@@ -60,12 +60,9 @@ swift run HostCatPrivilegedHelper
 - 已完成的重要变更更新到 `CHANGELOG.md`。
 - agent 协作规则更新到本文件。
 
-## Git 规则
+## 代码提交规则
 
-- 提交信息使用中文。
-- 首行格式示例：`feat: 搭建 HostCat 基础开发框架`。
-- 不添加 `Generated with ...`、`Co-authored-by` 等署名。
-- 提交前至少运行：
+- 提交代码前至少运行：
 
 ```bash
 git diff --check
