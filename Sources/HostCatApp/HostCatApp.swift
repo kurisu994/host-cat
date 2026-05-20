@@ -5,43 +5,22 @@ import SwiftUI
 
 @main
 struct HostCatApplication: App {
-    @State private var config = AppConfig.initial(defaultHosts: Self.defaultHosts)
-    private let helperClient = PreviewHostHelperClient()
+    @StateObject private var viewModel: MenuBarViewModel
+
+    init() {
+        let config = AppConfig.initial(defaultHosts: Self.defaultHosts)
+        let coordinator = HostWriteCoordinator(helperClient: PreviewHostHelperClient())
+        _viewModel = StateObject(wrappedValue: MenuBarViewModel(config: config, coordinator: coordinator))
+    }
 
     var body: some Scene {
         MenuBarExtra("HostCat", systemImage: "pawprint") {
-            Text("HostCat")
-                .font(.headline)
-
-            Divider()
-
-            Button("查看合成 Hosts") {
-                _ = try? HostsMerger().merge(config)
-            }
-
-            Button("应用当前配置") {
-                Task {
-                    guard let merged = try? HostsMerger().merge(config) else {
-                        return
-                    }
-
-                    _ = try? await helperClient.writeHosts(
-                        merged.text,
-                        expectedCurrentHostsHash: config.state.lastAppliedHostsHash
-                    )
-                }
-            }
-
-            Divider()
-
-            Button("退出") {
-                NSApplication.shared.terminate(nil)
-            }
+            MenuBarContentView(viewModel: viewModel)
         }
         .menuBarExtraStyle(.menu)
 
         Settings {
-            SettingsView(config: config)
+            SettingsView(config: viewModel.config)
         }
     }
 
@@ -51,6 +30,79 @@ struct HostCatApplication: App {
     ::1 localhost
 
     """
+}
+
+private struct MenuBarContentView: View {
+    @ObservedObject var viewModel: MenuBarViewModel
+
+    var body: some View {
+        Text("HostCat")
+            .font(.headline)
+
+        Divider()
+
+        // 默认节点（始终激活，不可切换）
+        Button {
+            // 默认节点不可停用
+        } label: {
+            HStack {
+                Image(systemName: "checkmark")
+                    .opacity(viewModel.defaultNodeItem.isActive ? 1 : 0)
+                Text(viewModel.defaultNodeItem.name)
+            }
+        }
+        .disabled(true)
+
+        Divider()
+
+        // 分组和节点
+        ForEach(viewModel.groupItems) { group in
+            Text(group.name)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(group.nodes) { node in
+                Button {
+                    viewModel.toggleNode(id: node.id, inGroup: node.groupID)
+                } label: {
+                    HStack {
+                        Image(systemName: "checkmark")
+                            .opacity(node.isActive ? 1 : 0)
+                        Text(node.name)
+                    }
+                }
+            }
+
+            Divider()
+        }
+
+        // 操作菜单
+        Button("查看合成 Hosts") {
+            viewModel.updateMergedPreview()
+        }
+
+        Button("打开编辑器") {
+            // TODO: 打开编辑窗口
+        }
+
+        if viewModel.isApplying {
+            Text("正在应用...")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+
+        if let error = viewModel.applyError {
+            Text(error)
+                .font(.caption)
+                .foregroundStyle(.red)
+        }
+
+        Divider()
+
+        Button("退出") {
+            NSApplication.shared.terminate(nil)
+        }
+    }
 }
 
 private struct SettingsView: View {
