@@ -22,7 +22,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 实现要点：
 
 - 主应用和 Helper 必须使用有效的 Developer ID 证书签名。
-- XPC 连接需验证调用方的 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中根据 `processIdentifier` 获取调用方 `SecCode`，校验 Team ID、bundle identifier 和签名状态。`auditToken` 只作为补充校验信息，不作为唯一安全边界。
+- XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement，限定 Team ID、bundle identifier 和签名状态。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
 - Helper 的 launchd plist 放在 `Contents/Library/LaunchDaemons/` 目录下，Helper 可执行文件放在 `Contents/Library/HelperTools/` 目录下。`SMAppService` 模式下二者都必须在 app bundle 内，应用删除时自动清理。
 - DNS 缓存刷新命令（`dscacheutil -flushcache` + `killall -HUP mDNSResponder`）由 Helper 在写入 hosts 后一并执行，因为这两个命令都需要 root 权限。
 
@@ -84,7 +84,7 @@ struct AppSettings: Codable, Sendable {
 
 「默认」节点是可编辑节点，和普通节点一起参与语法校验、合并输出与冲突检测；区别仅在于它不可删除、不可停用、排序固定在菜单最顶部。若导入时发现 `/etc/hosts` 已包含 HostCat 管理区块，则优先解析管理区块恢复配置；只把管理区块外的内容导入「默认」节点，避免二次导入。
 
-hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时按 UTF-8 解码；如果解码失败，回退到 Latin-1（能无损读取任意字节序列）并弹窗提示用户「hosts 文件编码异常，已按 Latin-1 读取，建议检查内容」。HostCat 写出时统一使用 UTF-8 编码。
+hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时按 UTF-8 解码；如果解码失败，回退到 Latin-1 读取并弹窗提示用户「hosts 文件编码异常，已按 Latin-1 读取。HostCat 写入时会转换为 UTF-8，建议先检查内容」。回退读取只用于最大程度展示和备份原内容，不承诺 byte-for-byte 保留；HostCat 写出时统一使用 UTF-8 编码。
 
 ## 首版交付路线
 
@@ -98,7 +98,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持分组、节点、组内单选。
 - 支持在编辑窗口中对节点和分组进行拖拽排序（上移/下移）。菜单栏 `NSMenu` 不支持原生拖拽，排序操作统一在编辑窗口的树形列表中完成。
 - 支持编辑节点 hosts 文本（纯文本编辑器 + 语法高亮 + 行号 + 错误标记）。
-- 支持 hosts 基础语法校验（每行为注释、空行或 `<IP> <域名>` 格式），Apply 时高亮错误行。
+- 支持 hosts 基础语法校验：每行可为空行、整行注释，或 `IP hostname [alias...] [# comment]`。首版支持 IPv4、IPv6、同一行多个 hostname / alias、连续空白和行尾注释；Apply 时高亮错误行。
 - 支持查看当前合成后的 hosts 文本。
 - 支持合并时跨组冲突检测，同一域名在多个激活节点中存在不同 IP 定义时阻止写入，要求用户解决冲突后再 Apply。
 - 支持合并输出时静默去重：同一域名 + 同一 IP 在多个激活节点中重复出现时，只保留第一次出现的条目，在预览界面标注「N 条重复条目已合并」。
@@ -111,7 +111,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 
 - 支持应用配置到 `/etc/hosts`，写入后自动刷新 DNS 缓存。
 - 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份恢复。默认保留最近 3 份备份，超出自动删除最早的。
-- 支持写入前检测 HostCat 管理区块外是否存在非空内容。如果有，弹窗告知用户「检测到 hosts 文件中有 HostCat 管理区块外的内容，是否导入到默认节点？」，给用户选择导入或忽略的机会。
+- 支持写入前检测 HostCat 管理区块外是否存在非空内容。如果有，弹窗告知用户「检测到 hosts 文件中有 HostCat 管理区块外的内容」，并提供三个选择：推荐的「导入到默认节点并继续」、保守的「取消写入」、显式风险选项「确认覆盖并不再保留」。默认按钮为导入，禁止用含糊的「忽略」表达可能丢失内容的操作。
 - 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
 - 支持 Helper 注册、审批状态检测、重新注册引导和写入失败回滚。
 
@@ -238,7 +238,7 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 - **菜单栏展示风格**：平铺 + 标题分隔符。分组名作为不可点击的标题分隔符，组内节点平铺为可勾选菜单项。
 - **排序操作归属**：拖拽排序在编辑窗口的树形列表中完成，菜单栏不支持拖拽。
 - **合并去重策略**：合并输出时静默去重，同域名 + 同 IP 只保留第一次出现；预览界面标注合并数量。
-- **hosts 文件编码**：读取按 UTF-8，解码失败回退 Latin-1 并提示用户；写出统一 UTF-8。
+- **hosts 文件编码**：读取按 UTF-8，解码失败回退 Latin-1 并提示用户写入时会转换为 UTF-8；回退读取用于展示和备份，不承诺 byte-for-byte 保留；写出统一 UTF-8。
 - **应用自更新**：计划第二版引入 Sparkle 框架实现自动更新，首版暂不包含。
 
 ## 初步取舍
