@@ -25,6 +25,8 @@
 - 更新 `HostCatApp` 菜单栏 UI，支持分组标题展示、节点勾选切换、合成预览入口、冲突和错误提示。
 - 添加 `EditorView`，实现左侧分组/节点树（增删改排序）和右侧 hosts 文本编辑。
 - 菜单栏「打开编辑器」入口打开 EditorWindow。
+- 添加 `MergedPreviewView`，展示合成 hosts 文本、重复条目合并数量、冲突详情。
+- 菜单栏「查看合成 Hosts」入口打开预览窗口。
 
 ### Documentation
 

@@ -27,6 +27,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 - `HostCatApp`：
   - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
   - 编辑窗口 MVP：左侧分组/节点树、增删改排序、右侧 hosts 文本编辑。
+  - 合成预览窗口：展示最终 hosts 文本、重复条目合并数量、冲突详情和定位引导。
 - `HostCatPrivilegedHelper`：
   - 可执行 target 骨架。
 - `HostCatCoreTests`：
