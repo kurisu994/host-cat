@@ -24,6 +24,11 @@ struct HostCatApplication: App {
         }
         .defaultSize(width: 900, height: 600)
 
+        Window("合成预览", id: "preview") {
+            MergedPreviewView(viewModel: viewModel)
+        }
+        .defaultSize(width: 700, height: 500)
+
         Settings {
             SettingsView(config: viewModel.config)
         }
@@ -84,7 +89,7 @@ private struct MenuBarContentView: View {
 
         // 操作菜单
         Button("查看合成 Hosts") {
-            viewModel.updateMergedPreview()
+            openWindow(id: "preview")
         }
 
         Button("打开编辑器") {
