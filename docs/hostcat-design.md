@@ -87,7 +87,7 @@ Privileged Helper (root, fixed /private/etc/hosts only)
 - `HostCatCore`：纯 Swift 模块，包含数据模型、hosts parser、合并规则、冲突检测、配置读写、备份索引和状态快照逻辑。此模块不依赖 SwiftUI、AppKit 或 ServiceManagement，便于单元测试。
 - `HostCatHelperClient`：主应用内的 XPC client 包装层，向上暴露 `async throws` API，向下封装 `NSXPCConnection`、code signing requirement 和错误映射。
 - `HostCatPrivilegedHelper`：root Helper 可执行文件，只负责固定路径写入、文件安全校验、DNS 刷新和错误回传。
-- `HostCatCoreTests`：覆盖 parser、merge、dedupe、conflict、encoding、配置迁移和状态回滚；Helper 的真实写入只放在签名后的集成或手动 smoke 测试中。
+- `HostCatCoreTests`：覆盖 parser、merge、dedupe、conflict、encoding、配置迁移、状态回滚和 hosts 导入；Helper 的真实写入只放在签名后的集成或手动 smoke 测试中。
 
 ## 核心数据模型
 
@@ -147,11 +147,11 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持分组、节点、组内单选。
 - 支持在编辑窗口中对节点和分组进行拖拽排序（上移/下移）。菜单栏 `NSMenu` 不支持原生拖拽，排序操作统一在编辑窗口的树形列表中完成。
 - 支持编辑节点 hosts 文本（纯文本编辑器 + 语法高亮 + 行号 + 错误标记）。
-- 支持 hosts 基础语法校验：每行可为空行、整行注释，或 `IP hostname [alias...] [# comment]`。首版支持 IPv4、IPv6、同一行多个 hostname / alias、连续空白和行尾注释；Apply 时高亮错误行。
+- hosts 文本语法校验：每行可为空行、整行注释，或 `IP hostname [alias...] [# comment]`。首版支持 IPv4、IPv6、同一行多个 hostname / alias、连续空白和行尾注释；Apply 时高亮错误行。
 - 支持查看当前合成后的 hosts 文本。
 - 支持合并时跨组冲突检测，同一域名在多个激活节点中存在不同 IP 定义时阻止写入，要求用户解决冲突后再 Apply。
 - 支持合并输出时静默去重：同一域名 + 同一 IP 在多个激活节点中重复出现时，只保留第一次出现的条目，在预览界面标注「N 条重复条目已合并」。
-- 支持首次启动时导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点。
+- 支持首次启动时导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点（通过 `HostsImporter`）。
 - 支持启用或关闭开机自启动。
 
 ### 阶段 2：真实写入版
@@ -163,6 +163,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持写入前对比 `expectedCurrentHostsHash`，检测 `/etc/hosts` 是否在 HostCat 之外被修改；发现变化时先进入导入/取消/覆盖决策，不静默覆盖。
 - 支持写入前检测 HostCat 管理区块外是否存在非空内容。如果有，弹窗告知用户「检测到 hosts 文件中有 HostCat 管理区块外的内容」，并提供三个选择：推荐的「导入到默认节点并继续」、保守的「取消写入」、显式风险选项「确认覆盖并不再保留」。默认按钮为导入，禁止用含糊的「忽略」表达可能丢失内容的操作。
 - 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
+- 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
 - 支持 Helper 注册、审批状态检测、重新注册引导和写入失败回滚。
 
 ### 暂缓功能
@@ -290,7 +291,7 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 
 - hosts parser：空行、整行注释、行尾注释、IPv4、IPv6、多 hostname、连续空白、非法 IP、非法 hostname。
 - 合并规则：默认节点固定参与、组内单选、跨组组合、重复条目静默去重、同域名不同 IP 冲突阻止。
-- 管理区块解析：无 HostCat 区块、完整区块、缺 Begin、缺 End、版本号未知、区块外内容导入。
+- 管理区块解析：无 HostCat 区块、完整 v1 区块、缺 Begin、缺 End、版本号未知、区块外内容导入。
 - 编码处理：UTF-8 正常读取、Latin-1 回退提示、写出统一 UTF-8。
 - 配置存储：`configVersion`、JSON 损坏恢复、原子写入失败不破坏旧配置、未来迁移入口。
 - 状态批次：debounce 合并、写入成功更新快照、写入失败回滚当前批次、失败期间新操作保留、hash 不匹配不自动覆盖。

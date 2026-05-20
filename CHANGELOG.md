@@ -14,11 +14,17 @@
 - 添加 JSON 配置存储，支持默认配置创建、版本校验、损坏恢复和原子写入。
 - 添加最小 SwiftUI 菜单栏 app 骨架和 Privileged Helper 可执行 target 骨架。
 - 添加核心单元测试，覆盖配置初始化、hash 稳定性、parser、合并去重和冲突检测。
+- 添加 `HostsImporter`，支持解析 HostCat 管理区块（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`）。
+- 支持 hosts 导入场景：无 HostCat 区块、完整 v1 区块、缺 Begin、缺 End、未知版本。
+- 支持首次启动时将管理区块外内容导入「默认」节点，避免重复导入。
+- 支持 UTF-8 读取和 Latin-1 fallback，标记编码问题并提示用户。
+- 添加 `HostsImporterTests`，覆盖全部解析场景和编码 fallback。
 
 ### Documentation
 
 - 补充开发方案设计，明确 XPC 安全边界、状态快照、写入安全策略、测试策略和构建分发策略。
 - 新增 README、CHANGELOG 和 AGENTS 协作文档。
+- 更新 README，补充 `HostsImporter` 能力和阶段1当前进度。
 
 ### Not Yet Implemented
 
