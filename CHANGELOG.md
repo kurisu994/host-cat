@@ -23,6 +23,8 @@
 - 添加 `ConfigMutationServiceTests`，覆盖全部配置变更操作和边界行为。
 - 添加 `MenuBarViewModel`，管理菜单栏内存配置状态、节点激活切换、debounce 写入调度和错误展示。
 - 更新 `HostCatApp` 菜单栏 UI，支持分组标题展示、节点勾选切换、合成预览入口、冲突和错误提示。
+- 添加 `EditorView`，实现左侧分组/节点树（增删改排序）和右侧 hosts 文本编辑。
+- 菜单栏「打开编辑器」入口打开 EditorWindow。
 
 ### Documentation
 

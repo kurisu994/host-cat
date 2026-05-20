@@ -26,6 +26,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
 - `HostCatApp`：
   - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
+  - 编辑窗口 MVP：左侧分组/节点树、增删改排序、右侧 hosts 文本编辑。
 - `HostCatPrivilegedHelper`：
   - 可执行 target 骨架。
 - `HostCatCoreTests`：
