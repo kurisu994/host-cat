@@ -22,9 +22,9 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
   - 备份存储（`BackupStore`），支持自动命名、保留策略和读取恢复。
 - `HostCatHelperClient`：
-  - Helper client 协议。
-  - 预览模式 client。
-  - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
+  - Helper client 协议（`HostHelperClient`）。
+  - 预览模式 client（`PreviewHostHelperClient`）。
+  - XPC protocol 边界草案（`HostCatHelperXPCProtocol`）。
 - `HostCatApp`：
   - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
   - 编辑窗口 MVP：左侧分组/节点树、增删改排序、右侧 hosts 文本编辑。
@@ -33,6 +33,9 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 可执行 target 骨架。
 - `HostCatCoreTests`：
   - parser、merge、conflict、config/hash、importer 单元测试。
+  - 配置变更服务（`ConfigMutationService`）单元测试。
+  - 写入协调器（`HostWriteCoordinator`）单元测试。
+  - 备份存储（`BackupStore`）单元测试。
 
 ## 环境要求
 
@@ -118,8 +121,11 @@ swift run HostCatPrivilegedHelper
 
 ## 下一步
 
-- 增加首次 hosts 导入和 HostCat 管理区块解析（`HostsImporter`）。
-- 增加 `HostWriteCoordinator` actor，实现 debounce、状态快照和失败回滚。
-- 将 `HostCatHelperClient` 接入真实 `NSXPCConnection`。
-- 建立 Xcode app/helper target、签名、公证和 DMG 发布流程。
-- 完成编辑窗口、语法高亮、冲突 UX 和备份恢复。
+阶段 1（安全预览版）已完成。接下来进入阶段 2（真实写入版）：
+
+- 从 SwiftPM 骨架过渡到 Xcode app/helper target。
+- 接入 `SMAppService` 注册和 Privileged Helper 真实写入。
+- 实现 `NSXPCConnection` 封装和 code signing requirement 验证。
+- 完成安全写入策略：flags 检查、hash 校验、`mkstemp`、原子替换、DNS 刷新。
+- 接入自动备份、外部修改检测和导入/覆盖决策。
+- 配置签名、公证、DMG 打包和 GitHub Release 发布流水线。
