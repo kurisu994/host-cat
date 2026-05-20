@@ -81,15 +81,12 @@ public struct AppSettings: Codable, Equatable, Sendable {
 public struct AppStateMetadata: Codable, Equatable, Sendable {
     public var lastAppliedHostsHash: String?
     public var lastAppliedAt: Date?
-    public var lastExternalHostsHash: String?
 
     public init(
         lastAppliedHostsHash: String? = nil,
-        lastAppliedAt: Date? = nil,
-        lastExternalHostsHash: String? = nil
+        lastAppliedAt: Date? = nil
     ) {
         self.lastAppliedHostsHash = lastAppliedHostsHash
         self.lastAppliedAt = lastAppliedAt
-        self.lastExternalHostsHash = lastExternalHostsHash
     }
 }

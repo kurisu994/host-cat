@@ -30,7 +30,8 @@ struct MergedPreviewView: View {
             // 冲突提示
             if !viewModel.lastConflicts.isEmpty {
                 ConflictBanner(conflicts: viewModel.lastConflicts) { conflict in
-                    // 导航到冲突节点
+                    // TODO: 导航到冲突节点需要 EditorView 集成，当前显示提示
+                    viewModel.applyError = "冲突节点 \(conflict.hostname) 位于 \(conflict.incoming.nodeName)"
                 }
             }
 
