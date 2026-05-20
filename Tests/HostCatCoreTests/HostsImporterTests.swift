@@ -4,7 +4,7 @@ import XCTest
 final class HostsImporterTests: XCTestCase {
     func testNoHostCatBlockReturnsAllContentAsDefault() {
         let content = "127.0.0.1 localhost\n::1 localhost\n"
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertEqual(result.defaultNodeContent, content)
         XCTAssertFalse(result.hasHostCatBlock)
@@ -18,7 +18,7 @@ final class HostsImporterTests: XCTestCase {
         let inside = "# --- HostCat Begin (v1) ---\n# 默认\n10.0.0.1 api.test\n# --- HostCat End ---"
         let content = outside + inside
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertEqual(result.defaultNodeContent, outside.trimmingCharacters(in: .whitespacesAndNewlines))
         XCTAssertTrue(result.hasHostCatBlock)
@@ -30,7 +30,7 @@ final class HostsImporterTests: XCTestCase {
     func testMissingBeginMarkerReturnsInvalidBlock() {
         let content = "127.0.0.1 localhost\n# --- HostCat End ---\n"
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertTrue(result.hasHostCatBlock)
         XCTAssertNil(result.blockVersion)
@@ -41,7 +41,7 @@ final class HostsImporterTests: XCTestCase {
     func testMissingEndMarkerReturnsInvalidBlock() {
         let content = "127.0.0.1 localhost\n# --- HostCat Begin (v1) ---\n10.0.0.1 api.test\n"
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertTrue(result.hasHostCatBlock)
         XCTAssertEqual(result.blockVersion, .v1)
@@ -52,7 +52,7 @@ final class HostsImporterTests: XCTestCase {
     func testUnknownVersionReturnsInvalidBlock() {
         let content = "127.0.0.1 localhost\n# --- HostCat Begin (v2) ---\n10.0.0.1 api.test\n# --- HostCat End ---"
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertTrue(result.hasHostCatBlock)
         XCTAssertEqual(result.blockVersion, .unknown("v2"))
@@ -65,7 +65,7 @@ final class HostsImporterTests: XCTestCase {
         let outside = "\n127.0.0.1 localhost"
         let content = inside + outside
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost")
         XCTAssertTrue(result.hasHostCatBlock)
@@ -78,7 +78,7 @@ final class HostsImporterTests: XCTestCase {
         let after = "\n::1 localhost"
         let content = before + inside + after
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost\n\n::1 localhost")
         XCTAssertTrue(result.hasHostCatBlock)
@@ -88,7 +88,7 @@ final class HostsImporterTests: XCTestCase {
     func testEmptyOutsideContentReturnsEmptyString() {
         let content = "# --- HostCat Begin (v1) ---\n# 默认\n10.0.0.1 api.test\n# --- HostCat End ---"
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertEqual(result.defaultNodeContent, "")
         XCTAssertTrue(result.hasHostCatBlock)
@@ -131,11 +131,67 @@ final class HostsImporterTests: XCTestCase {
     func testWhitespaceAroundMarkersIsHandled() {
         let content = "  127.0.0.1 localhost  \n  # --- HostCat Begin (v1) ---  \n10.0.0.1 api.test\n  # --- HostCat End ---  \n  ::1 localhost  "
 
-        let result = try! HostsImporter().importHosts(content)
+        let result = HostsImporter().importHosts(content)
 
         XCTAssertTrue(result.hasHostCatBlock)
         XCTAssertTrue(result.isBlockValid)
         XCTAssertTrue(result.defaultNodeContent.contains("127.0.0.1 localhost"))
         XCTAssertTrue(result.defaultNodeContent.contains("::1 localhost"))
+    }
+
+    func testMultipleBlocksUsesFirstBlock() {
+        let firstBlock = "# --- HostCat Begin (v1) ---\n10.0.0.1 api.test\n# --- HostCat End ---"
+        let secondBlock = "# --- HostCat Begin (v1) ---\n10.0.0.2 api2.test\n# --- HostCat End ---"
+        let content = "127.0.0.1 localhost\n" + firstBlock + "\n::1 localhost\n" + secondBlock
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertTrue(result.hasHostCatBlock)
+        XCTAssertEqual(result.blockVersion, .v1)
+        XCTAssertTrue(result.isBlockValid)
+        XCTAssertTrue(result.defaultNodeContent.contains("127.0.0.1 localhost"))
+        XCTAssertTrue(result.defaultNodeContent.contains("::1 localhost"))
+        XCTAssertTrue(result.defaultNodeContent.contains("10.0.0.2 api2.test"))
+    }
+
+    func testReversedMarkersTreatedAsMissingEnd() {
+        let content = "127.0.0.1 localhost\n# --- HostCat End ---\n10.0.0.1 api.test\n# --- HostCat Begin (v1) ---"
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertTrue(result.hasHostCatBlock)
+        XCTAssertNil(result.blockVersion)
+        XCTAssertFalse(result.isBlockValid)
+    }
+
+    func testEmptyFileReturnsEmptyDefaultContent() {
+        let content = ""
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertEqual(result.defaultNodeContent, "")
+        XCTAssertFalse(result.hasHostCatBlock)
+        XCTAssertTrue(result.isBlockValid)
+    }
+
+    func testWhitespaceOnlyFileReturnsEmptyDefaultContent() {
+        let content = "   \n\t\n   "
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertEqual(result.defaultNodeContent, "")
+        XCTAssertFalse(result.hasHostCatBlock)
+        XCTAssertTrue(result.isBlockValid)
+    }
+
+    func testUTF8DecodeFailureFallsBackToLatin1() {
+        let content = "127.0.0.1 localhost\n# --- HostCat Begin (v1) ---\n10.0.0.1 api.test\n# --- HostCat End ---"
+        let latin1Data = content.data(using: .isoLatin1)!
+
+        let result = HostsImporter().importHostsWithFallback(data: latin1Data)
+
+        XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost")
+        XCTAssertTrue(result.hasHostCatBlock)
+        XCTAssertFalse(result.encodingIssue)
     }
 }

@@ -27,31 +27,13 @@ public struct HostsImportResult: Equatable, Sendable {
     }
 }
 
-public enum HostsImportError: Error, Equatable, LocalizedError, Sendable {
-    case invalidBlockMissingEnd
-    case invalidBlockMissingBegin
-    case unsupportedBlockVersion(String)
-
-    public var errorDescription: String? {
-        switch self {
-        case .invalidBlockMissingEnd:
-            "HostCat 管理区块缺少结束标记。"
-        case .invalidBlockMissingBegin:
-            "HostCat 管理区块缺少开始标记。"
-        case let .unsupportedBlockVersion(version):
-            "不支持的 HostCat 管理区块版本：\(version)"
-        }
-    }
-}
-
 public struct HostsImporter: Sendable {
     public static let beginMarkerPrefix = "# --- HostCat Begin ("
-    public static let beginMarkerSuffix = "# --- HostCat Begin (v1) ---"
     public static let endMarker = "# --- HostCat End ---"
 
     public init() {}
 
-    public func importHosts(_ content: String) throws -> HostsImportResult {
+    public func importHosts(_ content: String) -> HostsImportResult {
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
 
         let beginInfo = findBeginMarker(in: lines)
@@ -107,19 +89,11 @@ public struct HostsImporter: Sendable {
 
     public func importHostsWithFallback(data: Data) -> HostsImportResult {
         if let utf8String = String(data: data, encoding: .utf8) {
-            return (try? importHosts(utf8String)) ?? HostsImportResult(
-                defaultNodeContent: "",
-                hasHostCatBlock: false,
-                encodingIssue: false
-            )
+            return importHosts(utf8String)
         }
 
         if let latin1String = String(data: data, encoding: .isoLatin1) {
-            var result = (try? importHosts(latin1String)) ?? HostsImportResult(
-                defaultNodeContent: "",
-                hasHostCatBlock: false,
-                encodingIssue: false
-            )
+            var result = importHosts(latin1String)
             result.encodingIssue = true
             return result
         }
