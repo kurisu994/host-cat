@@ -21,6 +21,8 @@
 - 添加 `HostsImporterTests`，覆盖全部解析场景和编码 fallback。
 - 添加 `ConfigMutationService`，提供 group/node 增删改、排序、单选/多选激活行为，默认节点不可删除/不可停用保护。
 - 添加 `ConfigMutationServiceTests`，覆盖全部配置变更操作和边界行为。
+- 添加 `HostWriteCoordinator` actor，实现 500ms debounce 合并、parser 校验、冲突检测、成功状态快照和失败回滚。
+- 添加 `HostWriteCoordinatorTests`，覆盖 debounce 合并、写入成功、写入失败、冲突阻止、新操作保留。
 
 ### Documentation
 

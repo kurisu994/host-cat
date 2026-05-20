@@ -19,6 +19,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - hosts 导入与管理区块解析（`HostsImporter`），支持无区块、完整 v1 区块、缺 Begin、缺 End、未知版本，区块外内容提取为默认节点内容。
   - UTF-8 读取和 Latin-1 fallback，标记编码问题。
   - 配置变更服务（`ConfigMutationService`），支持 group/node 增删改、排序、单选/多选激活行为，默认节点保护。
+  - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
 - `HostCatHelperClient`：
   - Helper client 协议。
   - 预览模式 client。
