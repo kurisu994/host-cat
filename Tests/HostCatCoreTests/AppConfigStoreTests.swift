@@ -48,8 +48,7 @@ final class AppConfigStoreTests: XCTestCase {
             settings: AppSettings(launchAtLogin: true),
             state: AppStateMetadata(
                 lastAppliedHostsHash: "abc123",
-                lastAppliedAt: Date(timeIntervalSince1970: 1_800_000_000),
-                lastExternalHostsHash: "external456"
+                lastAppliedAt: Date(timeIntervalSince1970: 1_800_000_000)
             )
         )
 
@@ -140,6 +139,5 @@ final class AppConfigStoreTests: XCTestCase {
         XCTAssertFalse(config.settings.launchAtLogin, file: file, line: line)
         XCTAssertNil(config.state.lastAppliedHostsHash, file: file, line: line)
         XCTAssertNil(config.state.lastAppliedAt, file: file, line: line)
-        XCTAssertNil(config.state.lastExternalHostsHash, file: file, line: line)
     }
 }

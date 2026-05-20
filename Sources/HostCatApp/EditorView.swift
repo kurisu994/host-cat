@@ -13,6 +13,9 @@ struct EditorView: View {
     @State private var showAddNodeSheet = false
     @State private var newNodeName: String = ""
     @State private var selectedGroupForNewNode: UUID?
+    @State private var showRenameNodeSheet = false
+    @State private var editingNodeToRename: (groupID: UUID, nodeID: UUID)?
+    @State private var renameNodeNewName: String = ""
 
     var body: some View {
         NavigationSplitView {
@@ -68,7 +71,9 @@ struct EditorView: View {
                             .tag(node.id)
                             .contextMenu {
                                 Button("重命名") {
-                                    // TODO: 显示重命名对话框
+                                    editingNodeToRename = (group.id, node.id)
+                                    renameNodeNewName = node.name
+                                    showRenameNodeSheet = true
                                 }
                                 Button("删除") {
                                     nodeToDelete = (group.id, node.id)
@@ -208,6 +213,18 @@ struct EditorView: View {
             }
         } message: {
             Text("删除后无法恢复，是否继续？")
+        }
+        .sheet(isPresented: $showRenameNodeSheet) {
+            RenameNodeSheet(name: $renameNodeNewName) {
+                guard !renameNodeNewName.isEmpty,
+                      let (groupID, nodeID) = editingNodeToRename else { return }
+                var service = ConfigMutationService()
+                service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
+                viewModel.scheduleApply()
+                renameNodeNewName = ""
+                editingNodeToRename = nil
+                showRenameNodeSheet = false
+            }
         }
         .frame(minWidth: 700, minHeight: 500)
     }
@@ -376,6 +393,31 @@ private struct AddNodeSheet: View {
                 Button("取消", role: .cancel) {}
                 Button("添加") {
                     onAdd()
+                }
+                .disabled(name.isEmpty)
+            }
+        }
+        .padding()
+        .frame(width: 300)
+    }
+}
+
+private struct RenameNodeSheet: View {
+    @Binding var name: String
+    let onRename: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("重命名节点")
+                .font(.headline)
+
+            TextField("新名称", text: $name)
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                Button("取消", role: .cancel) {}
+                Button("确认") {
+                    onRename()
                 }
                 .disabled(name.isEmpty)
             }

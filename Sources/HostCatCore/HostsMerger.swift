@@ -52,6 +52,11 @@ public struct HostsMerger: Sendable {
         var records: [HostRecord]
     }
 
+    private static let hostCatBeginHeader = "# --- HostCat Begin (v1) ---"
+    private static let hostCatEndHeader = "# --- HostCat End ---"
+    private static let sectionSeparator = "# =============================="
+    private static let subsectionSeparator = "# ------------------------------"
+
     public init() {}
 
     public func merge(_ config: AppConfig) throws -> MergedHosts {
@@ -115,7 +120,7 @@ public struct HostsMerger: Sendable {
 
     private func buildMergedHosts(from contexts: [ParsedContext]) -> MergedHosts {
         var lines: [String] = [
-            "# --- HostCat Begin (v1) ---",
+            Self.hostCatBeginHeader,
             ""
         ]
         var seenEntryKeys: Set<String> = []
@@ -123,11 +128,11 @@ public struct HostsMerger: Sendable {
         var emittedRecords: [HostRecord] = []
 
         for context in contexts {
-            lines.append("# ==============================")
+            lines.append(Self.sectionSeparator)
             if let groupName = context.groupName {
                 lines.append("# [\(groupName)]")
                 lines.append("")
-                lines.append("# ------------------------------")
+                lines.append(Self.subsectionSeparator)
                 lines.append("# \(context.nodeName)")
             } else {
                 lines.append("# \(context.nodeName)")
@@ -163,7 +168,7 @@ public struct HostsMerger: Sendable {
             lines.append("")
         }
 
-        lines.append("# --- HostCat End ---")
+        lines.append(Self.hostCatEndHeader)
         lines.append("")
 
         return MergedHosts(

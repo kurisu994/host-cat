@@ -5,6 +5,7 @@ public enum HostsParseError: Error, Equatable, LocalizedError, Sendable {
     case invalidIPAddress(lineNumber: Int, value: String)
     case missingHostname(lineNumber: Int)
     case invalidHostname(lineNumber: Int, value: String)
+    case emptyContent
 
     public var errorDescription: String? {
         switch self {
@@ -14,6 +15,8 @@ public enum HostsParseError: Error, Equatable, LocalizedError, Sendable {
             "第 \(lineNumber) 行缺少 hostname"
         case let .invalidHostname(lineNumber, value):
             "第 \(lineNumber) 行 hostname 无效：\(value)"
+        case .emptyContent:
+            "hosts 内容为空"
         }
     }
 }
@@ -109,6 +112,10 @@ public struct HostsParser: Sendable {
                     lineNumber: lineNumber
                 )
             )
+        }
+
+        guard !records.isEmpty else {
+            throw HostsParseError.emptyContent
         }
 
         return records

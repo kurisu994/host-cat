@@ -31,13 +31,64 @@ final class HostsParserTests: XCTestCase {
         }
     }
 
-    func testRejectsMissingHostname() {
-        XCTAssertThrowsError(try HostsParser().parse("127.0.0.1\n")) { error in
-            guard case HostsParseError.missingHostname(let lineNumber) = error else {
-                return XCTFail("Expected missingHostname error, got \(error)")
-            }
+    func testParsesMultipleLines() throws {
+        let content = """
+            127.0.0.1 localhost
+            10.0.0.1 api.test
+            192.168.1.1 router.local
+            """
+        let records = try HostsParser().parse(content)
+        XCTAssertEqual(records.count, 3)
+        XCTAssertEqual(records[0].ipAddress, "127.0.0.1")
+        XCTAssertEqual(records[2].hostnames, ["router.local"])
+    }
 
+    func testParsesLineWithMultipleAliases() throws {
+        let records = try HostsParser().parse("10.0.0.1 host1 host2 host3\n")
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0].hostnames, ["host1", "host2", "host3"])
+    }
+
+    func testIgnoresBlankLinesAndComments() throws {
+        let content = """
+            # This is a comment
+
+            127.0.0.1 localhost
+
+            # Another comment
+            10.0.0.1 api.test
+            """
+        let records = try HostsParser().parse(content)
+        XCTAssertEqual(records.count, 2)
+    }
+
+    func testRejectsInvalidIPv6Address() {
+        XCTAssertThrowsError(try HostsParser().parse("::ggg localhost\n")) { error in
+            guard case HostsParseError.invalidIPAddress(let lineNumber, let value) = error else {
+                return XCTFail("Expected invalidIPAddress error, got \(error)")
+            }
             XCTAssertEqual(lineNumber, 1)
+            XCTAssertEqual(value, "::ggg")
         }
+    }
+
+    func testRejectsEmptyContent() {
+        XCTAssertThrowsError(try HostsParser().parse("")) { error in
+            guard case HostsParseError.emptyContent = error else {
+                return XCTFail("Expected emptyContent error, got \(error)")
+            }
+        }
+    }
+
+    func testTracksLineNumbers() throws {
+        let content = """
+            # comment
+
+            127.0.0.1 localhost
+            10.0.0.1 api.test
+            """
+        let records = try HostsParser().parse(content)
+        XCTAssertEqual(records[0].lineNumber, 3)
+        XCTAssertEqual(records[1].lineNumber, 4)
     }
 }
