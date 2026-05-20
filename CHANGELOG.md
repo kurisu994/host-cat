@@ -19,6 +19,8 @@
 - 支持首次启动时将管理区块外内容导入「默认」节点，避免重复导入。
 - 支持 UTF-8 读取和 Latin-1 fallback，标记编码问题并提示用户。
 - 添加 `HostsImporterTests`，覆盖全部解析场景和编码 fallback。
+- 添加 `ConfigMutationService`，提供 group/node 增删改、排序、单选/多选激活行为，默认节点不可删除/不可停用保护。
+- 添加 `ConfigMutationServiceTests`，覆盖全部配置变更操作和边界行为。
 
 ### Documentation
 
