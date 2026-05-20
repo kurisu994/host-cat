@@ -22,13 +22,13 @@
 
 ### 1. 补齐配置存储
 
-- [ ] 新增 JSON 配置读写模块。
-- [ ] 使用 `~/Library/Application Support/com.hostcat.app/config.json` 作为默认配置路径。
-- [ ] 支持 `configVersion` 校验和未来迁移入口。
-- [ ] 配置不存在时创建 `AppConfig.initial(defaultHosts:)`。
-- [ ] JSON 损坏时恢复默认配置，并返回可展示的错误状态。
-- [ ] 写入采用原子写入：临时文件写入后 rename。
-- [ ] 增加单元测试：保存、读取、损坏恢复、版本入口、原子写入失败不破坏旧配置。
+- [x] 新增 JSON 配置读写模块。
+- [x] 使用 `~/Library/Application Support/com.hostcat.app/config.json` 作为默认配置路径。
+- [x] 支持 `configVersion` 校验和未来迁移入口。
+- [x] 配置不存在时创建 `AppConfig.initial(defaultHosts:)`。
+- [x] JSON 损坏时恢复默认配置，并返回可展示的错误状态。
+- [x] 写入采用原子写入：临时文件写入后 rename。
+- [x] 增加单元测试：保存、读取、损坏恢复、版本入口、原子写入失败不破坏旧配置。
 
 ### 2. 实现 hosts 导入与管理区块解析
 

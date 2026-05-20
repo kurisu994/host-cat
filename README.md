@@ -15,6 +15,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 同域名不同 IP 冲突检测。
   - 同 IP + 同域名重复条目去重计数。
   - hosts 内容 SHA256 hash。
+  - JSON 配置存储，支持默认路径、版本校验、损坏恢复和原子写入。
 - `HostCatHelperClient`：
   - Helper client 协议。
   - 预览模式 client。
@@ -111,7 +112,7 @@ swift run HostCatPrivilegedHelper
 
 ## 下一步
 
-- 增加 JSON 配置存储和迁移入口。
+- 增加首次 hosts 导入和 HostCat 管理区块解析。
 - 增加 `HostWriteCoordinator` actor，实现 debounce、状态快照和失败回滚。
 - 将 `HostCatHelperClient` 接入真实 `NSXPCConnection`。
 - 建立 Xcode app/helper target、签名、公证和 DMG 发布流程。

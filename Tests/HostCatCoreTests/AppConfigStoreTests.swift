@@ -1,0 +1,145 @@
+import Darwin
+import Foundation
+import XCTest
+@testable import HostCatCore
+
+final class AppConfigStoreTests: XCTestCase {
+    func testDefaultConfigURLUsesApplicationSupportDirectory() {
+        let url = AppConfigStore.defaultConfigURL()
+
+        XCTAssertEqual(url.lastPathComponent, "config.json")
+        XCTAssertEqual(url.deletingLastPathComponent().lastPathComponent, "com.hostcat.app")
+        XCTAssertTrue(url.path.contains("Application Support"))
+    }
+
+    func testLoadCreatesAndPersistsDefaultConfigWhenFileIsMissing() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        let store = AppConfigStore(configURL: configURL)
+
+        let result = try store.load(defaultHosts: "127.0.0.1 localhost\n")
+
+        XCTAssertEqual(result.status, .createdDefault)
+        assertDefaultConfig(result.config, defaultHosts: "127.0.0.1 localhost\n")
+        XCTAssertTrue(FileManager.default.fileExists(atPath: configURL.path))
+        XCTAssertEqual(try decodeConfig(at: configURL), result.config)
+    }
+
+    func testSaveAndLoadRoundTripExistingConfig() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("nested/config.json")
+        let store = AppConfigStore(configURL: configURL)
+        let config = AppConfig(
+            configVersion: 1,
+            defaultNode: HostNode(name: "默认", content: "127.0.0.1 localhost\n", isActive: true),
+            groups: [
+                HostGroup(
+                    name: "项目 A",
+                    isSingleSelect: true,
+                    nodes: [
+                        HostNode(name: "开发", content: "10.0.0.2 api.test\n", isActive: true)
+                    ]
+                )
+            ],
+            settings: AppSettings(launchAtLogin: true),
+            state: AppStateMetadata(
+                lastAppliedHostsHash: "abc123",
+                lastAppliedAt: Date(timeIntervalSince1970: 1_800_000_000),
+                lastExternalHostsHash: "external456"
+            )
+        )
+
+        try store.save(config)
+        let result = try store.load(defaultHosts: "fallback\n")
+
+        XCTAssertEqual(result.status, .loadedExisting)
+        XCTAssertEqual(result.config, config)
+    }
+
+    func testCorruptJSONRecoversDefaultConfigAndReportsDisplayableReason() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        try Data("{ invalid json".utf8).write(to: configURL)
+        let store = AppConfigStore(configURL: configURL)
+
+        let result = try store.load(defaultHosts: "::1 localhost\n")
+
+        XCTAssertEqual(result.status, .recoveredDefault(.invalidJSON))
+        assertDefaultConfig(result.config, defaultHosts: "::1 localhost\n")
+        XCTAssertEqual(try decodeConfig(at: configURL), result.config)
+        XCTAssertNotNil(AppConfigRecoveryReason.invalidJSON.errorDescription)
+    }
+
+    func testUnsupportedConfigVersionRecoversDefaultConfigAndReportsVersion() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        var unsupported = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        unsupported.configVersion = 99
+        try JSONEncoder.hostCatConfigEncoder.encode(unsupported).write(to: configURL)
+        let store = AppConfigStore(configURL: configURL)
+
+        let result = try store.load(defaultHosts: "255.255.255.255 broadcasthost\n")
+
+        XCTAssertEqual(result.status, .recoveredDefault(.unsupportedVersion(99)))
+        assertDefaultConfig(result.config, defaultHosts: "255.255.255.255 broadcasthost\n")
+        XCTAssertEqual(try decodeConfig(at: configURL), result.config)
+        XCTAssertNotNil(AppConfigRecoveryReason.unsupportedVersion(99).errorDescription)
+    }
+
+    func testSaveFailureDoesNotDestroyExistingConfig() throws {
+        let directory = try makeTemporaryDirectory()
+        defer {
+            _ = chmod(directory.path, 0o700)
+            try? FileManager.default.removeItem(at: directory)
+        }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        let store = AppConfigStore(configURL: configURL)
+        let original = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        let replacement = AppConfig.initial(defaultHosts: "10.0.0.2 api.test\n")
+        try store.save(original)
+
+        XCTAssertEqual(chmod(directory.path, 0o500), 0)
+        XCTAssertThrowsError(try store.save(replacement))
+
+        XCTAssertEqual(chmod(directory.path, 0o700), 0)
+        XCTAssertEqual(try decodeConfig(at: configURL), original)
+    }
+
+    private func makeTemporaryDirectory() throws -> URL {
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("HostCatCoreTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    private func decodeConfig(at url: URL) throws -> AppConfig {
+        let data = try Data(contentsOf: url)
+        return try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: data)
+    }
+
+    private func assertDefaultConfig(
+        _ config: AppConfig,
+        defaultHosts: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        XCTAssertEqual(config.configVersion, 1, file: file, line: line)
+        XCTAssertEqual(config.defaultNode.name, "默认", file: file, line: line)
+        XCTAssertEqual(config.defaultNode.content, defaultHosts, file: file, line: line)
+        XCTAssertTrue(config.defaultNode.isActive, file: file, line: line)
+        XCTAssertEqual(config.groups, [], file: file, line: line)
+        XCTAssertFalse(config.settings.launchAtLogin, file: file, line: line)
+        XCTAssertNil(config.state.lastAppliedHostsHash, file: file, line: line)
+        XCTAssertNil(config.state.lastAppliedAt, file: file, line: line)
+        XCTAssertNil(config.state.lastExternalHostsHash, file: file, line: line)
+    }
+}

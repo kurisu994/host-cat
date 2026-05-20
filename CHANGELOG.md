@@ -11,6 +11,7 @@
 - 添加 hosts parser，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
 - 添加 hosts 合并逻辑，支持默认节点参与、激活节点合并、重复条目去重和同域名不同 IP 冲突检测。
 - 添加 SHA256 hosts hash 工具，为后续外部修改检测和写入回滚打基础。
+- 添加 JSON 配置存储，支持默认配置创建、版本校验、损坏恢复和原子写入。
 - 添加最小 SwiftUI 菜单栏 app 骨架和 Privileged Helper 可执行 target 骨架。
 - 添加核心单元测试，覆盖配置初始化、hash 稳定性、parser、合并去重和冲突检测。
 
