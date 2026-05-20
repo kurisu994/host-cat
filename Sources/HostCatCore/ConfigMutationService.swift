@@ -38,6 +38,11 @@ public struct ConfigMutationService: Sendable {
         config.groups.swapAt(index, targetIndex)
     }
 
+    public func setGroupSingleSelect(_ isSingleSelect: Bool, forGroup groupID: UUID, in config: inout AppConfig) {
+        guard let index = config.groups.firstIndex(where: { $0.id == groupID }) else { return }
+        config.groups[index].isSingleSelect = isSingleSelect
+    }
+
     // MARK: - Node Operations (within a group)
 
     public func addNode(

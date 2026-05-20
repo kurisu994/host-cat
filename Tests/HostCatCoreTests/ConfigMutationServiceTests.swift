@@ -273,6 +273,16 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertFalse(config.groups[1].nodes[0].isActive)
     }
 
+    func testSetGroupSingleSelect() {
+        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true)])
+        let service = ConfigMutationService()
+        let groupID = config.groups[0].id
+
+        service.setGroupSingleSelect(false, forGroup: groupID, in: &config)
+
+        XCTAssertFalse(config.groups[0].isSingleSelect)
+    }
+
     // MARK: - Node Content Update
 
     func testUpdateNodeContent() {
