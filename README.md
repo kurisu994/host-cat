@@ -23,10 +23,9 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 - `HostCatHelperClient`：
   - Helper client 协议。
   - 预览模式 client。
-  - XPC protocol 边界草案。
+  - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
 - `HostCatApp`：
-  - 最小 SwiftUI `MenuBarExtra` 菜单栏入口。
-  - 最小 Settings 页面。
+  - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
 - `HostCatPrivilegedHelper`：
   - 可执行 target 骨架。
 - `HostCatCoreTests`：
