@@ -19,6 +19,11 @@ struct HostCatApplication: App {
         }
         .menuBarExtraStyle(.menu)
 
+        Window("编辑器", id: "editor") {
+            EditorView(viewModel: viewModel)
+        }
+        .defaultSize(width: 900, height: 600)
+
         Settings {
             SettingsView(config: viewModel.config)
         }
@@ -34,6 +39,7 @@ struct HostCatApplication: App {
 
 private struct MenuBarContentView: View {
     @ObservedObject var viewModel: MenuBarViewModel
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Text("HostCat")
@@ -82,7 +88,7 @@ private struct MenuBarContentView: View {
         }
 
         Button("打开编辑器") {
-            // TODO: 打开编辑窗口
+            openWindow(id: "editor")
         }
 
         if viewModel.isApplying {
