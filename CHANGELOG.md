@@ -27,6 +27,8 @@
 - 菜单栏「打开编辑器」入口打开 EditorWindow。
 - 添加 `MergedPreviewView`，展示合成 hosts 文本、重复条目合并数量、冲突详情。
 - 菜单栏「查看合成 Hosts」入口打开预览窗口。
+- 添加 `BackupStore`，支持自动命名备份、保留策略（默认3份）、读取恢复。
+- 添加 `BackupStoreTests`，覆盖备份命名、列表排序、保留策略、读取内容。
 
 ### Documentation
 
