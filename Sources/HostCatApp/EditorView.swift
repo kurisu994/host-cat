@@ -38,7 +38,7 @@ struct EditorView: View {
                         }
                     }
 
-                    // 分组
+                    // 分组（支持拖拽排序）
                     ForEach(viewModel.config.groups) { group in
                         Section(header: GroupHeader(
                             name: group.name,
@@ -56,16 +56,6 @@ struct EditorView: View {
                             onDelete: {
                                 let service = mutationService
                                 service.removeGroup(id: group.id, from: &viewModel.config)
-                                viewModel.scheduleApply()
-                            },
-                            onMoveUp: {
-                                let service = mutationService
-                                service.moveGroup(id: group.id, direction: .up, in: &viewModel.config)
-                                viewModel.scheduleApply()
-                            },
-                            onMoveDown: {
-                                let service = mutationService
-                                service.moveGroup(id: group.id, direction: .down, in: &viewModel.config)
                                 viewModel.scheduleApply()
                             }
                         )) {
@@ -90,28 +80,24 @@ struct EditorView: View {
                                         nodeToDelete = (group.id, node.id)
                                         showDeleteConfirmation = true
                                     }
-                                    Divider()
-                                    Button("上移") {
-                                        let service = mutationService
-                                        service.moveNode(id: node.id, direction: .up, inGroup: group.id, in: &viewModel.config)
-                                        viewModel.scheduleApply()
-                                    }
-                                    Button("下移") {
-                                        let service = mutationService
-                                        service.moveNode(id: node.id, direction: .down, inGroup: group.id, in: &viewModel.config)
-                                        viewModel.scheduleApply()
-                                    }
+                                }
+                                .draggable(node.id.uuidString)
+                                .dropDestination(for: String.self) { items, _ in
+                                    guard let draggedIDString = items.first,
+                                          let draggedID = UUID(uuidString: draggedIDString) else { return false }
+                                    return reorderNode(draggedID: draggedID, targetID: node.id, inGroup: group.id)
                                 }
                             }
 
-                            Button("添加节点") {
+                            AddNodeButton {
                                 selectedGroupForNewNode = group.id
                                 newNodeName = ""
                                 showAddNodeDialog = true
                             }
-                            .buttonStyle(.plain)
-                            .foregroundStyle(.secondary)
                         }
+                    }
+                    .onMove { source, destination in
+                        moveGroups(from: source, to: destination)
                     }
                 }
                 .listStyle(.sidebar)
@@ -130,7 +116,14 @@ struct EditorView: View {
         } detail: {
             // 右侧：hosts 文本编辑
             if let nodeID = selectedNodeID {
-                VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // 标题
+                    Text("编辑器")
+                        .font(.title2.bold())
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        .padding(.bottom, 8)
+
                     // 工具栏
                     HStack {
                         TextField("节点名称", text: $editingName)
@@ -142,14 +135,17 @@ struct EditorView: View {
                         Button("应用") {
                             saveCurrentNode()
                         }
+                        .buttonStyle(.bordered)
                         .keyboardShortcut(.return, modifiers: .command)
 
                         Button("撤销") {
                             loadNodeContent(id: nodeID)
                         }
+                        .buttonStyle(.bordered)
                         .keyboardShortcut("z", modifiers: .command)
                     }
-                    .padding()
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
 
                     Divider()
 
@@ -316,6 +312,26 @@ struct EditorView: View {
 
         viewModel.scheduleApply()
     }
+
+    private func moveGroups(from source: IndexSet, to destination: Int) {
+        viewModel.config.groups.move(fromOffsets: source, toOffset: destination)
+        viewModel.scheduleApply()
+    }
+
+    @discardableResult
+    private func reorderNode(draggedID: UUID, targetID: UUID, inGroup groupID: UUID) -> Bool {
+        guard draggedID != targetID else { return false }
+        guard let groupIndex = viewModel.config.groups.firstIndex(where: { $0.id == groupID }) else { return false }
+        let nodes = viewModel.config.groups[groupIndex].nodes
+        guard let fromIndex = nodes.firstIndex(where: { $0.id == draggedID }),
+              let toIndex = nodes.firstIndex(where: { $0.id == targetID }) else { return false }
+        viewModel.config.groups[groupIndex].nodes.move(
+            fromOffsets: IndexSet(integer: fromIndex),
+            toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex
+        )
+        viewModel.scheduleApply()
+        return true
+    }
 }
 
 // MARK: - Subviews
@@ -331,17 +347,19 @@ private struct NodeRow: View {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isActive ? .green : .secondary)
             Text(name)
+
+            Spacer()
+
             if isDefault {
                 Text("默认")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
                     .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(3)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background {
@@ -359,8 +377,6 @@ private struct GroupHeader: View {
     let onRename: (String) -> Void
     let onToggleSingleSelect: () -> Void
     let onDelete: () -> Void
-    let onMoveUp: () -> Void
-    let onMoveDown: () -> Void
 
     @State private var isRenaming = false
     @State private var renameText: String = ""
@@ -394,16 +410,17 @@ private struct GroupHeader: View {
                     onToggleSingleSelect()
                 }
                 Divider()
-                Button("上移") { onMoveUp() }
-                Button("下移") { onMoveDown() }
-                Divider()
                 Button("删除分组", role: .destructive) {
                     onDelete()
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
         }
     }
 }
@@ -411,25 +428,68 @@ private struct GroupHeader: View {
 private struct SidebarAddGroupButton: View {
     let action: () -> Void
 
+    @State private var isHovering = false
+
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 14) {
+            HStack(spacing: 8) {
                 Image(systemName: "plus")
-                    .font(.system(size: 19, weight: .medium))
-                    .frame(width: 22)
+                    .font(.system(size: 13, weight: .medium))
 
-                Text("New Group")
-                    .font(.system(size: 15, weight: .semibold))
+                Text("新建分组")
+                    .font(.system(size: 13))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .foregroundStyle(.primary)
+        .foregroundStyle(isHovering ? .primary : .secondary)
         .background(Color(NSColor.controlBackgroundColor))
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
         .help("新建分组")
+    }
+}
+
+private struct AddNodeButton: View {
+    let action: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                    .font(.system(size: 10, weight: .semibold))
+                Text("添加节点")
+                    .font(.system(size: 12))
+            }
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .foregroundStyle(Color.secondary.opacity(isHovering ? 0.5 : 0.25))
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.accentColor.opacity(isHovering ? 0.06 : 0))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovering = hovering
+            }
+        }
+        .help("在此分组中添加新节点")
     }
 }
 
@@ -521,7 +581,9 @@ private struct FocusedNameTextField: NSViewRepresentable {
             textField.placeholderString = placeholder
         }
 
-        if textField.stringValue != text {
+        // 输入法正在组合（如拼音输入中），不要强制同步 stringValue，否则会打断 IME
+        let hasMarkedText = (textField.currentEditor() as? NSTextView)?.hasMarkedText() ?? false
+        if !hasMarkedText, textField.stringValue != text {
             textField.stringValue = text
         }
 
@@ -541,6 +603,11 @@ private struct FocusedNameTextField: NSViewRepresentable {
 
         func controlTextDidChange(_ notification: Notification) {
             guard let textField = notification.object as? NSTextField else { return }
+            // 输入法正在组合字符时（如中文拼音），跳过更新 binding，
+            // 避免触发 SwiftUI 重建导致 updateNSView 打断 IME 状态
+            if let editor = textField.currentEditor() as? NSTextView, editor.hasMarkedText() {
+                return
+            }
             text.wrappedValue = textField.stringValue
         }
 
@@ -554,7 +621,8 @@ private struct FocusedNameTextField: NSViewRepresentable {
             didRequestFocus = true
 
             Task { @MainActor in
-                for delay in [0, 10, 50, 100, 200] {
+                // 菜单栏应用延迟稍长，多试几次
+                for delay in [0, 10, 50, 100, 200, 400] {
                     if delay > 0 {
                         try? await Task.sleep(for: .milliseconds(delay))
                     }
@@ -568,8 +636,16 @@ private struct FocusedNameTextField: NSViewRepresentable {
         private func focusNow(_ textField: NSTextField) -> Bool {
             guard let window = textField.window else { return false }
             guard textField.currentEditor() == nil else { return true }
-            NSApplication.shared.activate(ignoringOtherApps: true)
+
+            // 菜单栏应用默认 activation policy 是 .accessory，
+            // 必须临时切到 .regular 才能可靠获取键盘焦点
+            let app = NSApplication.shared
+            if app.activationPolicy() != .regular {
+                app.setActivationPolicy(.regular)
+            }
+            app.activate(ignoringOtherApps: true)
             window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
             window.makeFirstResponder(textField)
             textField.selectText(nil)
             return textField.currentEditor() != nil
