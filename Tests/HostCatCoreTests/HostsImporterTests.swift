@@ -36,6 +36,24 @@ final class HostsImporterTests: XCTestCase {
         XCTAssertFalse(result.encodingIssue)
     }
 
+    func testCompleteBlockProvidesSafeDefaultContentPreservingManagedRecords() {
+        let content = """
+        127.0.0.1 localhost
+        # --- HostCat Begin (v1) ---
+        # 默认
+        10.0.0.1 api.test
+        # --- HostCat End ---
+        """
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost")
+        XCTAssertTrue(result.safeDefaultNodeContent.contains("127.0.0.1 localhost"))
+        XCTAssertTrue(result.safeDefaultNodeContent.contains("10.0.0.1 api.test"))
+        XCTAssertFalse(result.safeDefaultNodeContent.contains("# --- HostCat Begin (v1) ---"))
+        XCTAssertFalse(result.safeDefaultNodeContent.contains("# --- HostCat End ---"))
+    }
+
     func testMissingBeginMarkerReturnsInvalidBlock() {
         let content = "127.0.0.1 localhost\n# --- HostCat End ---\n"
 

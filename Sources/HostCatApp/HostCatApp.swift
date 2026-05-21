@@ -49,12 +49,12 @@ struct HostCatApplication: App {
 
         do {
             return try store.load(
-                defaultHosts: importResult.defaultNodeContent,
+                defaultHosts: importResult.safeDefaultNodeContent,
                 currentHostsHash: importResult.currentHostsHash
             ).config
         } catch {
             return AppConfig.initial(
-                defaultHosts: importResult.defaultNodeContent,
+                defaultHosts: importResult.safeDefaultNodeContent,
                 currentHostsHash: importResult.currentHostsHash
             )
         }

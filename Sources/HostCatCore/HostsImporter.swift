@@ -7,6 +7,7 @@ public enum HostsBlockVersion: Equatable, Sendable {
 
 public struct HostsImportResult: Equatable, Sendable {
     public var defaultNodeContent: String
+    public var safeDefaultNodeContent: String
     public var decodedContent: String
     public var currentHostsHash: String
     public var hasHostCatBlock: Bool
@@ -16,6 +17,7 @@ public struct HostsImportResult: Equatable, Sendable {
 
     public init(
         defaultNodeContent: String,
+        safeDefaultNodeContent: String? = nil,
         decodedContent: String,
         currentHostsHash: String,
         hasHostCatBlock: Bool,
@@ -24,6 +26,7 @@ public struct HostsImportResult: Equatable, Sendable {
         encodingIssue: Bool = false
     ) {
         self.defaultNodeContent = defaultNodeContent
+        self.safeDefaultNodeContent = safeDefaultNodeContent ?? defaultNodeContent
         self.decodedContent = decodedContent
         self.currentHostsHash = currentHostsHash
         self.hasHostCatBlock = hasHostCatBlock
@@ -53,6 +56,7 @@ public struct HostsImporter: Sendable {
         ) -> HostsImportResult {
             HostsImportResult(
                 defaultNodeContent: defaultNodeContent,
+                safeDefaultNodeContent: hasHostCatBlock ? stripHostCatMarkers(from: content) : nil,
                 decodedContent: content,
                 currentHostsHash: currentHostsHash,
                 hasHostCatBlock: hasHostCatBlock,
@@ -178,6 +182,21 @@ public struct HostsImporter: Sendable {
             }
         }
         return nil
+    }
+
+    private func stripHostCatMarkers(from content: String) -> String {
+        content
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                let isBeginMarker = trimmed.hasPrefix(Self.beginMarkerPrefix)
+                    && trimmed.hasSuffix(Self.beginMarkerSuffix)
+                let isEndMarker = trimmed == Self.endMarker
+                return !isBeginMarker && !isEndMarker
+            }
+            .map(String.init)
+            .joined(separator: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func extractOutsideBlock(lines: [Substring], beginIndex: Int?, endIndex: Int?) -> String {
