@@ -33,6 +33,9 @@ let package = Package(
                 "HostCatCore",
                 "HostCatHelperClient"
             ],
+            resources: [
+                .process("Resources")
+            ],
             swiftSettings: strictConcurrency
         ),
         .executableTarget(
