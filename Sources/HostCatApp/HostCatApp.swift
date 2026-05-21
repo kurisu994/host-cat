@@ -21,11 +21,13 @@ struct HostCatApplication: App {
 
         Window("编辑器", id: "editor") {
             EditorView(viewModel: viewModel)
+                .background(WindowFocusView(title: "编辑器"))
         }
         .defaultSize(width: 900, height: 600)
 
         Window("合成预览", id: "preview") {
             MergedPreviewView(viewModel: viewModel)
+                .background(WindowFocusView(title: "合成预览"))
         }
         .defaultSize(width: 700, height: 500)
 
@@ -109,11 +111,12 @@ private struct MenuBarContentView: View {
 
         // 操作菜单
         Button("查看合成 Hosts") {
-            openWindow(id: "preview")
+            viewModel.updateMergedPreview()
+            openAppWindow(id: "preview", title: "合成预览")
         }
 
         Button("打开编辑器") {
-            openWindow(id: "editor")
+            openAppWindow(id: "editor", title: "编辑器")
         }
 
         if viewModel.isApplying {
@@ -133,6 +136,78 @@ private struct MenuBarContentView: View {
         Button("退出") {
             NSApplication.shared.terminate(nil)
         }
+    }
+
+    private func openAppWindow(id: String, title: String) {
+        openWindow(id: id)
+        WindowFocus.focusSoon(title: title)
+    }
+}
+
+private struct WindowFocusView: NSViewRepresentable {
+    let title: String
+
+    func makeNSView(context _: Context) -> NSView {
+        FocusHostingView(title: title)
+    }
+
+    func updateNSView(_ nsView: NSView, context _: Context) {
+        guard let view = nsView as? FocusHostingView else { return }
+        view.title = title
+    }
+
+    private final class FocusHostingView: NSView {
+        var title: String
+        private var focusedWindowID: ObjectIdentifier?
+
+        init(title: String) {
+            self.title = title
+            super.init(frame: .zero)
+        }
+
+        @available(*, unavailable)
+        required init?(coder _: NSCoder) {
+            nil
+        }
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            focusWindowIfAvailable()
+        }
+
+        func focusWindowIfAvailable() {
+            guard let window else { return }
+            let windowID = ObjectIdentifier(window)
+            guard focusedWindowID != windowID else { return }
+            focusedWindowID = windowID
+            WindowFocus.focus(window: window)
+        }
+    }
+}
+
+@MainActor
+private enum WindowFocus {
+    static func focusSoon(title: String) {
+        focus(title: title)
+        Task { @MainActor in
+            focus(title: title)
+        }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
+            focus(title: title)
+        }
+    }
+
+    static func focus(title: String) {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        guard let window = NSApplication.shared.windows.first(where: { $0.title == title }) else { return }
+        focus(window: window)
+    }
+
+    static func focus(window: NSWindow) {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 }
 
