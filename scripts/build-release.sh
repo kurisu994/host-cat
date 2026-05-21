@@ -38,13 +38,19 @@ xcodebuild archive \
     -archivePath "$ARCHIVE_PATH" \
     -quiet
 
-# 4. 导出 (Export)
+# 4. 导出 (Export) 或提取 App
 echo "📤 导出 App..."
-xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE_PATH" \
-    -exportOptionsPlist scripts/ExportOptions.plist \
-    -exportPath "$EXPORT_PATH" \
-    -quiet
+if [ -z "$DEVELOPER_ID_APPLICATION" ]; then
+    echo "⚠️ 缺少证书，跳过标准 exportArchive，直接从 archive 中提取 app"
+    mkdir -p "$EXPORT_PATH"
+    cp -a "${ARCHIVE_PATH}/Products/Applications/${APP_NAME}.app" "${EXPORT_PATH}/"
+else
+    xcodebuild -exportArchive \
+        -archivePath "$ARCHIVE_PATH" \
+        -exportOptionsPlist scripts/ExportOptions.plist \
+        -exportPath "$EXPORT_PATH" \
+        -quiet
+fi
 
 # 5. 打包 DMG (使用 hdiutil)
 echo "💿 创建 DMG..."
