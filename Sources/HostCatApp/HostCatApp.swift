@@ -34,6 +34,7 @@ struct HostCatApplication: App {
 
         Window("编辑器", id: "editor") {
             EditorView(viewModel: viewModel)
+                .externalModificationAlert(viewModel: viewModel)
                 .background(WindowFocusView(title: "编辑器"))
         }
         .defaultSize(width: 900, height: 600)
@@ -43,6 +44,16 @@ struct HostCatApplication: App {
                 .background(WindowFocusView(title: "合成预览"))
         }
         .defaultSize(width: 700, height: 500)
+
+        Window("Helper 设置", id: "helper-setup") {
+            HelperSetupView(registrationManager: registrationManager)
+        }
+        .defaultSize(width: 400, height: 350)
+
+        Window("备份管理", id: "backup") {
+            BackupRestoreView(viewModel: viewModel)
+        }
+        .defaultSize(width: 700, height: 450)
 
         Settings {
             SettingsView(

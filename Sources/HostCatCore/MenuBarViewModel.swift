@@ -172,6 +172,14 @@ public final class MenuBarViewModel: ObservableObject {
         return result
     }
 
+    /// 强制写入，跳过 hash 校验（用于用户确认覆盖外部修改后）
+    public func forceApply() {
+        // 清除 lastAppliedHostsHash 让 coordinator 不做 hash 校验
+        config.state.lastAppliedHostsHash = nil
+        config.state.lastExternalHostsHash = nil
+        scheduleApply()
+    }
+
     private func handleApplyCompletion(
         result: ApplyResult,
         rolledBackConfig: AppConfig?,

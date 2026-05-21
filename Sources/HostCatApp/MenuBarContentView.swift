@@ -45,14 +45,24 @@ struct MenuBarContentView: View {
             openAppWindow(id: "editor", title: "编辑器")
         }
 
+        Divider()
+
+        Button("备份管理") {
+            openAppWindow(id: "backup", title: "备份管理")
+        }
+
+        Button("Helper 设置") {
+            openAppWindow(id: "helper-setup", title: "Helper 设置")
+        }
+
         if viewModel.isApplying {
-            Text("正在应用...")
+            Label("正在应用...", systemImage: "arrow.triangle.2.circlepath")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
 
         if let error = viewModel.applyError {
-            Text(error)
+            Label(error, systemImage: "exclamationmark.triangle")
                 .font(.caption)
                 .foregroundStyle(.red)
         }
