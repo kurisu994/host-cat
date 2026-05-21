@@ -10,6 +10,8 @@ struct EditorView: View {
     @State private var editingName: String = ""
     @State private var showDeleteConfirmation = false
     @State private var nodeToDelete: (groupID: UUID, nodeID: UUID)?
+    @State private var showDeleteGroupConfirmation = false
+    @State private var groupToDelete: UUID?
     @State private var showAddGroupDialog = false
     @State private var newGroupName: String = ""
     @State private var showAddNodeDialog = false
@@ -45,7 +47,6 @@ struct EditorView: View {
                     ForEach(viewModel.config.groups) { group in
                         Section(header: GroupHeader(
                             name: group.name,
-                            isSingleSelect: group.isSingleSelect,
                             isCollapsed: collapsedGroupIDs.contains(group.id),
                             onToggleCollapse: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -61,15 +62,9 @@ struct EditorView: View {
                                 service.renameGroup(id: group.id, to: newName, in: &viewModel.config)
                                 viewModel.scheduleApply()
                             },
-                            onToggleSingleSelect: {
-                                let service = mutationService
-                                service.setGroupSingleSelect(!group.isSingleSelect, forGroup: group.id, in: &viewModel.config)
-                                viewModel.scheduleApply()
-                            },
                             onDelete: {
-                                let service = mutationService
-                                service.removeGroup(id: group.id, from: &viewModel.config)
-                                viewModel.scheduleApply()
+                                groupToDelete = group.id
+                                showDeleteGroupConfirmation = true
                             }
                         )) {
                             if !collapsedGroupIDs.contains(group.id) {
@@ -84,12 +79,12 @@ struct EditorView: View {
                                     .onTapGesture {
                                         selectedNodeID = node.id
                                     }
+                                    .onTapGesture(count: 2) {
+                                        editingNodeToRename = (group.id, node.id)
+                                        renameNodeNewName = node.name
+                                        showRenameNodeDialog = true
+                                    }
                                     .contextMenu {
-                                        Button("重命名") {
-                                            editingNodeToRename = (group.id, node.id)
-                                            renameNodeNewName = node.name
-                                            showRenameNodeDialog = true
-                                        }
                                         Button("删除") {
                                             nodeToDelete = (group.id, node.id)
                                             showDeleteConfirmation = true
@@ -204,7 +199,7 @@ struct EditorView: View {
                 ContentUnavailableView("选择一个节点", systemImage: "doc.text")
             }
         }
-        .alert("确认删除", isPresented: $showDeleteConfirmation) {
+        .alert("确认删除节点", isPresented: $showDeleteConfirmation) {
             Button("删除", role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
                     let service = mutationService
@@ -218,6 +213,21 @@ struct EditorView: View {
             }
         } message: {
             Text("删除后无法恢复，是否继续？")
+        }
+        .alert("确认删除分组", isPresented: $showDeleteGroupConfirmation) {
+            Button("删除", role: .destructive) {
+                if let groupID = groupToDelete {
+                    let service = mutationService
+                    service.removeGroup(id: groupID, from: &viewModel.config)
+                    viewModel.scheduleApply()
+                }
+                groupToDelete = nil
+            }
+            Button("取消", role: .cancel) {
+                groupToDelete = nil
+            }
+        } message: {
+            Text("删除分组将同时删除其下所有节点，是否继续？")
         }
         .frame(minWidth: 700, minHeight: 500)
         .overlay {
@@ -389,15 +399,15 @@ private struct NodeRow: View {
 
 private struct GroupHeader: View {
     let name: String
-    let isSingleSelect: Bool
     let isCollapsed: Bool
     let onToggleCollapse: () -> Void
     let onRename: (String) -> Void
-    let onToggleSingleSelect: () -> Void
     let onDelete: () -> Void
 
     @State private var isRenaming = false
     @State private var renameText: String = ""
+    @State private var isHovering = false
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         HStack {
@@ -414,41 +424,52 @@ private struct GroupHeader: View {
             if isRenaming {
                 TextField("分组名称", text: $renameText)
                     .textFieldStyle(.roundedBorder)
+                    .focused($isTextFieldFocused)
                     .onSubmit {
-                        onRename(renameText)
+                        if !renameText.isEmpty {
+                            onRename(renameText)
+                        }
+                        isRenaming = false
+                    }
+                    .onExitCommand {
                         isRenaming = false
                     }
             } else {
                 Text(name)
                     .font(.headline)
-                Image(systemName: isSingleSelect ? "1.circle" : "infinity")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .help(isSingleSelect ? "单选组" : "多选组")
+                    .onTapGesture(count: 2) {
+                        renameText = name
+                        isRenaming = true
+                        // 菜单栏应用需要激活窗口才能接收键盘输入
+                        DispatchQueue.main.async {
+                            let app = NSApplication.shared
+                            if app.activationPolicy() != .regular {
+                                app.setActivationPolicy(.regular)
+                            }
+                            app.activate(ignoringOtherApps: true)
+                            app.keyWindow?.makeKeyAndOrderFront(nil)
+                            isTextFieldFocused = true
+                        }
+                    }
             }
 
             Spacer()
 
-            Menu {
-                Button("重命名") {
-                    renameText = name
-                    isRenaming = true
-                }
-                Button(isSingleSelect ? "切换为多选" : "切换为单选") {
-                    onToggleSingleSelect()
-                }
-                Divider()
-                Button("删除分组", role: .destructive) {
+            // 删除按钮（hover 且非编辑时显示）
+            if isHovering && !isRenaming {
+                Button {
                     onDelete()
+                } label: {
+                    Image(systemName: "xmark.circle")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
                 }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .help("删除分组")
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
+        }
+        .onHover { hovering in
+            isHovering = hovering
         }
     }
 }

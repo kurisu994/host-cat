@@ -20,7 +20,7 @@ public struct ConfigMutationService: Sendable {
     // MARK: - Group Operations
 
     public func addGroup(named name: String, to config: inout AppConfig) {
-        let group = HostGroup(name: name, isSingleSelect: true, nodes: [])
+        let group = HostGroup(name: name, isSingleSelect: false, nodes: [])
         config.groups.append(group)
         logger.info("添加分组: \(name)")
     }
@@ -252,22 +252,8 @@ public struct ConfigMutationService: Sendable {
             return .notFound
         }
 
-        let isSingleSelect = config.groups[groupIndex].isSingleSelect
-
-        if isSingleSelect {
-            if active {
-                // 单选组：激活一个时自动关闭同组其他节点
-                for i in config.groups[groupIndex].nodes.indices {
-                    config.groups[groupIndex].nodes[i].isActive = (i == nodeIndex)
-                }
-            } else {
-                // 单选组：允许停用当前激活的节点
-                config.groups[groupIndex].nodes[nodeIndex].isActive = false
-            }
-        } else {
-            // 多选组：直接设置目标节点状态
-            config.groups[groupIndex].nodes[nodeIndex].isActive = active
-        }
+        // 多选模式：直接设置目标节点状态
+        config.groups[groupIndex].nodes[nodeIndex].isActive = active
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
         logger.info("节点 \(nodeName) 状态设为 \(active)")
         return .success

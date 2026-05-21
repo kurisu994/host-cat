@@ -41,7 +41,7 @@ public struct HostGroup: Codable, Equatable, Identifiable, Sendable {
     public init(
         id: UUID = UUID(),
         name: String,
-        isSingleSelect: Bool = true,
+        isSingleSelect: Bool = false,
         nodes: [HostNode] = []
     ) {
         self.id = id

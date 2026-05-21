@@ -20,7 +20,7 @@ final class ConfigMutationServiceTests: XCTestCase {
 
     private func makeGroup(
         name: String,
-        isSingleSelect: Bool = true,
+        isSingleSelect: Bool = false,
         nodes: [HostNode] = []
     ) -> HostGroup {
         HostGroup(name: name, isSingleSelect: isSingleSelect, nodes: nodes)
@@ -40,7 +40,7 @@ final class ConfigMutationServiceTests: XCTestCase {
 
         XCTAssertEqual(config.groups.count, 1)
         XCTAssertEqual(config.groups[0].name, "开发环境")
-        XCTAssertTrue(config.groups[0].isSingleSelect)
+        XCTAssertFalse(config.groups[0].isSingleSelect)
         XCTAssertTrue(config.groups[0].nodes.isEmpty)
     }
 
@@ -216,25 +216,26 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertEqual(config.defaultNode.name, "系统默认")
     }
 
-    // MARK: - Single Select Behavior
+    // MARK: - Node Activation (Multi-Select)
 
-    func testSingleSelectGroupActivatesOneNode() {
+    func testMultiSelectActivatesIndependently() {
         let n1 = makeNode(name: "N1", isActive: true)
         let n2 = makeNode(name: "N2", isActive: false)
-        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true, nodes: [n1, n2])])
+        var config = makeConfig(groups: [makeGroup(name: "G", nodes: [n1, n2])])
         let service = ConfigMutationService()
         let groupID = config.groups[0].id
 
         service.setNodeActive(id: n2.id, active: true, inGroup: groupID, in: &config)
 
-        XCTAssertFalse(config.groups[0].nodes[0].isActive)
+        // 多选模式：激活 N2 不影响 N1
+        XCTAssertTrue(config.groups[0].nodes[0].isActive)
         XCTAssertTrue(config.groups[0].nodes[1].isActive)
     }
 
-    func testMultiSelectGroupAllowsMultipleActive() {
+    func testMultiSelectAllowsMultipleActive() {
         let n1 = makeNode(name: "N1", isActive: true)
         let n2 = makeNode(name: "N2", isActive: false)
-        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: false, nodes: [n1, n2])])
+        var config = makeConfig(groups: [makeGroup(name: "G", nodes: [n1, n2])])
         let service = ConfigMutationService()
         let groupID = config.groups[0].id
 
@@ -244,9 +245,9 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertTrue(config.groups[0].nodes[1].isActive)
     }
 
-    func testSingleSelectGroupDeactivatesAllWhenTurnedOff() {
+    func testDeactivateNode() {
         let n1 = makeNode(name: "N1", isActive: true)
-        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true, nodes: [n1])])
+        var config = makeConfig(groups: [makeGroup(name: "G", nodes: [n1])])
         let service = ConfigMutationService()
         let groupID = config.groups[0].id
 
@@ -255,20 +256,21 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertFalse(config.groups[0].nodes[0].isActive)
     }
 
-    func testSingleSelectGroupActivationDoesNotAffectOtherGroups() {
+    func testActivationDoesNotAffectOtherGroups() {
         let n1a = makeNode(name: "N1A", isActive: true)
         let n1b = makeNode(name: "N1B", isActive: false)
         let n2a = makeNode(name: "N2A", isActive: false)
         var config = makeConfig(groups: [
-            makeGroup(name: "G1", isSingleSelect: true, nodes: [n1a, n1b]),
-            makeGroup(name: "G2", isSingleSelect: true, nodes: [n2a])
+            makeGroup(name: "G1", nodes: [n1a, n1b]),
+            makeGroup(name: "G2", nodes: [n2a])
         ])
         let service = ConfigMutationService()
         let group1ID = config.groups[0].id
 
         service.setNodeActive(id: n1b.id, active: true, inGroup: group1ID, in: &config)
 
-        XCTAssertFalse(config.groups[0].nodes[0].isActive)
+        // 多选模式：两个都激活，不影响其他分组
+        XCTAssertTrue(config.groups[0].nodes[0].isActive)
         XCTAssertTrue(config.groups[0].nodes[1].isActive)
         XCTAssertFalse(config.groups[1].nodes[0].isActive)
     }
