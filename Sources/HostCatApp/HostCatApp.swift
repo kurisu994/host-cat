@@ -44,23 +44,30 @@ struct HostCatApplication: App {
     """
 
     private static func loadInitialConfig() -> AppConfig {
-        let importedHosts = readImportedDefaultHosts()
+        let importResult = readImportedDefaultHosts()
         let store = AppConfigStore()
 
         do {
-            return try store.load(defaultHosts: importedHosts).config
+            return try store.load(
+                defaultHosts: importResult.defaultNodeContent,
+                currentHostsHash: importResult.currentHostsHash
+            ).config
         } catch {
-            return AppConfig.initial(defaultHosts: importedHosts)
+            return AppConfig.initial(
+                defaultHosts: importResult.defaultNodeContent,
+                currentHostsHash: importResult.currentHostsHash
+            )
         }
     }
 
-    private static func readImportedDefaultHosts() -> String {
+    private static func readImportedDefaultHosts() -> HostsImportResult {
+        let importer = HostsImporter()
         let hostsURL = URL(fileURLWithPath: "/etc/hosts")
         guard let data = try? Data(contentsOf: hostsURL) else {
-            return defaultHosts
+            return importer.importHosts(defaultHosts)
         }
 
-        return HostsImporter().importHostsWithFallback(data: data).defaultNodeContent
+        return importer.importHostsWithFallback(data: data)
     }
 }
 

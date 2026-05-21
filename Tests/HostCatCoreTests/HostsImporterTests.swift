@@ -2,6 +2,15 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsImporterTests: XCTestCase {
+    func testImportResultIncludesDecodedContentAndCurrentHash() {
+        let content = "127.0.0.1 localhost\n::1 localhost\n"
+
+        let result = HostsImporter().importHosts(content)
+
+        XCTAssertEqual(result.decodedContent, content)
+        XCTAssertEqual(result.currentHostsHash, HostsHash.sha256Hex(content))
+    }
+
     func testNoHostCatBlockReturnsAllContentAsDefault() {
         let content = "127.0.0.1 localhost\n::1 localhost\n"
         let result = HostsImporter().importHosts(content)

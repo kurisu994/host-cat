@@ -2,6 +2,15 @@ import XCTest
 @testable import HostCatCore
 
 final class AppConfigTests: XCTestCase {
+    func testInitialConfigStoresExternalHostsHashWhenProvided() {
+        let hash = HostsHash.sha256Hex("127.0.0.1 localhost\n")
+
+        let config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n", currentHostsHash: hash)
+
+        XCTAssertNil(config.state.lastAppliedHostsHash)
+        XCTAssertEqual(config.state.lastExternalHostsHash, hash)
+    }
+
     func testInitialConfigStoresDefaultNodeAndStateMetadata() {
         let config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
 

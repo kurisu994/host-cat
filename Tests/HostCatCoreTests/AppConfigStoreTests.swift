@@ -27,6 +27,19 @@ final class AppConfigStoreTests: XCTestCase {
         XCTAssertEqual(try decodeConfig(at: configURL), result.config)
     }
 
+    func testLoadCreatesDefaultConfigWithExternalHostsHashWhenFileIsMissing() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        let store = AppConfigStore(configURL: configURL)
+
+        let result = try store.load(defaultHosts: "127.0.0.1 localhost\n", currentHostsHash: "current_hash")
+
+        XCTAssertEqual(result.status, .createdDefault)
+        XCTAssertEqual(result.config.state.lastExternalHostsHash, "current_hash")
+    }
+
     func testSaveAndLoadRoundTripExistingConfig() throws {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -57,6 +70,41 @@ final class AppConfigStoreTests: XCTestCase {
 
         XCTAssertEqual(result.status, .loadedExisting)
         XCTAssertEqual(result.config, config)
+    }
+
+    func testLoadBackfillsExternalHostsHashForExistingConfigWithoutHashes() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        let original = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        try JSONEncoder.hostCatConfigEncoder.encode(original).write(to: configURL)
+
+        let result = try AppConfigStore(configURL: configURL).load(
+            defaultHosts: "fallback\n",
+            currentHostsHash: "current_hash"
+        )
+
+        XCTAssertEqual(result.status, .loadedExisting)
+        XCTAssertEqual(result.config.state.lastExternalHostsHash, "current_hash")
+    }
+
+    func testLoadDoesNotBackfillExternalHashWhenAppliedHashExists() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        var original = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        original.state.lastAppliedHostsHash = "applied_hash"
+        try JSONEncoder.hostCatConfigEncoder.encode(original).write(to: configURL)
+
+        let result = try AppConfigStore(configURL: configURL).load(
+            defaultHosts: "fallback\n",
+            currentHostsHash: "current_hash"
+        )
+
+        XCTAssertEqual(result.config.state.lastAppliedHostsHash, "applied_hash")
+        XCTAssertNil(result.config.state.lastExternalHostsHash)
     }
 
     func testCorruptJSONRecoversDefaultConfigAndReportsDisplayableReason() throws {

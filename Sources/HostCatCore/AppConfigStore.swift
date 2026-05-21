@@ -61,9 +61,9 @@ public struct AppConfigStore: Sendable {
             .appendingPathComponent("config.json", isDirectory: false)
     }
 
-    public func load(defaultHosts: String) throws -> AppConfigLoadResult {
+    public func load(defaultHosts: String, currentHostsHash: String? = nil) throws -> AppConfigLoadResult {
         guard FileManager.default.fileExists(atPath: configURL.path) else {
-            let config = AppConfig.initial(defaultHosts: defaultHosts)
+            let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
             try save(config)
             return AppConfigLoadResult(config: config, status: .createdDefault)
         }
@@ -73,14 +73,27 @@ public struct AppConfigStore: Sendable {
         do {
             decodedConfig = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: data)
         } catch {
-            return try recoverDefault(defaultHosts: defaultHosts, reason: .invalidJSON)
+            return try recoverDefault(
+                defaultHosts: defaultHosts,
+                currentHostsHash: currentHostsHash,
+                reason: .invalidJSON
+            )
         }
 
         guard decodedConfig.configVersion == Self.currentConfigVersion else {
             return try recoverDefault(
                 defaultHosts: defaultHosts,
+                currentHostsHash: currentHostsHash,
                 reason: .unsupportedVersion(decodedConfig.configVersion)
             )
+        }
+
+        if let currentHostsHash,
+           decodedConfig.state.lastAppliedHostsHash == nil,
+           decodedConfig.state.lastExternalHostsHash == nil {
+            var backfilledConfig = decodedConfig
+            backfilledConfig.state.lastExternalHostsHash = currentHostsHash
+            return AppConfigLoadResult(config: backfilledConfig, status: .loadedExisting)
         }
 
         return AppConfigLoadResult(config: decodedConfig, status: .loadedExisting)
@@ -118,9 +131,10 @@ public struct AppConfigStore: Sendable {
 
     private func recoverDefault(
         defaultHosts: String,
+        currentHostsHash: String?,
         reason: AppConfigRecoveryReason
     ) throws -> AppConfigLoadResult {
-        let config = AppConfig.initial(defaultHosts: defaultHosts)
+        let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
         try save(config)
         return AppConfigLoadResult(config: config, status: .recoveredDefault(reason))
     }

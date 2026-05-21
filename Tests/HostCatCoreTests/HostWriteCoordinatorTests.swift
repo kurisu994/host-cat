@@ -6,6 +6,7 @@ actor FakeHostHelperClient: HostHelperClient {
     var shouldSucceed: Bool = true
     var simulatedError: Error?
     var writtenContents: [String] = []
+    var expectedHashes: [String?] = []
     var delayNanoseconds: UInt64 = 0
 
     func writeHosts(_ contents: String, expectedCurrentHostsHash: String?) async throws -> HostHelperWriteResult {
@@ -22,6 +23,7 @@ actor FakeHostHelperClient: HostHelperClient {
         }
 
         writtenContents.append(contents)
+        expectedHashes.append(expectedCurrentHostsHash)
         return HostHelperWriteResult(
             finalHostsHash: HostsHash.sha256Hex(contents),
             didRefreshDNS: true
@@ -76,6 +78,19 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
         let writes = await fakeClient.writtenContents
         XCTAssertEqual(writes.count, 1)
+    }
+
+    func testFirstApplyUsesLastExternalHostsHashWhenNoAppliedHashExists() async {
+        let fakeClient = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(1))
+        var config = makeConfig()
+        config.state.lastExternalHostsHash = "external_hash"
+
+        let (result, _) = await coordinator.scheduleApply(config: config)
+
+        XCTAssertTrue(result.success)
+        let hashes = await fakeClient.expectedHashes
+        XCTAssertEqual(hashes, ["external_hash"])
     }
 
     func testWriteFailureDoesNotUpdateStateAndReturnsRolledBackConfig() async {

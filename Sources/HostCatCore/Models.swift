@@ -21,13 +21,13 @@ public struct AppConfig: Codable, Equatable, Sendable {
         self.state = state
     }
 
-    public static func initial(defaultHosts: String) -> AppConfig {
+    public static func initial(defaultHosts: String, currentHostsHash: String? = nil) -> AppConfig {
         AppConfig(
             configVersion: 1,
             defaultNode: HostNode(name: "默认", content: defaultHosts, isActive: true),
             groups: [],
             settings: AppSettings(launchAtLogin: false),
-            state: AppStateMetadata()
+            state: AppStateMetadata(lastExternalHostsHash: currentHostsHash)
         )
     }
 }
@@ -81,7 +81,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
 public struct AppStateMetadata: Codable, Equatable, Sendable {
     public var lastAppliedHostsHash: String?
     public var lastAppliedAt: Date?
-    /// 预留字段：阶段2实现外部 hosts 修改检测时，记录上次导入/确认的外部 hosts hash
+    /// 记录上次导入/确认的外部 hosts hash，用于首次写入时携带预期当前 hash。
     public var lastExternalHostsHash: String?
 
     public init(

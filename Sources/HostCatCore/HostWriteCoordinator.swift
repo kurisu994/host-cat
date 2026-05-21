@@ -185,7 +185,7 @@ public actor HostWriteCoordinator {
         do {
             let result = try await helperClient.writeHosts(
                 merged.text,
-                expectedCurrentHostsHash: config.state.lastAppliedHostsHash
+                expectedCurrentHostsHash: config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
             )
 
             // 3. 写入成功：更新状态

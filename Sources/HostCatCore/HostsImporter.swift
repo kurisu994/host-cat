@@ -7,6 +7,8 @@ public enum HostsBlockVersion: Equatable, Sendable {
 
 public struct HostsImportResult: Equatable, Sendable {
     public var defaultNodeContent: String
+    public var decodedContent: String
+    public var currentHostsHash: String
     public var hasHostCatBlock: Bool
     public var blockVersion: HostsBlockVersion?
     public var isBlockValid: Bool
@@ -14,12 +16,16 @@ public struct HostsImportResult: Equatable, Sendable {
 
     public init(
         defaultNodeContent: String,
+        decodedContent: String,
+        currentHostsHash: String,
         hasHostCatBlock: Bool,
         blockVersion: HostsBlockVersion? = nil,
         isBlockValid: Bool = true,
         encodingIssue: Bool = false
     ) {
         self.defaultNodeContent = defaultNodeContent
+        self.decodedContent = decodedContent
+        self.currentHostsHash = currentHostsHash
         self.hasHostCatBlock = hasHostCatBlock
         self.blockVersion = blockVersion
         self.isBlockValid = isBlockValid
@@ -36,6 +42,25 @@ public struct HostsImporter: Sendable {
 
     public func importHosts(_ content: String) -> HostsImportResult {
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
+        let currentHostsHash = HostsHash.sha256Hex(content)
+
+        func makeResult(
+            defaultNodeContent: String,
+            hasHostCatBlock: Bool,
+            blockVersion: HostsBlockVersion? = nil,
+            isBlockValid: Bool = true,
+            encodingIssue: Bool = false
+        ) -> HostsImportResult {
+            HostsImportResult(
+                defaultNodeContent: defaultNodeContent,
+                decodedContent: content,
+                currentHostsHash: currentHostsHash,
+                hasHostCatBlock: hasHostCatBlock,
+                blockVersion: blockVersion,
+                isBlockValid: isBlockValid,
+                encodingIssue: encodingIssue
+            )
+        }
 
         let beginInfo = findBeginMarker(in: lines)
         let firstEndIndex = findEndMarker(in: lines)
@@ -43,7 +68,7 @@ public struct HostsImporter: Sendable {
         if let begin = beginInfo {
             let endIndex = findEndMarker(in: lines, after: begin.index)
             if let firstEndIndex, firstEndIndex < begin.index, endIndex == nil {
-                return HostsImportResult(
+                return makeResult(
                     defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: firstEndIndex),
                     hasHostCatBlock: true,
                     blockVersion: nil,
@@ -53,7 +78,7 @@ public struct HostsImporter: Sendable {
             }
 
             if endIndex == nil {
-                return HostsImportResult(
+                return makeResult(
                     defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: begin.index, endIndex: nil),
                     hasHostCatBlock: true,
                     blockVersion: begin.version,
@@ -63,7 +88,7 @@ public struct HostsImporter: Sendable {
             }
 
             guard case .v1 = begin.version else {
-                return HostsImportResult(
+                return makeResult(
                     defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: begin.index, endIndex: endIndex),
                     hasHostCatBlock: true,
                     blockVersion: begin.version,
@@ -73,7 +98,7 @@ public struct HostsImporter: Sendable {
             }
 
             let outsideContent = extractOutsideBlock(lines: lines, beginIndex: begin.index, endIndex: endIndex)
-            return HostsImportResult(
+            return makeResult(
                 defaultNodeContent: outsideContent,
                 hasHostCatBlock: true,
                 blockVersion: .v1,
@@ -81,7 +106,7 @@ public struct HostsImporter: Sendable {
                 encodingIssue: false
             )
         } else if let firstEndIndex {
-            return HostsImportResult(
+            return makeResult(
                 defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: firstEndIndex),
                 hasHostCatBlock: true,
                 blockVersion: nil,
@@ -91,7 +116,7 @@ public struct HostsImporter: Sendable {
         }
 
         let defaultContent = content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : content
-        return HostsImportResult(
+        return makeResult(
             defaultNodeContent: defaultContent,
             hasHostCatBlock: false,
             blockVersion: nil,
@@ -113,6 +138,8 @@ public struct HostsImporter: Sendable {
 
         return HostsImportResult(
             defaultNodeContent: "",
+            decodedContent: "",
+            currentHostsHash: HostsHash.sha256Hex(""),
             hasHostCatBlock: false,
             encodingIssue: true
         )
