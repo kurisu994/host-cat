@@ -122,14 +122,17 @@ public final class MenuBarViewModel: ObservableObject {
         lastConflicts = []
 
         Task {
+            guard persistDraftConfig() else {
+                isApplying = false
+                return
+            }
+
             let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config)
 
             isApplying = false
 
-            // 如果写入失败且有回滚配置，恢复内存状态
-            if !result.success, let rolledBack = rolledBackConfig {
-                config = rolledBack
-                logger.warning("写入失败，配置已回滚到上次成功状态")
+            if !result.success, rolledBackConfig != nil {
+                logger.warning("写入失败，保留当前配置草稿，hosts 未应用")
             }
 
             if result.success {
@@ -157,8 +160,8 @@ public final class MenuBarViewModel: ObservableObject {
                 applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
                 logger.warning("合并冲突: \(conflicts.count) 个")
             } else if let errorMessage = result.errorMessage {
-                applyError = errorMessage
-                logger.error("应用失败: \(errorMessage)")
+                applyError = "hosts 未应用: \(errorMessage)"
+                logger.error("应用失败，hosts 未应用: \(errorMessage)")
             }
         }
     }
@@ -168,14 +171,22 @@ public final class MenuBarViewModel: ObservableObject {
         applyError = nil
         lastConflicts = []
 
+        guard persistDraftConfig() else {
+            isApplying = false
+            let message = applyError ?? "配置保存失败"
+            return ApplyResult(
+                success: false,
+                errorMessage: message,
+                status: .writeFailed(message)
+            )
+        }
+
         let (result, rolledBackConfig) = await coordinator.applyImmediately(config: config)
 
         isApplying = false
 
-        // 如果写入失败且有回滚配置，恢复内存状态
-        if !result.success, let rolledBack = rolledBackConfig {
-            config = rolledBack
-            logger.warning("即时应用失败，配置已回滚到上次成功状态")
+        if !result.success, rolledBackConfig != nil {
+            logger.warning("即时应用失败，保留当前配置草稿，hosts 未应用")
         }
 
         if result.success {
@@ -198,11 +209,23 @@ public final class MenuBarViewModel: ObservableObject {
             applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
             logger.warning("即时应用冲突: \(conflicts.count) 个")
         } else if let errorMessage = result.errorMessage {
-            applyError = errorMessage
-            logger.error("即时应用失败: \(errorMessage)")
+            applyError = "hosts 未应用: \(errorMessage)"
+            logger.error("即时应用失败，hosts 未应用: \(errorMessage)")
         }
 
         return result
+    }
+
+    private func persistDraftConfig() -> Bool {
+        do {
+            try configStore.save(config)
+            logger.info("配置草稿持久化成功")
+            return true
+        } catch {
+            logger.error("配置草稿持久化失败: \(error.localizedDescription)")
+            applyError = "配置保存失败: \(error.localizedDescription)"
+            return false
+        }
     }
 
     // MARK: - Preview
