@@ -103,7 +103,7 @@ public struct HostsMerger: Sendable {
                 )
 
                 for hostname in record.hostnames {
-                    let key = hostname.lowercased()
+                    let key = "\(hostname.lowercased())\u{0}\(addressFamily(of: record.ipAddress))"
                     if let existing = firstSeen[key], existing.ipAddress != incoming.ipAddress {
                         conflicts.append(
                             HostConflict(hostname: hostname, existing: existing, incoming: incoming)
@@ -130,12 +130,12 @@ public struct HostsMerger: Sendable {
         for context in contexts {
             lines.append(Self.sectionSeparator)
             if let groupName = context.groupName {
-                lines.append("# [\(groupName)]")
+                lines.append("# [\(sanitizeCommentText(groupName))]")
                 lines.append("")
                 lines.append(Self.subsectionSeparator)
-                lines.append("# \(context.nodeName)")
+                lines.append("# \(sanitizeCommentText(context.nodeName))")
             } else {
-                lines.append("# \(context.nodeName)")
+                lines.append("# \(sanitizeCommentText(context.nodeName))")
             }
 
             for record in context.records {
@@ -185,5 +185,18 @@ public struct HostsMerger: Sendable {
         }
 
         return "\(body) # \(comment)"
+    }
+
+    private func addressFamily(of ipAddress: String) -> String {
+        ipAddress.contains(":") ? "ipv6" : "ipv4"
+    }
+
+    private func sanitizeCommentText(_ value: String) -> String {
+        let scalars = value.unicodeScalars.map { scalar in
+            CharacterSet.newlines.contains(scalar) || CharacterSet.controlCharacters.contains(scalar)
+                ? " "
+                : String(scalar)
+        }
+        return scalars.joined().trimmingCharacters(in: .whitespaces)
     }
 }

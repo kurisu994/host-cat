@@ -39,6 +39,12 @@
 - 修复 `EditorView` 中 `ConfigMutationService` 被重复实例化的问题，改为统一使用 `@State` 属性。
 - 为 `HostsParser` 补充制表符分隔、下划线 hostname、纯注释/空内容等边界测试用例。
 - 为 `AppStateMetadata.lastExternalHostsHash` 添加预留注释，说明阶段2外部修改检测用途。
+- 修复 `HostWriteCoordinator` 与 `HostHelperClient` 的 target 边界错误，恢复 `swift build` 和 `swift test` 编译。
+- 修复写入进行中新操作被跳过的问题，现在会等待当前写入结束后继续应用最新批次。
+- 修复 HostCat 管理区块导入的版本解析、反序 marker 和区块外内容保留问题。
+- 修复合并输出中 group/node 名称换行可能注入 hosts 记录的问题。
+- 修复标准 `localhost` IPv4/IPv6 双栈条目被误判为冲突的问题。
+- 修复快速连续备份可能同名覆盖和保留顺序不稳定的问题。
 
 ### Documentation
 

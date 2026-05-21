@@ -71,7 +71,8 @@ public struct ConfigMutationService: Sendable {
             targetIndex = index + 1
         }
         config.groups.swapAt(index, targetIndex)
-        logger.info("分组移动: \(config.groups[targetIndex].name)")
+        let movedGroupName = config.groups[targetIndex].name
+        logger.info("分组移动: \(movedGroupName)")
         return .success
     }
 
@@ -82,7 +83,9 @@ public struct ConfigMutationService: Sendable {
             return .notFound
         }
         config.groups[index].isSingleSelect = isSingleSelect
-        logger.info("分组 \(config.groups[index].name) 切换为 \(isSingleSelect ? "单选" : "多选")")
+        let groupName = config.groups[index].name
+        let modeName = isSingleSelect ? "单选" : "多选"
+        logger.info("分组 \(groupName) 切换为 \(modeName)")
         return .success
     }
 
@@ -101,7 +104,8 @@ public struct ConfigMutationService: Sendable {
         }
         let node = HostNode(name: name, content: content, isActive: false)
         config.groups[index].nodes.append(node)
-        logger.info("添加节点 \(name) 到分组 \(config.groups[index].name)")
+        let groupName = config.groups[index].name
+        logger.info("添加节点 \(name) 到分组 \(groupName)")
         return .success
     }
 
@@ -178,7 +182,8 @@ public struct ConfigMutationService: Sendable {
             targetIndex = nodeIndex + 1
         }
         config.groups[groupIndex].nodes.swapAt(nodeIndex, targetIndex)
-        logger.info("节点移动: \(config.groups[groupIndex].nodes[targetIndex].name)")
+        let movedNodeName = config.groups[groupIndex].nodes[targetIndex].name
+        logger.info("节点移动: \(movedNodeName)")
         return .success
     }
 
@@ -198,7 +203,8 @@ public struct ConfigMutationService: Sendable {
             return .notFound
         }
         config.groups[groupIndex].nodes[nodeIndex].content = content
-        logger.info("更新节点 \(config.groups[groupIndex].nodes[nodeIndex].name) 内容")
+        let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
+        logger.info("更新节点 \(nodeName) 内容")
         return .success
     }
 
@@ -262,7 +268,8 @@ public struct ConfigMutationService: Sendable {
             // 多选组：直接设置目标节点状态
             config.groups[groupIndex].nodes[nodeIndex].isActive = active
         }
-        logger.info("节点 \(config.groups[groupIndex].nodes[nodeIndex].name) 状态设为 \(active)")
+        let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
+        logger.info("节点 \(nodeName) 状态设为 \(active)")
         return .success
     }
 }

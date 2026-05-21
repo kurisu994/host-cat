@@ -8,7 +8,7 @@ struct HostCatApplication: App {
     @StateObject private var viewModel: MenuBarViewModel
 
     init() {
-        let config = AppConfig.initial(defaultHosts: Self.defaultHosts)
+        let config = Self.loadInitialConfig()
         let coordinator = HostWriteCoordinator(helperClient: PreviewHostHelperClient())
         _viewModel = StateObject(wrappedValue: MenuBarViewModel(config: config, coordinator: coordinator))
     }
@@ -40,6 +40,26 @@ struct HostCatApplication: App {
     ::1 localhost
 
     """
+
+    private static func loadInitialConfig() -> AppConfig {
+        let importedHosts = readImportedDefaultHosts()
+        let store = AppConfigStore()
+
+        do {
+            return try store.load(defaultHosts: importedHosts).config
+        } catch {
+            return AppConfig.initial(defaultHosts: importedHosts)
+        }
+    }
+
+    private static func readImportedDefaultHosts() -> String {
+        let hostsURL = URL(fileURLWithPath: "/etc/hosts")
+        guard let data = try? Data(contentsOf: hostsURL) else {
+            return defaultHosts
+        }
+
+        return HostsImporter().importHostsWithFallback(data: data).defaultNodeContent
+    }
 }
 
 private struct MenuBarContentView: View {

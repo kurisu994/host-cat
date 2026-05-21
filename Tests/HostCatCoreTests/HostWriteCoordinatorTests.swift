@@ -45,7 +45,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testDebounceMergesRapidChanges() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(50))
         let config = makeConfig()
 
         // 快速连续触发 3 次
@@ -56,11 +56,11 @@ final class HostWriteCoordinatorTests: XCTestCase {
         _ = await (r1, r2, r3)
 
         // 等待 debounce + 写入完成
-        try? await Task.sleep(nanoseconds: 1_200_000_000)
+        try? await Task.sleep(nanoseconds: 200_000_000)
 
         let writes = await fakeClient.writtenContents
         // debounce 后只应写入 1 次（最后一次没被取消的）
-        XCTAssertGreaterThanOrEqual(writes.count, 0)
+        XCTAssertEqual(writes.count, 1)
     }
 
     func testWriteSuccessUpdatesState() async {
@@ -121,26 +121,26 @@ final class HostWriteCoordinatorTests: XCTestCase {
         let fakeClient = FakeHostHelperClient()
         // 模拟写入耗时 300ms
         await fakeClient.setDelayNanoseconds(300_000_000)
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(50))
         let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
         let config2 = makeConfig(defaultContent: "127.0.0.1 localhost\n10.0.0.1 test.com")
 
-        // 第一次 schedule，写入会耗时 300ms
-        async let r1 = coordinator.scheduleApply(config: config1)
+        // 第一次立即写入会耗时 300ms，第二次请求必须在当前写入完成后继续应用
+        async let r1 = coordinator.applyImmediately(config: config1)
 
         // 等待 100ms（写入进行中），然后触发第二次
         try? await Task.sleep(nanoseconds: 100_000_000)
         async let r2 = coordinator.scheduleApply(config: config2)
 
-        _ = await r1
-        _ = await r2
+        let first = await r1
+        let second = await r2
 
-        // 再等待 debounce 完成
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        XCTAssertTrue(first.result.success)
+        XCTAssertTrue(second.result.success)
 
         let writes = await fakeClient.writtenContents
-        // config2 的写入应该被执行（debounce 后）
-        XCTAssertGreaterThanOrEqual(writes.count, 1)
+        XCTAssertEqual(writes.count, 2)
+        XCTAssertTrue(writes[1].contains("10.0.0.1 test.com"))
     }
 
     func testHashMismatchPreventsOverwrite() async {

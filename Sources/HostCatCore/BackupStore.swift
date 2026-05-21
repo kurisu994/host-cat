@@ -59,8 +59,12 @@ public struct BackupStore: Sendable {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HHmmss"
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        let timestamp = formatter.string(from: Date())
-        let filename = "\(Self.backupFilePrefix)\(timestamp).\(Self.backupFileExtension)"
+        let now = Date()
+        let timestamp = formatter.string(from: now)
+        let orderingToken = String(UInt64(now.timeIntervalSince1970 * 1_000_000_000))
+        let paddedOrderingToken = String(repeating: "0", count: max(0, 20 - orderingToken.count)) + orderingToken
+        let uniqueSuffix = UUID().uuidString.prefix(8)
+        let filename = "\(Self.backupFilePrefix)\(timestamp)_\(paddedOrderingToken)_\(uniqueSuffix).\(Self.backupFileExtension)"
         let fileURL = backupDirectory.appendingPathComponent(filename)
 
         do {
@@ -92,13 +96,11 @@ public struct BackupStore: Sendable {
             return []
         }
 
-        let backupFiles = files.filter { $0.pathExtension == Self.backupFileExtension }
-
-        return backupFiles.sorted { url1, url2 in
-            let date1 = (try? url1.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
-            let date2 = (try? url2.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date.distantPast
-            return date1 > date2
+        let backupFiles = files.filter {
+            $0.lastPathComponent.hasPrefix(Self.backupFilePrefix) && $0.pathExtension == Self.backupFileExtension
         }
+
+        return backupFiles.sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
 
     /// 读取指定备份文件的内容
@@ -115,7 +117,8 @@ public struct BackupStore: Sendable {
             return nil
         }
 
-        let dateString = String(filename.dropFirst(prefix.count).dropLast(suffix.count))
+        let body = String(filename.dropFirst(prefix.count).dropLast(suffix.count))
+        let dateString = String(body.prefix("yyyy-MM-dd_HHmmss".count))
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HHmmss"
         formatter.locale = Locale(identifier: "en_US_POSIX")

@@ -7,7 +7,7 @@ public enum HostsHash {
     public static func sha256Hex(_ content: String) -> String {
         let digest = SHA256.hash(data: Data(content.utf8))
         var hexString = ""
-        hexString.reserveCapacity(digest.count * 2)
+        hexString.reserveCapacity(64)
         for byte in digest {
             hexString.append(String(byte >> 4, radix: 16))
             hexString.append(String(byte & 0x0F, radix: 16))

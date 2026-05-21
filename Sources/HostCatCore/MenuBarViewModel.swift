@@ -97,13 +97,14 @@ public final class MenuBarViewModel: ObservableObject {
                 return
             }
             let currentActive = config.groups[groupIndex].nodes[nodeIndex].isActive
+            let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
             mutationService.setNodeActive(
                 id: id,
                 active: !currentActive,
                 inGroup: groupID,
                 in: &config
             )
-            logger.info("节点 \(config.groups[groupIndex].nodes[nodeIndex].name) 状态切换为 \(!currentActive)")
+            logger.info("节点 \(nodeName) 状态切换为 \(!currentActive)")
         } else {
             // 默认节点不可停用
             logger.debug("尝试切换默认节点，已忽略")

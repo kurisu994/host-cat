@@ -113,17 +113,17 @@ final class HostsImporterTests: XCTestCase {
 
         let result = HostsImporter().importHostsWithFallback(data: data)
 
-        XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost")
+        XCTAssertEqual(result.defaultNodeContent, "127.0.0.1 localhost\n\n# café comment")
         XCTAssertTrue(result.hasHostCatBlock)
         XCTAssertTrue(result.encodingIssue)
     }
 
-    func testUnreadableDataReturnsEmptyWithEncodingIssue() {
+    func testLatin1ArbitraryBytesArePreservedWithEncodingIssue() {
         let data = Data([0xFF, 0xFE, 0xFD])
 
         let result = HostsImporter().importHostsWithFallback(data: data)
 
-        XCTAssertEqual(result.defaultNodeContent, "")
+        XCTAssertEqual(result.defaultNodeContent, "ÿþý")
         XCTAssertFalse(result.hasHostCatBlock)
         XCTAssertTrue(result.encodingIssue)
     }

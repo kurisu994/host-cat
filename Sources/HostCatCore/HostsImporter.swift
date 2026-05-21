@@ -29,6 +29,7 @@ public struct HostsImportResult: Equatable, Sendable {
 
 public struct HostsImporter: Sendable {
     public static let beginMarkerPrefix = "# --- HostCat Begin ("
+    private static let beginMarkerSuffix = ") ---"
     public static let endMarker = "# --- HostCat End ---"
 
     public init() {}
@@ -37,12 +38,23 @@ public struct HostsImporter: Sendable {
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
 
         let beginInfo = findBeginMarker(in: lines)
-        let endIndex = findEndMarker(in: lines)
+        let firstEndIndex = findEndMarker(in: lines)
 
         if let begin = beginInfo {
+            let endIndex = findEndMarker(in: lines, after: begin.index)
+            if let firstEndIndex, firstEndIndex < begin.index, endIndex == nil {
+                return HostsImportResult(
+                    defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: firstEndIndex),
+                    hasHostCatBlock: true,
+                    blockVersion: nil,
+                    isBlockValid: false,
+                    encodingIssue: false
+                )
+            }
+
             if endIndex == nil {
                 return HostsImportResult(
-                    defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: nil),
+                    defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: begin.index, endIndex: nil),
                     hasHostCatBlock: true,
                     blockVersion: begin.version,
                     isBlockValid: false,
@@ -52,7 +64,7 @@ public struct HostsImporter: Sendable {
 
             guard case .v1 = begin.version else {
                 return HostsImportResult(
-                    defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: nil),
+                    defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: begin.index, endIndex: endIndex),
                     hasHostCatBlock: true,
                     blockVersion: begin.version,
                     isBlockValid: false,
@@ -68,9 +80,9 @@ public struct HostsImporter: Sendable {
                 isBlockValid: true,
                 encodingIssue: false
             )
-        } else if endIndex != nil {
+        } else if let firstEndIndex {
             return HostsImportResult(
-                defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: nil),
+                defaultNodeContent: extractOutsideBlock(lines: lines, beginIndex: nil, endIndex: firstEndIndex),
                 hasHostCatBlock: true,
                 blockVersion: nil,
                 isBlockValid: false,
@@ -78,8 +90,9 @@ public struct HostsImporter: Sendable {
             )
         }
 
+        let defaultContent = content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : content
         return HostsImportResult(
-            defaultNodeContent: content,
+            defaultNodeContent: defaultContent,
             hasHostCatBlock: false,
             blockVersion: nil,
             isBlockValid: true,
@@ -108,8 +121,10 @@ public struct HostsImporter: Sendable {
     private func findBeginMarker(in lines: [Substring]) -> (index: Int, version: HostsBlockVersion)? {
         for (index, line) in lines.enumerated() {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix(Self.beginMarkerPrefix) && trimmed.hasSuffix("---") {
-                let versionPart = trimmed.dropFirst(Self.beginMarkerPrefix.count).dropLast(4)
+            if trimmed.hasPrefix(Self.beginMarkerPrefix) && trimmed.hasSuffix(Self.beginMarkerSuffix) {
+                let versionPart = trimmed
+                    .dropFirst(Self.beginMarkerPrefix.count)
+                    .dropLast(Self.beginMarkerSuffix.count)
                 let versionString = String(versionPart).trimmingCharacters(in: .whitespaces)
                 let version: HostsBlockVersion = (versionString == "v1") ? .v1 : .unknown(versionString)
                 return (index, version)
@@ -128,19 +143,41 @@ public struct HostsImporter: Sendable {
         return nil
     }
 
-    private func extractOutsideBlock(lines: [Substring], beginIndex: Int?, endIndex: Int?) -> String {
-        var resultLines: [String] = []
-
-        for (index, line) in lines.enumerated() {
-            if let begin = beginIndex, let end = endIndex {
-                if index < begin || index > end {
-                    resultLines.append(String(line))
-                }
-            } else {
-                resultLines.append(String(line))
+    private func findEndMarker(in lines: [Substring], after beginIndex: Int) -> Int? {
+        for (index, line) in lines.enumerated() where index > beginIndex {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed == Self.endMarker {
+                return index
             }
         }
+        return nil
+    }
 
+    private func extractOutsideBlock(lines: [Substring], beginIndex: Int?, endIndex: Int?) -> String {
+        if let begin = beginIndex, let end = endIndex {
+            let before = lines[..<begin].map(String.init)
+            let afterStart = lines.index(lines.startIndex, offsetBy: end + 1)
+            let after = lines[afterStart...].map(String.init)
+            var resultLines = before
+            if !before.isEmpty, !after.isEmpty {
+                resultLines.append("")
+            }
+            resultLines.append(contentsOf: after)
+            let content = resultLines.joined(separator: "\n")
+            return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if let begin = beginIndex {
+            let content = lines[..<begin].map(String.init).joined(separator: "\n")
+            return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if let end = endIndex {
+            let content = lines[..<end].map(String.init).joined(separator: "\n")
+            return content.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        let resultLines = lines.map(String.init)
         let content = resultLines.joined(separator: "\n")
         return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }

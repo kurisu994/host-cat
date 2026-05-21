@@ -17,26 +17,25 @@ final class BackupStoreTests: XCTestCase {
         super.tearDown()
     }
 
-    func testBackupNamingContainsTimestamp() {
+    func testBackupNamingContainsTimestamp() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 3)
         let content = "127.0.0.1 localhost"
 
-        let backupURL = store.createBackup(content: content)
+        let backupURL = try store.createBackup(content: content)
 
-        XCTAssertNotNil(backupURL)
-        let filename = backupURL!.lastPathComponent
+        let filename = backupURL.lastPathComponent
         XCTAssertTrue(filename.hasPrefix("hosts_"))
         XCTAssertTrue(filename.hasSuffix(".bak"))
     }
 
-    func testListBackupsSortedByDate() {
+    func testListBackupsSortedByDate() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 5)
 
-        _ = store.createBackup(content: "content1")
+        _ = try store.createBackup(content: "content1")
         Thread.sleep(forTimeInterval: 0.01)
-        _ = store.createBackup(content: "content2")
+        _ = try store.createBackup(content: "content2")
         Thread.sleep(forTimeInterval: 0.01)
-        _ = store.createBackup(content: "content3")
+        _ = try store.createBackup(content: "content3")
 
         let backups = store.listBackups()
 
@@ -46,28 +45,27 @@ final class BackupStoreTests: XCTestCase {
         XCTAssertEqual(dates, dates.sorted(by: >))
     }
 
-    func testMaxBackupsEnforced() {
+    func testMaxBackupsEnforced() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 2)
 
-        _ = store.createBackup(content: "content1")
+        _ = try store.createBackup(content: "content1")
         Thread.sleep(forTimeInterval: 0.01)
-        _ = store.createBackup(content: "content2")
+        _ = try store.createBackup(content: "content2")
         Thread.sleep(forTimeInterval: 0.01)
-        _ = store.createBackup(content: "content3")
+        _ = try store.createBackup(content: "content3")
 
         let backups = store.listBackups()
 
         XCTAssertEqual(backups.count, 2)
     }
 
-    func testReadBackupContent() {
+    func testReadBackupContent() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 3)
         let content = "127.0.0.1 localhost\n::1 localhost"
 
-        let backupURL = store.createBackup(content: content)
-        XCTAssertNotNil(backupURL)
+        let backupURL = try store.createBackup(content: content)
 
-        let readContent = store.readBackup(at: backupURL!)
+        let readContent = store.readBackup(at: backupURL)
         XCTAssertEqual(readContent, content)
     }
 
@@ -79,19 +77,32 @@ final class BackupStoreTests: XCTestCase {
         XCTAssertNil(readContent)
     }
 
-    func testOldestBackupRemovedWhenExceedingMax() {
+    func testOldestBackupRemovedWhenExceedingMax() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 2)
 
-        let backup1 = store.createBackup(content: "oldest")
+        let backup1 = try store.createBackup(content: "oldest")
         Thread.sleep(forTimeInterval: 0.01)
-        let backup2 = store.createBackup(content: "middle")
+        let backup2 = try store.createBackup(content: "middle")
         Thread.sleep(forTimeInterval: 0.01)
-        let backup3 = store.createBackup(content: "newest")
+        let backup3 = try store.createBackup(content: "newest")
 
         let backups = store.listBackups()
+        let backupNames = Set(backups.map(\.lastPathComponent))
 
         XCTAssertEqual(backups.count, 2)
-        XCTAssertFalse(backups.contains(backup1!))
-        XCTAssertTrue(backups.contains(backup2!) || backups.contains(backup3!))
+        XCTAssertFalse(backupNames.contains(backup1.lastPathComponent))
+        XCTAssertTrue(backupNames.contains(backup2.lastPathComponent))
+        XCTAssertTrue(backupNames.contains(backup3.lastPathComponent))
+    }
+
+    func testRapidBackupsUseUniqueNames() throws {
+        let store = BackupStore(backupDirectory: tempDir, maxBackups: 5)
+
+        let backup1 = try store.createBackup(content: "content1")
+        let backup2 = try store.createBackup(content: "content2")
+        let backup3 = try store.createBackup(content: "content3")
+
+        XCTAssertEqual(Set([backup1.lastPathComponent, backup2.lastPathComponent, backup3.lastPathComponent]).count, 3)
+        XCTAssertEqual(store.listBackups().count, 3)
     }
 }

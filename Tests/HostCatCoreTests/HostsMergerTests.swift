@@ -98,7 +98,7 @@ final class HostsMergerTests: XCTestCase {
         )
 
         let merged = try HostsMerger().merge(config)
-        XCTAssertTrue(merged.text.contains("# HostCat"))
+        XCTAssertTrue(merged.text.contains("# --- HostCat Begin (v1) ---"))
         XCTAssertEqual(merged.records.count, 0)
         XCTAssertEqual(merged.duplicateCount, 0)
     }
@@ -155,5 +155,34 @@ final class HostsMergerTests: XCTestCase {
             }
             XCTAssertEqual(conflicts.count, 2)
         }
+    }
+
+    func testGroupAndNodeNamesCannotInjectHostsRecords() throws {
+        let config = AppConfig(
+            configVersion: 1,
+            defaultNode: HostNode(name: "默认\n10.0.0.9 injected-default.test", content: "127.0.0.1 localhost\n", isActive: true),
+            groups: [
+                HostGroup(
+                    name: "项目\n10.0.0.8 injected-group.test",
+                    isSingleSelect: true,
+                    nodes: [
+                        HostNode(
+                            name: "开发\n10.0.0.7 injected-node.test",
+                            content: "10.0.0.2 api.test\n",
+                            isActive: true
+                        )
+                    ]
+                )
+            ],
+            settings: AppSettings(launchAtLogin: false),
+            state: AppStateMetadata()
+        )
+
+        let merged = try HostsMerger().merge(config)
+
+        XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.9 injected-default.test"))
+        XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.8 injected-group.test"))
+        XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.7 injected-node.test"))
+        XCTAssertTrue(merged.text.contains("10.0.0.2 api.test"))
     }
 }

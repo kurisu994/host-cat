@@ -1,6 +1,8 @@
 import Foundation
 import os.log
 
+private typealias ApplyOutcome = (result: ApplyResult, rolledBackConfig: AppConfig?)
+
 /// 应用结果状态码，区分不同结果类型
 public enum ApplyStatus: Equatable, Sendable {
     case success
@@ -40,7 +42,8 @@ public actor HostWriteCoordinator {
     private let debounceInterval: Duration
     private let logger = Logger(subsystem: "com.hostcat.app", category: "HostWriteCoordinator")
 
-    private var pendingTask: Task<ApplyResult, Never>?
+    private var pendingTask: Task<ApplyOutcome, Never>?
+    private var pendingGeneration = 0
     private var isWriting = false
 
     public private(set) var lastSuccessfulConfigSnapshot: AppConfig?
@@ -60,9 +63,11 @@ public actor HostWriteCoordinator {
     public func scheduleApply(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         // 取消之前的 debounce 任务
         pendingTask?.cancel()
+        pendingGeneration += 1
+        let generation = pendingGeneration
 
         // 如果当前正在写入，创建一个新的 debounce 任务等待当前写入完成
-        let task = Task { [debounceInterval] in
+        let task = Task<ApplyOutcome, Never> { [debounceInterval] in
             do {
                 try await Task.sleep(for: debounceInterval)
                 guard !Task.isCancelled else {
@@ -75,6 +80,7 @@ public actor HostWriteCoordinator {
                     )
                 }
 
+                self.clearPendingTask(ifGeneration: generation)
                 return await self.performWrite(config: config)
             } catch {
                 return (
@@ -96,19 +102,40 @@ public actor HostWriteCoordinator {
     /// 立即执行写入，不经过 debounce。用于编辑窗口的 Apply 按钮等需要即时反馈的场景。
     public func applyImmediately(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         pendingTask?.cancel()
+        pendingTask = nil
         return await performWrite(config: config)
     }
 
     // MARK: - Private
 
-    private func performWrite(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
-        guard !isWriting else {
-            logger.warning("写入正在进行中，跳过本次请求")
+    private func clearPendingTask(ifGeneration generation: Int) {
+        if pendingGeneration == generation {
+            pendingTask = nil
+        }
+    }
+
+    private func waitUntilCurrentWriteFinishes() async -> Bool {
+        while isWriting {
+            do {
+                try await Task.sleep(for: .milliseconds(10))
+            } catch {
+                return false
+            }
+
+            if Task.isCancelled {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private func performWrite(config: AppConfig) async -> ApplyOutcome {
+        guard await waitUntilCurrentWriteFinishes() else {
             return (
                 ApplyResult(
                     success: false,
-                    errorMessage: "写入正在进行中",
-                    status: .writeFailed("写入正在进行中")
+                    status: .cancelled
                 ),
                 nil
             )
@@ -153,9 +180,14 @@ public actor HostWriteCoordinator {
             )
 
             // 3. 写入成功：更新状态
+            let appliedAt = Date()
+            var appliedConfig = config
+            appliedConfig.state.lastAppliedHostsHash = result.finalHostsHash
+            appliedConfig.state.lastAppliedAt = appliedAt
+
             lastAppliedHash = result.finalHostsHash
-            lastAppliedAt = Date()
-            lastSuccessfulConfigSnapshot = config
+            lastAppliedAt = appliedAt
+            lastSuccessfulConfigSnapshot = appliedConfig
 
             logger.info("写入成功, hash: \(result.finalHostsHash.prefix(8))...")
 
@@ -163,7 +195,7 @@ public actor HostWriteCoordinator {
                 ApplyResult(
                     success: true,
                     appliedHash: result.finalHostsHash,
-                    appliedAt: lastAppliedAt,
+                    appliedAt: appliedAt,
                     status: .success
                 ),
                 nil

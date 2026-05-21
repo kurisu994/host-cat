@@ -38,27 +38,27 @@ struct EditorView: View {
                         name: group.name,
                         isSingleSelect: group.isSingleSelect,
                         onRename: { newName in
-                            var service = mutationService
+                            let service = mutationService
                             service.renameGroup(id: group.id, to: newName, in: &viewModel.config)
                             viewModel.scheduleApply()
                         },
                         onToggleSingleSelect: {
-                            var service = mutationService
+                            let service = mutationService
                             service.setGroupSingleSelect(!group.isSingleSelect, forGroup: group.id, in: &viewModel.config)
                             viewModel.scheduleApply()
                         },
                         onDelete: {
-                            var service = mutationService
+                            let service = mutationService
                             service.removeGroup(id: group.id, from: &viewModel.config)
                             viewModel.scheduleApply()
                         },
                         onMoveUp: {
-                            var service = mutationService
+                            let service = mutationService
                             service.moveGroup(id: group.id, direction: .up, in: &viewModel.config)
                             viewModel.scheduleApply()
                         },
                         onMoveDown: {
-                            var service = mutationService
+                            let service = mutationService
                             service.moveGroup(id: group.id, direction: .down, in: &viewModel.config)
                             viewModel.scheduleApply()
                         }
@@ -82,12 +82,12 @@ struct EditorView: View {
                                 }
                                 Divider()
                                 Button("上移") {
-                                    var service = mutationService
+                                    let service = mutationService
                                     service.moveNode(id: node.id, direction: .up, inGroup: group.id, in: &viewModel.config)
                                     viewModel.scheduleApply()
                                 }
                                 Button("下移") {
-                                    var service = mutationService
+                                    let service = mutationService
                                     service.moveNode(id: node.id, direction: .down, inGroup: group.id, in: &viewModel.config)
                                     viewModel.scheduleApply()
                                 }
@@ -183,7 +183,7 @@ struct EditorView: View {
         .sheet(isPresented: $showAddGroupSheet) {
             AddGroupSheet(name: $newGroupName) {
                 guard !newGroupName.isEmpty else { return }
-                var service = mutationService
+                let service = mutationService
                 service.addGroup(named: newGroupName, to: &viewModel.config)
                 viewModel.scheduleApply()
                 newGroupName = ""
@@ -193,7 +193,7 @@ struct EditorView: View {
         .sheet(isPresented: $showAddNodeSheet) {
             AddNodeSheet(name: $newNodeName) {
                 guard !newNodeName.isEmpty, let groupID = selectedGroupForNewNode else { return }
-                var service = mutationService
+                let service = mutationService
                 service.addNode(named: newNodeName, content: "", toGroup: groupID, in: &viewModel.config)
                 viewModel.scheduleApply()
                 newNodeName = ""
@@ -203,7 +203,7 @@ struct EditorView: View {
         .alert("确认删除", isPresented: $showDeleteConfirmation) {
             Button("删除", role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
-                    var service = mutationService
+                    let service = mutationService
                     service.removeNode(id: nodeID, fromGroup: groupID, in: &viewModel.config)
                     viewModel.scheduleApply()
                 }
@@ -219,7 +219,7 @@ struct EditorView: View {
             RenameNodeSheet(name: $renameNodeNewName) {
                 guard !renameNodeNewName.isEmpty,
                       let (groupID, nodeID) = editingNodeToRename else { return }
-                var service = mutationService
+                let service = mutationService
                 service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
                 viewModel.scheduleApply()
                 renameNodeNewName = ""
@@ -254,7 +254,7 @@ struct EditorView: View {
 
     private func saveCurrentNode() {
         guard let id = selectedNodeID else { return }
-        var service = mutationService
+        let service = mutationService
 
         if id == viewModel.config.defaultNode.id {
             service.updateDefaultNodeContent(editingContent, in: &viewModel.config)
