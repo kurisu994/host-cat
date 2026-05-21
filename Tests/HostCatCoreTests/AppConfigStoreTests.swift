@@ -52,7 +52,7 @@ final class AppConfigStoreTests: XCTestCase {
             groups: [
                 HostGroup(
                     name: "项目 A",
-                    isSingleSelect: true,
+                    isSingleSelect: false,
                     nodes: [
                         HostNode(name: "开发", content: "10.0.0.2 api.test\n", isActive: true)
                     ]
@@ -105,6 +105,24 @@ final class AppConfigStoreTests: XCTestCase {
 
         XCTAssertEqual(result.config.state.lastAppliedHostsHash, "applied_hash")
         XCTAssertNil(result.config.state.lastExternalHostsHash)
+    }
+
+    func testLoadNormalizesLegacySingleSelectGroupsToMultiSelect() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        config.groups = [
+            HostGroup(name: "旧分组", isSingleSelect: true, nodes: [
+                HostNode(name: "A", content: "10.0.0.1 a.test\n", isActive: true)
+            ])
+        ]
+        try JSONEncoder.hostCatConfigEncoder.encode(config).write(to: configURL)
+
+        let result = try AppConfigStore(configURL: configURL).load(defaultHosts: "fallback\n")
+
+        XCTAssertFalse(result.config.groups[0].isSingleSelect)
     }
 
     func testCorruptJSONRecoversDefaultConfigAndReportsDisplayableReason() throws {

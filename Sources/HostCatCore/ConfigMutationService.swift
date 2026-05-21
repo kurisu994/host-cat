@@ -252,12 +252,6 @@ public struct ConfigMutationService: Sendable {
             return .notFound
         }
 
-        // 单选模式：激活时自动停用同组其他节点
-        if active && config.groups[groupIndex].isSingleSelect {
-            for i in config.groups[groupIndex].nodes.indices where i != nodeIndex {
-                config.groups[groupIndex].nodes[i].isActive = false
-            }
-        }
         config.groups[groupIndex].nodes[nodeIndex].isActive = active
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
         logger.info("节点 \(nodeName) 状态设为 \(active)")

@@ -88,15 +88,14 @@ public struct AppConfigStore: Sendable {
             )
         }
 
+        var loadedConfig = normalizedForCurrentRules(decodedConfig)
         if let currentHostsHash,
-           decodedConfig.state.lastAppliedHostsHash == nil,
-           decodedConfig.state.lastExternalHostsHash == nil {
-            var backfilledConfig = decodedConfig
-            backfilledConfig.state.lastExternalHostsHash = currentHostsHash
-            return AppConfigLoadResult(config: backfilledConfig, status: .loadedExisting)
+           loadedConfig.state.lastAppliedHostsHash == nil,
+           loadedConfig.state.lastExternalHostsHash == nil {
+            loadedConfig.state.lastExternalHostsHash = currentHostsHash
         }
 
-        return AppConfigLoadResult(config: decodedConfig, status: .loadedExisting)
+        return AppConfigLoadResult(config: loadedConfig, status: .loadedExisting)
     }
 
     public func save(_ config: AppConfig) throws {
@@ -137,6 +136,15 @@ public struct AppConfigStore: Sendable {
         let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
         try save(config)
         return AppConfigLoadResult(config: config, status: .recoveredDefault(reason))
+    }
+
+    private func normalizedForCurrentRules(_ config: AppConfig) -> AppConfig {
+        var normalized = config
+        normalized.defaultNode.isActive = true
+        for index in normalized.groups.indices {
+            normalized.groups[index].isSingleSelect = false
+        }
+        return normalized
     }
 }
 

@@ -216,9 +216,9 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertEqual(config.defaultNode.name, "系统默认")
     }
 
-    // MARK: - Node Activation (Single-Select)
+    // MARK: - Node Activation (Legacy Single-Select Flag)
 
-    func testSingleSelectActivatesOneNode() {
+    func testLegacySingleSelectFlagDoesNotAffectActivation() {
         let n1 = makeNode(name: "N1", isActive: true)
         let n2 = makeNode(name: "N2", isActive: false)
         var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true, nodes: [n1, n2])])
@@ -227,8 +227,7 @@ final class ConfigMutationServiceTests: XCTestCase {
 
         service.setNodeActive(id: n2.id, active: true, inGroup: groupID, in: &config)
 
-        // 单选模式：激活 N2 会自动停用 N1
-        XCTAssertFalse(config.groups[0].nodes[0].isActive)
+        XCTAssertTrue(config.groups[0].nodes[0].isActive)
         XCTAssertTrue(config.groups[0].nodes[1].isActive)
     }
 
