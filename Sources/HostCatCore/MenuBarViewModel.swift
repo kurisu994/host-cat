@@ -41,6 +41,13 @@ public final class MenuBarViewModel: ObservableObject {
     @Published public var lastDuplicateCount: Int = 0
     @Published public var lastConflicts: [HostConflict] = []
 
+    // 外部修改检测
+    @Published public var showExternalModificationAlert = false
+    @Published public var externalModificationContent: String?
+
+    // Helper 状态提示
+    @Published public var showHelperRegistrationAlert = false
+
     private let mutationService = ConfigMutationService()
     private let coordinator: HostWriteCoordinator
     private let configStore: AppConfigStore
@@ -194,8 +201,15 @@ public final class MenuBarViewModel: ObservableObject {
             applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
             logger.warning("应用冲突: \(conflicts.count) 个")
         } else if let errorMessage = result.errorMessage {
-            applyError = "hosts 未应用: \(errorMessage)"
-            logger.error("\(failureLogPrefix)，hosts 未应用: \(errorMessage)")
+            // 区分外部修改和其他写入错误
+            if result.status == .writeFailed(HostHelperClientError.hashMismatch.localizedDescription) {
+                showExternalModificationAlert = true
+                applyError = "hosts 文件已在 HostCat 之外被修改"
+                logger.warning("检测到外部修改")
+            } else {
+                applyError = "hosts 未应用: \(errorMessage)"
+                logger.error("\(failureLogPrefix)，hosts 未应用: \(errorMessage)")
+            }
         }
     }
 

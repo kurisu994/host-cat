@@ -6,10 +6,23 @@ import SwiftUI
 @main
 struct HostCatApplication: App {
     @StateObject private var viewModel: MenuBarViewModel
+    @StateObject private var registrationManager = HelperRegistrationManager()
 
     init() {
         let config = Self.loadInitialConfig()
-        let coordinator = HostWriteCoordinator(helperClient: PreviewHostHelperClient())
+
+        #if DEBUG
+        // 开发环境：可以用 PreviewHostHelperClient 绕过 Helper 注册
+        let helperClient: any HostHelperClient = {
+            // 如果 Helper 可用就用真实 client，否则回退到 Preview
+            let xpc = XPCHostHelperClient()
+            return xpc
+        }()
+        #else
+        let helperClient: any HostHelperClient = XPCHostHelperClient()
+        #endif
+
+        let coordinator = HostWriteCoordinator(helperClient: helperClient)
         _viewModel = StateObject(wrappedValue: MenuBarViewModel(config: config, coordinator: coordinator))
     }
 
@@ -32,7 +45,10 @@ struct HostCatApplication: App {
         .defaultSize(width: 700, height: 500)
 
         Settings {
-            SettingsView(config: viewModel.config)
+            SettingsView(
+                config: viewModel.config,
+                registrationManager: registrationManager
+            )
         }
     }
 
@@ -71,16 +87,86 @@ struct HostCatApplication: App {
     }
 }
 
+// MARK: - 设置页面
+
+/// 设置页面，包含通用设置、Helper 状态和配置信息
 private struct SettingsView: View {
     let config: AppConfig
+    @ObservedObject var registrationManager: HelperRegistrationManager
 
     var body: some View {
         Form {
-            LabeledContent("配置版本", value: "\(config.configVersion)")
-            LabeledContent("默认节点", value: config.defaultNode.name)
-            LabeledContent("分组数量", value: "\(config.groups.count)")
+            // 通用设置
+            Section("通用") {
+                Toggle("开机自启动", isOn: launchAtLoginBinding)
+            }
+
+            // Helper 状态
+            Section("Privileged Helper") {
+                LabeledContent("状态") {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(helperStatusColor)
+                            .frame(width: 8, height: 8)
+                        Text(registrationManager.helperStatusDescription)
+                    }
+                }
+
+                if !registrationManager.isHelperReady {
+                    if registrationManager.isHelperRequiresApproval {
+                        Button("打开系统设置审批") {
+                            registrationManager.openSystemSettings()
+                        }
+                    } else {
+                        Button("注册 Helper") {
+                            registrationManager.registerHelper()
+                        }
+                    }
+                }
+
+                Button("刷新状态") {
+                    registrationManager.refreshHelperStatus()
+                }
+
+                if let error = registrationManager.lastError {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+            }
+
+            // 配置信息
+            Section("信息") {
+                LabeledContent("配置版本", value: "\(config.configVersion)")
+                LabeledContent("默认节点", value: config.defaultNode.name)
+                LabeledContent("分组数量", value: "\(config.groups.count)")
+            }
         }
         .padding(24)
         .frame(width: 420)
+        .onAppear {
+            registrationManager.refreshHelperStatus()
+        }
+    }
+
+    /// 开机自启动 Toggle binding
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { registrationManager.isLaunchAtLoginEnabled },
+            set: { registrationManager.setLaunchAtLogin($0) }
+        )
+    }
+
+    /// Helper 状态指示灯颜色
+    private var helperStatusColor: Color {
+        switch registrationManager.helperStatus {
+        case .enabled:
+            .green
+        case .requiresApproval:
+            .yellow
+        default:
+            .red
+        }
     }
 }
+

@@ -46,6 +46,8 @@ extension HostsMerger: HostsMerging {}
 public actor HostWriteCoordinator {
     private let helperClient: HostHelperClient
     private let merger: HostsMerging
+    private let backupStore: BackupStore?
+    private let hostsPath: String
     private let debounceInterval: Duration
     private let logger = Logger(subsystem: "com.hostcat.app", category: "HostWriteCoordinator")
 
@@ -60,10 +62,14 @@ public actor HostWriteCoordinator {
     public init(
         helperClient: HostHelperClient,
         merger: HostsMerging = HostsMerger(),
+        backupStore: BackupStore? = BackupStore(),
+        hostsPath: String = "/etc/hosts",
         debounceInterval: Duration = .milliseconds(500)
     ) {
         self.helperClient = helperClient
         self.merger = merger
+        self.backupStore = backupStore
+        self.hostsPath = hostsPath
         self.debounceInterval = debounceInterval
     }
 
@@ -181,14 +187,28 @@ public actor HostWriteCoordinator {
             )
         }
 
-        // 2. 调用 helper client 写入
+        // 2. 写入前备份当前 /etc/hosts
+        if let backupStore {
+            do {
+                let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
+                let currentHostsText = String(data: currentHostsData, encoding: .utf8) ?? ""
+                if !currentHostsText.isEmpty {
+                    _ = try backupStore.createBackup(content: currentHostsText)
+                    logger.info("写入前备份成功")
+                }
+            } catch {
+                logger.warning("写入前备份失败，继续写入: \(error.localizedDescription)")
+            }
+        }
+
+        // 3. 调用 helper client 写入
         do {
             let result = try await helperClient.writeHosts(
                 merged.text,
                 expectedCurrentHostsHash: config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
             )
 
-            // 3. 写入成功：更新状态
+            // 4. 写入成功：更新状态
             let appliedAt = Date()
             var appliedConfig = config
             appliedConfig.state.lastAppliedHostsHash = result.finalHostsHash
@@ -210,7 +230,7 @@ public actor HostWriteCoordinator {
                 nil
             )
         } catch {
-            // 4. 写入失败：回滚到上次成功的配置快照
+            // 5. 写入失败：回滚到上次成功的配置快照
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("写入失败: \(message)")
             let rolledBack = lastSuccessfulConfigSnapshot
