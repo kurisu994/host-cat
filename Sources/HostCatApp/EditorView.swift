@@ -1,6 +1,7 @@
 import AppKit
 import HostCatCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct EditorView: View {
     @ObservedObject var viewModel: MenuBarViewModel
@@ -18,6 +19,7 @@ struct EditorView: View {
     @State private var editingNodeToRename: (groupID: UUID, nodeID: UUID)?
     @State private var renameNodeNewName: String = ""
     @State private var mutationService = ConfigMutationService()
+    @State private var draggingNodeID: UUID?
 
     var body: some View {
         NavigationSplitView {
@@ -81,12 +83,20 @@ struct EditorView: View {
                                         showDeleteConfirmation = true
                                     }
                                 }
-                                .draggable(node.id.uuidString)
-                                .dropDestination(for: String.self) { items, _ in
-                                    guard let draggedIDString = items.first,
-                                          let draggedID = UUID(uuidString: draggedIDString) else { return false }
-                                    return reorderNode(draggedID: draggedID, targetID: node.id, inGroup: group.id)
+                                .opacity(draggingNodeID == node.id ? 0.4 : 1.0)
+                                .onDrag {
+                                    draggingNodeID = node.id
+                                    return NSItemProvider(object: node.id.uuidString as NSString)
                                 }
+                                .onDrop(
+                                    of: [UTType.text],
+                                    delegate: NodeReorderDropDelegate(
+                                        targetNodeID: node.id,
+                                        groupID: group.id,
+                                        draggingNodeID: $draggingNodeID,
+                                        viewModel: viewModel
+                                    )
+                                )
                             }
 
                             AddNodeButton {
@@ -318,20 +328,7 @@ struct EditorView: View {
         viewModel.scheduleApply()
     }
 
-    @discardableResult
-    private func reorderNode(draggedID: UUID, targetID: UUID, inGroup groupID: UUID) -> Bool {
-        guard draggedID != targetID else { return false }
-        guard let groupIndex = viewModel.config.groups.firstIndex(where: { $0.id == groupID }) else { return false }
-        let nodes = viewModel.config.groups[groupIndex].nodes
-        guard let fromIndex = nodes.firstIndex(where: { $0.id == draggedID }),
-              let toIndex = nodes.firstIndex(where: { $0.id == targetID }) else { return false }
-        viewModel.config.groups[groupIndex].nodes.move(
-            fromOffsets: IndexSet(integer: fromIndex),
-            toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex
-        )
-        viewModel.scheduleApply()
-        return true
-    }
+
 }
 
 // MARK: - Subviews
@@ -650,5 +647,48 @@ private struct FocusedNameTextField: NSViewRepresentable {
             textField.selectText(nil)
             return textField.currentEditor() != nil
         }
+    }
+}
+
+// MARK: - Node Reorder Drop Delegate
+
+private struct NodeReorderDropDelegate: DropDelegate {
+    let targetNodeID: UUID
+    let groupID: UUID
+    @Binding var draggingNodeID: UUID?
+    let viewModel: MenuBarViewModel
+
+    func dropEntered(info: DropInfo) {
+        guard let draggingID = draggingNodeID,
+              draggingID != targetNodeID,
+              let groupIndex = viewModel.config.groups.firstIndex(where: { $0.id == groupID }),
+              let fromIndex = viewModel.config.groups[groupIndex].nodes.firstIndex(where: { $0.id == draggingID }),
+              let toIndex = viewModel.config.groups[groupIndex].nodes.firstIndex(where: { $0.id == targetNodeID })
+        else { return }
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            viewModel.config.groups[groupIndex].nodes.move(
+                fromOffsets: IndexSet(integer: fromIndex),
+                toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex
+            )
+        }
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        draggingNodeID = nil
+        viewModel.scheduleApply()
+        return true
+    }
+
+    func dropExited(info: DropInfo) {
+        // 拖出范围时不清除，等 performDrop 处理
+    }
+
+    func validateDrop(info: DropInfo) -> Bool {
+        draggingNodeID != nil
     }
 }
