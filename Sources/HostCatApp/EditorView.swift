@@ -21,103 +21,104 @@ struct EditorView: View {
 
     var body: some View {
         NavigationSplitView {
-            // 左侧：分组和节点树
-            List(selection: $selectedNodeID) {
-                // 默认节点
-                Section("默认") {
-                    NodeRow(
-                        name: viewModel.config.defaultNode.name,
-                        isActive: viewModel.config.defaultNode.isActive,
-                        isDefault: true
-                    )
-                    .tag(viewModel.config.defaultNode.id)
-                }
+            VStack(spacing: 0) {
+                // 左侧：分组和节点树
+                List(selection: $selectedNodeID) {
+                    // 默认节点
+                    Section("默认") {
+                        NodeRow(
+                            name: viewModel.config.defaultNode.name,
+                            isActive: viewModel.config.defaultNode.isActive,
+                            isDefault: true
+                        )
+                        .tag(viewModel.config.defaultNode.id)
+                    }
 
-                // 分组
-                ForEach(viewModel.config.groups) { group in
-                    Section(header: GroupHeader(
-                        name: group.name,
-                        isSingleSelect: group.isSingleSelect,
-                        onRename: { newName in
-                            let service = mutationService
-                            service.renameGroup(id: group.id, to: newName, in: &viewModel.config)
-                            viewModel.scheduleApply()
-                        },
-                        onToggleSingleSelect: {
-                            let service = mutationService
-                            service.setGroupSingleSelect(!group.isSingleSelect, forGroup: group.id, in: &viewModel.config)
-                            viewModel.scheduleApply()
-                        },
-                        onDelete: {
-                            let service = mutationService
-                            service.removeGroup(id: group.id, from: &viewModel.config)
-                            viewModel.scheduleApply()
-                        },
-                        onMoveUp: {
-                            let service = mutationService
-                            service.moveGroup(id: group.id, direction: .up, in: &viewModel.config)
-                            viewModel.scheduleApply()
-                        },
-                        onMoveDown: {
-                            let service = mutationService
-                            service.moveGroup(id: group.id, direction: .down, in: &viewModel.config)
-                            viewModel.scheduleApply()
-                        }
-                    )) {
-                        ForEach(group.nodes) { node in
-                            NodeRow(
-                                name: node.name,
-                                isActive: node.isActive,
-                                isDefault: false
-                            )
-                            .tag(node.id)
-                            .contextMenu {
-                                Button("重命名") {
-                                    editingNodeToRename = (group.id, node.id)
-                                    renameNodeNewName = node.name
-                                    showRenameNodeDialog = true
-                                }
-                                Button("删除") {
-                                    nodeToDelete = (group.id, node.id)
-                                    showDeleteConfirmation = true
-                                }
-                                Divider()
-                                Button("上移") {
-                                    let service = mutationService
-                                    service.moveNode(id: node.id, direction: .up, inGroup: group.id, in: &viewModel.config)
-                                    viewModel.scheduleApply()
-                                }
-                                Button("下移") {
-                                    let service = mutationService
-                                    service.moveNode(id: node.id, direction: .down, inGroup: group.id, in: &viewModel.config)
-                                    viewModel.scheduleApply()
+                    // 分组
+                    ForEach(viewModel.config.groups) { group in
+                        Section(header: GroupHeader(
+                            name: group.name,
+                            isSingleSelect: group.isSingleSelect,
+                            onRename: { newName in
+                                let service = mutationService
+                                service.renameGroup(id: group.id, to: newName, in: &viewModel.config)
+                                viewModel.scheduleApply()
+                            },
+                            onToggleSingleSelect: {
+                                let service = mutationService
+                                service.setGroupSingleSelect(!group.isSingleSelect, forGroup: group.id, in: &viewModel.config)
+                                viewModel.scheduleApply()
+                            },
+                            onDelete: {
+                                let service = mutationService
+                                service.removeGroup(id: group.id, from: &viewModel.config)
+                                viewModel.scheduleApply()
+                            },
+                            onMoveUp: {
+                                let service = mutationService
+                                service.moveGroup(id: group.id, direction: .up, in: &viewModel.config)
+                                viewModel.scheduleApply()
+                            },
+                            onMoveDown: {
+                                let service = mutationService
+                                service.moveGroup(id: group.id, direction: .down, in: &viewModel.config)
+                                viewModel.scheduleApply()
+                            }
+                        )) {
+                            ForEach(group.nodes) { node in
+                                NodeRow(
+                                    name: node.name,
+                                    isActive: node.isActive,
+                                    isDefault: false
+                                )
+                                .tag(node.id)
+                                .contextMenu {
+                                    Button("重命名") {
+                                        editingNodeToRename = (group.id, node.id)
+                                        renameNodeNewName = node.name
+                                        showRenameNodeDialog = true
+                                    }
+                                    Button("删除") {
+                                        nodeToDelete = (group.id, node.id)
+                                        showDeleteConfirmation = true
+                                    }
+                                    Divider()
+                                    Button("上移") {
+                                        let service = mutationService
+                                        service.moveNode(id: node.id, direction: .up, inGroup: group.id, in: &viewModel.config)
+                                        viewModel.scheduleApply()
+                                    }
+                                    Button("下移") {
+                                        let service = mutationService
+                                        service.moveNode(id: node.id, direction: .down, inGroup: group.id, in: &viewModel.config)
+                                        viewModel.scheduleApply()
+                                    }
                                 }
                             }
-                        }
 
-                        Button("添加节点") {
-                            selectedGroupForNewNode = group.id
-                            newNodeName = ""
-                            showAddNodeDialog = true
+                            Button("添加节点") {
+                                selectedGroupForNewNode = group.id
+                                newNodeName = ""
+                                showAddNodeDialog = true
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
                     }
                 }
+                .listStyle(.sidebar)
+                .onChange(of: selectedNodeID) { _, newID in
+                    loadNodeContent(id: newID)
+                }
+
+                Divider()
+
+                SidebarAddGroupButton {
+                    newGroupName = ""
+                    showAddGroupDialog = true
+                }
             }
-            .listStyle(.sidebar)
             .frame(minWidth: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button("添加分组") {
-                        newGroupName = ""
-                        showAddGroupDialog = true
-                    }
-                }
-            }
-            .onChange(of: selectedNodeID) { _, newID in
-                loadNodeContent(id: newID)
-            }
         } detail: {
             // 右侧：hosts 文本编辑
             if let nodeID = selectedNodeID {
@@ -386,6 +387,31 @@ private struct GroupHeader: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+}
+
+private struct SidebarAddGroupButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: "plus")
+                    .font(.system(size: 19, weight: .medium))
+                    .frame(width: 22)
+
+                Text("New Group")
+                    .font(.system(size: 15, weight: .semibold))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.primary)
+        .background(Color(NSColor.controlBackgroundColor))
+        .help("新建分组")
     }
 }
 
