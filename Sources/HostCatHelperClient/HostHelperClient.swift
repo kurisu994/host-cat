@@ -1,6 +1,7 @@
 import Foundation
 import HostCatCore
 
+/// 预览模式 helper client，不真实写入 /etc/hosts
 public struct PreviewHostHelperClient: HostHelperClient {
     public init() {}
 
@@ -13,12 +14,4 @@ public struct PreviewHostHelperClient: HostHelperClient {
             didRefreshDNS: false
         )
     }
-}
-
-@objc public protocol HostCatHelperXPCProtocol {
-    func writeHosts(
-        _ contents: NSString,
-        expectedCurrentHostsHash: NSString?,
-        withReply reply: @escaping (NSDictionary) -> Void
-    )
 }

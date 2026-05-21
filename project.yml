@@ -1,0 +1,151 @@
+name: HostCat
+options:
+  bundleIdPrefix: com.hostcat
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "26.5"
+  defaultConfig: Debug
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+  minimumXcodeGenVersion: "2.40.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: true
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  # HostCatCore - 纯 Swift 业务核心 framework
+  HostCatCore:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/HostCatCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.core
+        PRODUCT_NAME: HostCatCore
+        SKIP_INSTALL: true
+        GENERATE_INFOPLIST_FILE: true
+        DEFINES_MODULE: true
+
+  # HostCatHelperClient - XPC client 包装层 framework
+  HostCatHelperClient:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Sources/HostCatHelperClient
+    dependencies:
+      - target: HostCatCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.helper-client
+        PRODUCT_NAME: HostCatHelperClient
+        SKIP_INSTALL: true
+        GENERATE_INFOPLIST_FILE: true
+        DEFINES_MODULE: true
+
+  # HostCatApp - macOS 菜单栏应用
+  HostCatApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/HostCatApp
+        excludes:
+          - Resources/Info.plist
+          - Resources/HostCatApp.entitlements
+    dependencies:
+      - target: HostCatCore
+        embed: true
+        codeSign: true
+        removeHeaders: true
+      - target: HostCatHelperClient
+        embed: true
+        codeSign: true
+        removeHeaders: true
+      - target: HostCatPrivilegedHelper
+        embed: false
+        # Helper 需通过 Copy Files phase 放到指定位置
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.app
+        PRODUCT_NAME: HostCat
+        INFOPLIST_FILE: Sources/HostCatApp/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/HostCatApp/Resources/HostCatApp.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: false
+        # 菜单栏应用不显示在 Dock 中
+        INFOPLIST_KEY_LSUIElement: true
+        # 关闭沙盒（直接分发）
+        ENABLE_APP_SANDBOX: false
+    postCompileScripts: []
+    preBuildScripts: []
+    postBuildScripts:
+      - name: "Copy Helper Tool and LaunchDaemon plist"
+        script: |
+          # SMAppService 要求 Helper 二进制在 Contents/Library/HelperTools/
+          HELPER_TOOLS_DIR="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/HelperTools"
+          mkdir -p "${HELPER_TOOLS_DIR}"
+          cp "${BUILT_PRODUCTS_DIR}/HostCatPrivilegedHelper" "${HELPER_TOOLS_DIR}/"
+
+          # SMAppService 要求 launchd plist 在 Contents/Library/LaunchDaemons/
+          LAUNCH_DAEMONS_DIR="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/LaunchDaemons"
+          mkdir -p "${LAUNCH_DAEMONS_DIR}"
+          cp "${SRCROOT}/Sources/HostCatPrivilegedHelper/com.hostcat.helper.plist" "${LAUNCH_DAEMONS_DIR}/"
+        basedOnDependencyAnalysis: false
+
+  # HostCatPrivilegedHelper - root Helper 可执行文件
+  HostCatPrivilegedHelper:
+    type: tool
+    platform: macOS
+    sources:
+      - path: Sources/HostCatPrivilegedHelper
+        excludes:
+          - Info.plist
+          - "*.plist"
+    dependencies:
+      - target: HostCatCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.helper
+        PRODUCT_NAME: HostCatPrivilegedHelper
+        INFOPLIST_FILE: Sources/HostCatPrivilegedHelper/Info.plist
+        SKIP_INSTALL: true
+
+  # HostCatCoreTests - 核心逻辑单元测试
+  HostCatCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/HostCatCoreTests
+    dependencies:
+      - target: HostCatCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.core-tests
+
+schemes:
+  HostCatApp:
+    build:
+      targets:
+        HostCatApp: all
+        HostCatCoreTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - HostCatCoreTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

@@ -1,0 +1,993 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1070F460441BA5007710E2F7 /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		14D2B6B7234D4F88CBEB5172 /* HelperDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5584A791D448EB4268A8164B /* HelperDelegate.swift */; };
+		17998537F01F6E93F60BD10E /* HostsFileWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */; };
+		224631B8B32B406A5C7377F7 /* MenuBarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */; };
+		24A79368968C11ACD4EFABEB /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		2BCC78E4CF1101CD2260D34E /* HostsImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E7DD731488812BF6C21188 /* HostsImporter.swift */; };
+		2DCCF82A00983C3E0A0A8F00 /* HostHelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080D17737691D76CE83D4ED8 /* HostHelperClient.swift */; };
+		369701FCD0ADB8AD41A492E4 /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		3C401C4010C5946DBEE9883D /* HostsWriteError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB65EC4EBEB996516D718E1 /* HostsWriteError.swift */; };
+		3CF0F290DB21C3FFD12A24D3 /* HostsMergerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 133D85B015E89D14238E7132 /* HostsMergerTests.swift */; };
+		42DE5C1BA01F6AA46EE86F2B /* HostCatPrivilegedHelperMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */; };
+		444E430AC60F1911A996CF87 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C10ECAA17224040C3046F84 /* Models.swift */; };
+		51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */; };
+		520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
+		5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */; };
+		635EF833C7E9E078EC10E5E1 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8E733CAC8ED8396B6E6F9 /* MenuBarViewModel.swift */; };
+		64A0BBA8209E2B9CAC85A761 /* BackupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */; };
+		6BAD6BBFB88BD5DCCAB72D14 /* ConfigMutationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */; };
+		6C3CA385866A481E7908EF4A /* HelperService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B2FC0550AF804D01C7F520 /* HelperService.swift */; };
+		7196700EDCFF09FE60C77B7A /* HostHelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99078CE3C8382C7B3E4A7CE0 /* HostHelperClient.swift */; };
+		79CC63DEA5B2D78AB3FFB45F /* AppConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */; };
+		7B4D199688960B4D1EED2645 /* HostWriteCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */; };
+		7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE0D54F96044F2F57634C83 /* EditorView.swift */; };
+		81ACA36DAAB37D49763BB40F /* HostsFileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */; };
+		81BA2A8CAB33A32ECB651708 /* NameInputDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478548346A1B1FFD6C125EEA /* NameInputDialog.swift */; };
+		82406C6856ECDFCA63BD1CA3 /* HostsImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */; };
+		8BFBED698502A3FACE80865A /* WindowFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7C78F009E32AECCA011883 /* WindowFocus.swift */; };
+		912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EBCC23847724F1472FDC48 /* TestDoubles.swift */; };
+		9B2CC295C59A13A66B6EBD77 /* HostsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014FF435AFEA5342833791B7 /* HostsParser.swift */; };
+		9D22255196CC0B054CAC2DD0 /* SidebarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */; };
+		9E5CAD830F2D7182B21A4FB7 /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		9E870546E70E7ECB9D5D329F /* BackupStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1170E06A567EC5F28A7CC50D /* BackupStoreTests.swift */; };
+		A854C9E2C21C4350D1A3AFDC /* AppConfigStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */; };
+		B1DC4984DA362BD870025F5F /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */; };
+		B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098317E3D7EC90CA857B8437 /* HostCatApp.swift */; };
+		B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
+		D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */; };
+		DB973E463FB120D41D7416D5 /* HostsMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF2470AD5775FB15B089832 /* HostsMerger.swift */; };
+		E9E24A6E65FF4E7BABB20B8C /* HostsHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */; };
+		EDED5CD6E7C1FD21C6176D2B /* HostsParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00742A95D2D11025BEC36E42 /* HostsParserTests.swift */; };
+		F821285041AD5606408628BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A92A1835D30534129D14FC33 /* Assets.xcassets */; };
+		F8A706BE662A35C074D61652 /* ConfigMutationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CBB2BC9AD0E1D4E9DCD57D1 /* ConfigMutationServiceTests.swift */; };
+		FEE940B370415525438FA6AD /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54AE85ADBAF6D01B7D1B3FB0 /* MenuBarContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0CC83AB9A0C29CBB49DBE791 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AD36AAF12ACF443F5705E68B;
+			remoteInfo = HostCatPrivilegedHelper;
+		};
+		41EF83012072B1F668A342E8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6C1EBE12C8BA8AAE53D2BFA;
+			remoteInfo = HostCatCore;
+		};
+		4C06D4B66453C146BAA257BA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9479EF03FD5264642C797635;
+			remoteInfo = HostCatHelperClient;
+		};
+		4C6D6482DFFE58E2C79C0F86 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6C1EBE12C8BA8AAE53D2BFA;
+			remoteInfo = HostCatCore;
+		};
+		69D9997F4747BBE806F08E3C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6C1EBE12C8BA8AAE53D2BFA;
+			remoteInfo = HostCatCore;
+		};
+		E9DE444E7C276CF67DD09386 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6C1EBE12C8BA8AAE53D2BFA;
+			remoteInfo = HostCatCore;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4BCE088EA15ADF06CE10C2FF /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				24A79368968C11ACD4EFABEB /* HostCatCore.framework in Embed Frameworks */,
+				B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7494EC96F95FAEA2447D4465 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		00742A95D2D11025BEC36E42 /* HostsParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsParserTests.swift; sourceTree = "<group>"; };
+		014FF435AFEA5342833791B7 /* HostsParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsParser.swift; sourceTree = "<group>"; };
+		05B2FC0550AF804D01C7F520 /* HelperService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperService.swift; sourceTree = "<group>"; };
+		080D17737691D76CE83D4ED8 /* HostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostHelperClient.swift; sourceTree = "<group>"; };
+		098317E3D7EC90CA857B8437 /* HostCatApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatApp.swift; sourceTree = "<group>"; };
+		0CBB2BC9AD0E1D4E9DCD57D1 /* ConfigMutationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationServiceTests.swift; sourceTree = "<group>"; };
+		1170E06A567EC5F28A7CC50D /* BackupStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupStoreTests.swift; sourceTree = "<group>"; };
+		133D85B015E89D14238E7132 /* HostsMergerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsMergerTests.swift; sourceTree = "<group>"; };
+		1654DD699B6DEBB0D2336F6B /* HostCatCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HostCatCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MergedPreviewView.swift; sourceTree = "<group>"; };
+		1AB65EC4EBEB996516D718E1 /* HostsWriteError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsWriteError.swift; sourceTree = "<group>"; };
+		28E7DD731488812BF6C21188 /* HostsImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsImporter.swift; sourceTree = "<group>"; };
+		2EE0D54F96044F2F57634C83 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsHash.swift; sourceTree = "<group>"; };
+		478548346A1B1FFD6C125EEA /* NameInputDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NameInputDialog.swift; sourceTree = "<group>"; };
+		4C10ECAA17224040C3046F84 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		54AE85ADBAF6D01B7D1B3FB0 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeReorderDropDelegate.swift; sourceTree = "<group>"; };
+		5584A791D448EB4268A8164B /* HelperDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperDelegate.swift; sourceTree = "<group>"; };
+		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
+		7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatPrivilegedHelperMain.swift; sourceTree = "<group>"; };
+		8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
+		8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarComponents.swift; sourceTree = "<group>"; };
+		93A07209DF12BB43C1A2EFAA /* HostCatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HostCatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9682678AF698BEFE8887AE91 /* HostCatCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HostCatCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		99078CE3C8382C7B3E4A7CE0 /* HostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostHelperClient.swift; sourceTree = "<group>"; };
+		A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsFileWriterTests.swift; sourceTree = "<group>"; };
+		A92A1835D30534129D14FC33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModelTests.swift; sourceTree = "<group>"; };
+		BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSRefresher.swift; sourceTree = "<group>"; };
+		BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStoreTests.swift; sourceTree = "<group>"; };
+		BFF2470AD5775FB15B089832 /* HostsMerger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsMerger.swift; sourceTree = "<group>"; };
+		C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsFileWriter.swift; sourceTree = "<group>"; };
+		CDD8E733CAC8ED8396B6E6F9 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
+		CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupStore.swift; sourceTree = "<group>"; };
+		D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsImporterTests.swift; sourceTree = "<group>"; };
+		DD7C78F009E32AECCA011883 /* WindowFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocus.swift; sourceTree = "<group>"; };
+		DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
+		E4EBCC23847724F1472FDC48 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
+		EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinatorTests.swift; sourceTree = "<group>"; };
+		F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinator.swift; sourceTree = "<group>"; };
+		F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = HostCatPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HostCatHelperClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0DA8F721ABC5A551AEA04DF8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		322D82A7FE0372B65892E747 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9E5CAD830F2D7182B21A4FB7 /* HostCatCore.framework in Frameworks */,
+				520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D17BD19F49DBE6E47E974A1E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1070F460441BA5007710E2F7 /* HostCatCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D49249A432F9930CA1045D42 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				369701FCD0ADB8AD41A492E4 /* HostCatCore.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		39D3AF5C79E8F1F09CB929A1 /* HostCatCore */ = {
+			isa = PBXGroup;
+			children = (
+				8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */,
+				CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */,
+				721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */,
+				BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */,
+				080D17737691D76CE83D4ED8 /* HostHelperClient.swift */,
+				C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */,
+				42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */,
+				28E7DD731488812BF6C21188 /* HostsImporter.swift */,
+				BFF2470AD5775FB15B089832 /* HostsMerger.swift */,
+				014FF435AFEA5342833791B7 /* HostsParser.swift */,
+				1AB65EC4EBEB996516D718E1 /* HostsWriteError.swift */,
+				F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */,
+				CDD8E733CAC8ED8396B6E6F9 /* MenuBarViewModel.swift */,
+				4C10ECAA17224040C3046F84 /* Models.swift */,
+			);
+			path = HostCatCore;
+			sourceTree = "<group>";
+		};
+		404181F8E2699A2AAEBE18BE /* HostCatPrivilegedHelper */ = {
+			isa = PBXGroup;
+			children = (
+				5584A791D448EB4268A8164B /* HelperDelegate.swift */,
+				05B2FC0550AF804D01C7F520 /* HelperService.swift */,
+				7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */,
+			);
+			path = HostCatPrivilegedHelper;
+			sourceTree = "<group>";
+		};
+		40BF74F3E0CDD003A04984F1 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				7A1AF09A1ADCBB4F5D338937 /* HostCatCoreTests */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		4ABB5A0B3D10E82B5720DE36 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A92A1835D30534129D14FC33 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		5DDCA8D97EFE015E4A4E35FA = {
+			isa = PBXGroup;
+			children = (
+				A4D80FC30644420507E787FD /* Sources */,
+				40BF74F3E0CDD003A04984F1 /* Tests */,
+				7C8191A389BC6859DF954E61 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7A1AF09A1ADCBB4F5D338937 /* HostCatCoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */,
+				DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */,
+				1170E06A567EC5F28A7CC50D /* BackupStoreTests.swift */,
+				0CBB2BC9AD0E1D4E9DCD57D1 /* ConfigMutationServiceTests.swift */,
+				A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */,
+				D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */,
+				133D85B015E89D14238E7132 /* HostsMergerTests.swift */,
+				00742A95D2D11025BEC36E42 /* HostsParserTests.swift */,
+				EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */,
+				B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */,
+				E4EBCC23847724F1472FDC48 /* TestDoubles.swift */,
+			);
+			path = HostCatCoreTests;
+			sourceTree = "<group>";
+		};
+		7C8191A389BC6859DF954E61 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				93A07209DF12BB43C1A2EFAA /* HostCatApp.app */,
+				9682678AF698BEFE8887AE91 /* HostCatCore.framework */,
+				1654DD699B6DEBB0D2336F6B /* HostCatCoreTests.xctest */,
+				FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */,
+				F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A4D80FC30644420507E787FD /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				BDEA80D55BBBF9AF4A53071A /* HostCatApp */,
+				39D3AF5C79E8F1F09CB929A1 /* HostCatCore */,
+				CB9B24D37F7AEAF809A81993 /* HostCatHelperClient */,
+				404181F8E2699A2AAEBE18BE /* HostCatPrivilegedHelper */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		BDEA80D55BBBF9AF4A53071A /* HostCatApp */ = {
+			isa = PBXGroup;
+			children = (
+				2EE0D54F96044F2F57634C83 /* EditorView.swift */,
+				098317E3D7EC90CA857B8437 /* HostCatApp.swift */,
+				54AE85ADBAF6D01B7D1B3FB0 /* MenuBarContentView.swift */,
+				177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */,
+				478548346A1B1FFD6C125EEA /* NameInputDialog.swift */,
+				5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */,
+				8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */,
+				DD7C78F009E32AECCA011883 /* WindowFocus.swift */,
+				4ABB5A0B3D10E82B5720DE36 /* Resources */,
+			);
+			path = HostCatApp;
+			sourceTree = "<group>";
+		};
+		CB9B24D37F7AEAF809A81993 /* HostCatHelperClient */ = {
+			isa = PBXGroup;
+			children = (
+				99078CE3C8382C7B3E4A7CE0 /* HostHelperClient.swift */,
+			);
+			path = HostCatHelperClient;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		07A50D03B9C37AB6F0B930ED /* HostCatApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 54CAA3A4722FF7481727ACB5 /* Build configuration list for PBXNativeTarget "HostCatApp" */;
+			buildPhases = (
+				336340C23E60EDA82624225C /* Sources */,
+				D9275FF7C209CBA983B370E4 /* Resources */,
+				322D82A7FE0372B65892E747 /* Frameworks */,
+				4BCE088EA15ADF06CE10C2FF /* Embed Frameworks */,
+				F4B227E27AE8A2191315E9AF /* Copy Helper Tool and LaunchDaemon plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3D0171BFEBAA923FDC9897A6 /* PBXTargetDependency */,
+				F3539115F47CE9014E03376B /* PBXTargetDependency */,
+				F61076D9C3EF1AA10D08FB10 /* PBXTargetDependency */,
+			);
+			name = HostCatApp;
+			packageProductDependencies = (
+			);
+			productName = HostCatApp;
+			productReference = 93A07209DF12BB43C1A2EFAA /* HostCatApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		77CF98B97260F455FA2532B4 /* HostCatCoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 09B983969BEC34429CFDE469 /* Build configuration list for PBXNativeTarget "HostCatCoreTests" */;
+			buildPhases = (
+				958B8E93103FAA76960739FE /* Sources */,
+				D49249A432F9930CA1045D42 /* Frameworks */,
+				7494EC96F95FAEA2447D4465 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B25B3660C064ED37BA2BF4BA /* PBXTargetDependency */,
+			);
+			name = HostCatCoreTests;
+			packageProductDependencies = (
+			);
+			productName = HostCatCoreTests;
+			productReference = 1654DD699B6DEBB0D2336F6B /* HostCatCoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		9479EF03FD5264642C797635 /* HostCatHelperClient */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1C2D2EF25F7A7B958111A5AA /* Build configuration list for PBXNativeTarget "HostCatHelperClient" */;
+			buildPhases = (
+				DCBF03178AB693F5FF592B3C /* Sources */,
+				D17BD19F49DBE6E47E974A1E /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9BA5677508538A237A6BD5BC /* PBXTargetDependency */,
+			);
+			name = HostCatHelperClient;
+			packageProductDependencies = (
+			);
+			productName = HostCatHelperClient;
+			productReference = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		AD36AAF12ACF443F5705E68B /* HostCatPrivilegedHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C656973FBFA7FF4EBC8B7AEA /* Build configuration list for PBXNativeTarget "HostCatPrivilegedHelper" */;
+			buildPhases = (
+				F584FB784F8C1439C7E016EC /* Sources */,
+				0DA8F721ABC5A551AEA04DF8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				806E163E91155B3621D2D43F /* PBXTargetDependency */,
+			);
+			name = HostCatPrivilegedHelper;
+			packageProductDependencies = (
+			);
+			productName = HostCatPrivilegedHelper;
+			productReference = F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */;
+			productType = "com.apple.product-type.tool";
+		};
+		F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB87F621F74BB7F11203C36D /* Build configuration list for PBXNativeTarget "HostCatCore" */;
+			buildPhases = (
+				DA3BE620AD4D4C5D39EB97F1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HostCatCore;
+			packageProductDependencies = (
+			);
+			productName = HostCatCore;
+			productReference = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		32BD2606AFB2AE0B91ED2382 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 90B937414A770AF906C46EF4 /* Build configuration list for PBXProject "HostCat" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 5DDCA8D97EFE015E4A4E35FA;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7C8191A389BC6859DF954E61 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				07A50D03B9C37AB6F0B930ED /* HostCatApp */,
+				F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */,
+				77CF98B97260F455FA2532B4 /* HostCatCoreTests */,
+				9479EF03FD5264642C797635 /* HostCatHelperClient */,
+				AD36AAF12ACF443F5705E68B /* HostCatPrivilegedHelper */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D9275FF7C209CBA983B370E4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F821285041AD5606408628BE /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F4B227E27AE8A2191315E9AF /* Copy Helper Tool and LaunchDaemon plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Helper Tool and LaunchDaemon plist";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# SMAppService 要求 Helper 二进制在 Contents/Library/HelperTools/\nHELPER_TOOLS_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/HelperTools\"\nmkdir -p \"${HELPER_TOOLS_DIR}\"\ncp \"${BUILT_PRODUCTS_DIR}/HostCatPrivilegedHelper\" \"${HELPER_TOOLS_DIR}/\"\n\n# SMAppService 要求 launchd plist 在 Contents/Library/LaunchDaemons/\nLAUNCH_DAEMONS_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Library/LaunchDaemons\"\nmkdir -p \"${LAUNCH_DAEMONS_DIR}\"\ncp \"${SRCROOT}/Sources/HostCatPrivilegedHelper/com.hostcat.helper.plist\" \"${LAUNCH_DAEMONS_DIR}/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		336340C23E60EDA82624225C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */,
+				B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */,
+				FEE940B370415525438FA6AD /* MenuBarContentView.swift in Sources */,
+				51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */,
+				81BA2A8CAB33A32ECB651708 /* NameInputDialog.swift in Sources */,
+				5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */,
+				9D22255196CC0B054CAC2DD0 /* SidebarComponents.swift in Sources */,
+				8BFBED698502A3FACE80865A /* WindowFocus.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		958B8E93103FAA76960739FE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A854C9E2C21C4350D1A3AFDC /* AppConfigStoreTests.swift in Sources */,
+				B1DC4984DA362BD870025F5F /* AppConfigTests.swift in Sources */,
+				9E870546E70E7ECB9D5D329F /* BackupStoreTests.swift in Sources */,
+				F8A706BE662A35C074D61652 /* ConfigMutationServiceTests.swift in Sources */,
+				D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */,
+				17998537F01F6E93F60BD10E /* HostsFileWriterTests.swift in Sources */,
+				82406C6856ECDFCA63BD1CA3 /* HostsImporterTests.swift in Sources */,
+				3CF0F290DB21C3FFD12A24D3 /* HostsMergerTests.swift in Sources */,
+				EDED5CD6E7C1FD21C6176D2B /* HostsParserTests.swift in Sources */,
+				224631B8B32B406A5C7377F7 /* MenuBarViewModelTests.swift in Sources */,
+				912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA3BE620AD4D4C5D39EB97F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				79CC63DEA5B2D78AB3FFB45F /* AppConfigStore.swift in Sources */,
+				64A0BBA8209E2B9CAC85A761 /* BackupStore.swift in Sources */,
+				6BAD6BBFB88BD5DCCAB72D14 /* ConfigMutationService.swift in Sources */,
+				C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */,
+				2DCCF82A00983C3E0A0A8F00 /* HostHelperClient.swift in Sources */,
+				7B4D199688960B4D1EED2645 /* HostWriteCoordinator.swift in Sources */,
+				81ACA36DAAB37D49763BB40F /* HostsFileWriter.swift in Sources */,
+				E9E24A6E65FF4E7BABB20B8C /* HostsHash.swift in Sources */,
+				2BCC78E4CF1101CD2260D34E /* HostsImporter.swift in Sources */,
+				DB973E463FB120D41D7416D5 /* HostsMerger.swift in Sources */,
+				9B2CC295C59A13A66B6EBD77 /* HostsParser.swift in Sources */,
+				3C401C4010C5946DBEE9883D /* HostsWriteError.swift in Sources */,
+				635EF833C7E9E078EC10E5E1 /* MenuBarViewModel.swift in Sources */,
+				444E430AC60F1911A996CF87 /* Models.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCBF03178AB693F5FF592B3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7196700EDCFF09FE60C77B7A /* HostHelperClient.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F584FB784F8C1439C7E016EC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				14D2B6B7234D4F88CBEB5172 /* HelperDelegate.swift in Sources */,
+				6C3CA385866A481E7908EF4A /* HelperService.swift in Sources */,
+				42DE5C1BA01F6AA46EE86F2B /* HostCatPrivilegedHelperMain.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3D0171BFEBAA923FDC9897A6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */;
+			targetProxy = 69D9997F4747BBE806F08E3C /* PBXContainerItemProxy */;
+		};
+		806E163E91155B3621D2D43F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */;
+			targetProxy = 4C6D6482DFFE58E2C79C0F86 /* PBXContainerItemProxy */;
+		};
+		9BA5677508538A237A6BD5BC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */;
+			targetProxy = E9DE444E7C276CF67DD09386 /* PBXContainerItemProxy */;
+		};
+		B25B3660C064ED37BA2BF4BA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */;
+			targetProxy = 41EF83012072B1F668A342E8 /* PBXContainerItemProxy */;
+		};
+		F3539115F47CE9014E03376B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9479EF03FD5264642C797635 /* HostCatHelperClient */;
+			targetProxy = 4C06D4B66453C146BAA257BA /* PBXContainerItemProxy */;
+		};
+		F61076D9C3EF1AA10D08FB10 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AD36AAF12ACF443F5705E68B /* HostCatPrivilegedHelper */;
+			targetProxy = 0CC83AB9A0C29CBB49DBE791 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		03C9D6F3E8CEB7E92FACB9DF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hostcat.core-tests";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		159575C32131097D0A2D68D9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/HostCatApp/Resources/HostCatApp.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/HostCatApp/Resources/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.app;
+				PRODUCT_NAME = HostCat;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		25286864B145B69C8D9D2069 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.core;
+				PRODUCT_NAME = HostCatCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		58E41B0291073ABC813DC247 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/HostCatApp/Resources/HostCatApp.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/HostCatApp/Resources/Info.plist;
+				INFOPLIST_KEY_LSUIElement = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.app;
+				PRODUCT_NAME = HostCat;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		863DBA26951DF1703C9B82CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hostcat.helper-client";
+				PRODUCT_NAME = HostCatHelperClient;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		8AFB27E375E9DBC574669814 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.core;
+				PRODUCT_NAME = HostCatCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		9C17D9C202280DDA4D871D66 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hostcat.helper-client";
+				PRODUCT_NAME = HostCatHelperClient;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		B14C8DAACCBEECA07934C93F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		BAC13A9586FA11FE80107F67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/HostCatPrivilegedHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.helper;
+				PRODUCT_NAME = HostCatPrivilegedHelper;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		D1D23C3AFE5C8FFB3D48A201 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		D3FA33AF0D0131F61F550576 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Sources/HostCatPrivilegedHelper/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.hostcat.helper;
+				PRODUCT_NAME = HostCatPrivilegedHelper;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		FDB7B0C063CCE6E4D5728DA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.hostcat.core-tests";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		09B983969BEC34429CFDE469 /* Build configuration list for PBXNativeTarget "HostCatCoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03C9D6F3E8CEB7E92FACB9DF /* Debug */,
+				FDB7B0C063CCE6E4D5728DA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1C2D2EF25F7A7B958111A5AA /* Build configuration list for PBXNativeTarget "HostCatHelperClient" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9C17D9C202280DDA4D871D66 /* Debug */,
+				863DBA26951DF1703C9B82CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		54CAA3A4722FF7481727ACB5 /* Build configuration list for PBXNativeTarget "HostCatApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				58E41B0291073ABC813DC247 /* Debug */,
+				159575C32131097D0A2D68D9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		90B937414A770AF906C46EF4 /* Build configuration list for PBXProject "HostCat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D1D23C3AFE5C8FFB3D48A201 /* Debug */,
+				B14C8DAACCBEECA07934C93F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C656973FBFA7FF4EBC8B7AEA /* Build configuration list for PBXNativeTarget "HostCatPrivilegedHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BAC13A9586FA11FE80107F67 /* Debug */,
+				D3FA33AF0D0131F61F550576 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DB87F621F74BB7F11203C36D /* Build configuration list for PBXNativeTarget "HostCatCore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25286864B145B69C8D9D2069 /* Debug */,
+				8AFB27E375E9DBC574669814 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+}

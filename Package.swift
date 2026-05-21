@@ -6,14 +6,14 @@ let strictConcurrency: [SwiftSetting] = [
     .unsafeFlags(["-strict-concurrency=complete"])
 ]
 
+// 说明：app 和 helper 的构建已迁移到 Xcode 工程（project.yml → HostCat.xcodeproj）。
+// Package.swift 保留 Core 库和测试 target，用于 `swift test` 快速验证核心逻辑。
 let package = Package(
     name: "HostCat",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "HostCatApp", targets: ["HostCatApp"]),
-        .executable(name: "HostCatPrivilegedHelper", targets: ["HostCatPrivilegedHelper"]),
         .library(name: "HostCatCore", targets: ["HostCatCore"]),
         .library(name: "HostCatHelperClient", targets: ["HostCatHelperClient"])
     ],
@@ -24,22 +24,6 @@ let package = Package(
         ),
         .target(
             name: "HostCatHelperClient",
-            dependencies: ["HostCatCore"],
-            swiftSettings: strictConcurrency
-        ),
-        .executableTarget(
-            name: "HostCatApp",
-            dependencies: [
-                "HostCatCore",
-                "HostCatHelperClient"
-            ],
-            resources: [
-                .process("Resources")
-            ],
-            swiftSettings: strictConcurrency
-        ),
-        .executableTarget(
-            name: "HostCatPrivilegedHelper",
             dependencies: ["HostCatCore"],
             swiftSettings: strictConcurrency
         ),
