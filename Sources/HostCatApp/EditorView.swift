@@ -1,3 +1,4 @@
+import AppKit
 import HostCatCore
 import SwiftUI
 
@@ -438,17 +439,17 @@ private struct NameInputSheet: View {
     let onCancel: () -> Void
     let onSubmit: () -> Void
 
-    @FocusState private var isNameFocused: Bool
-
     var body: some View {
         VStack(spacing: 16) {
             Text(title)
                 .font(.headline)
 
-            TextField(placeholder, text: $name)
-                .textFieldStyle(.roundedBorder)
-                .focused($isNameFocused)
-                .onSubmit(submit)
+            FocusedNameTextField(
+                placeholder: placeholder,
+                text: $name,
+                onSubmit: submit
+            )
+            .frame(height: 24)
 
             HStack {
                 Button("取消", role: .cancel) {
@@ -463,9 +464,6 @@ private struct NameInputSheet: View {
         }
         .padding()
         .frame(width: 300)
-        .task {
-            await focusNameField()
-        }
     }
 
     private var canSubmit: Bool {
@@ -477,10 +475,89 @@ private struct NameInputSheet: View {
         guard canSubmit else { return }
         onSubmit()
     }
+}
+
+private struct FocusedNameTextField: NSViewRepresentable {
+    let placeholder: String
+    @Binding var text: String
+    let onSubmit: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text, onSubmit: onSubmit)
+    }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let textField = NSTextField()
+        textField.placeholderString = placeholder
+        textField.stringValue = text
+        textField.bezelStyle = .roundedBezel
+        textField.isEditable = true
+        textField.isSelectable = true
+        textField.delegate = context.coordinator
+        textField.target = context.coordinator
+        textField.action = #selector(Coordinator.submit(_:))
+        textField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        textField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return textField
+    }
+
+    func updateNSView(_ textField: NSTextField, context: Context) {
+        context.coordinator.text = $text
+        context.coordinator.onSubmit = onSubmit
+
+        if textField.placeholderString != placeholder {
+            textField.placeholderString = placeholder
+        }
+
+        if textField.stringValue != text {
+            textField.stringValue = text
+        }
+
+        context.coordinator.focus(textField)
+    }
 
     @MainActor
-    private func focusNameField() async {
-        await Task.yield()
-        isNameFocused = true
+    final class Coordinator: NSObject, NSTextFieldDelegate {
+        var text: Binding<String>
+        var onSubmit: () -> Void
+        private var didRequestFocus = false
+
+        init(text: Binding<String>, onSubmit: @escaping () -> Void) {
+            self.text = text
+            self.onSubmit = onSubmit
+        }
+
+        func controlTextDidChange(_ notification: Notification) {
+            guard let textField = notification.object as? NSTextField else { return }
+            text.wrappedValue = textField.stringValue
+        }
+
+        @objc func submit(_ sender: NSTextField) {
+            text.wrappedValue = sender.stringValue
+            onSubmit()
+        }
+
+        func focus(_ textField: NSTextField) {
+            guard !didRequestFocus else { return }
+            didRequestFocus = true
+
+            focusNow(textField)
+            Task { @MainActor in
+                focusNow(textField)
+            }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                focusNow(textField)
+            }
+        }
+
+        private func focusNow(_ textField: NSTextField) {
+            guard let window = textField.window else { return }
+            guard textField.currentEditor() == nil else { return }
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            window.makeKey()
+            window.makeFirstResponder(textField)
+            textField.selectText(nil)
+        }
     }
 }
