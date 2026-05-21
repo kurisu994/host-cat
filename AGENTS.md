@@ -11,24 +11,28 @@
 
 ## 当前项目状态
 
-- 当前是 SwiftPM 基础框架，不是完整 Xcode 发布工程。
-- `HostCatApp` 已实现菜单栏预览体验、编辑窗口（支持分组折叠、拖拽排序、双击重命名、删除确认）和合成预览窗口。
-- `HostCatPrivilegedHelper` 只是可执行 target 骨架，不会写 `/etc/hosts`。
+- 当前已通过 `xcodegen` 迁移为标准 Xcode 工程，支持构建带 Privileged Helper 的 macOS App。
+- `HostCatApp` 已实现菜单栏预览体验、编辑窗口、合成预览窗口，以及 Helper 安装引导和备份恢复界面。
+- `HostCatPrivilegedHelper` 已实现基于 `SMAppService` 注册的 XPC 服务，支持安全的 `/etc/hosts` 真实写入和 DNS 刷新。
 - `HostCatCore` 已包含模型、parser、merge、conflict、hash、importer、config storage、mutation service、write coordinator 和 backup store。
 - 节点激活统一使用多选模式，`isSingleSelect` 字段保留但 UI 不再暴露切换入口。
-- 阶段 1（安全预览版）已完成，尚未接入真实 `SMAppService` 和 XPC 写入。
-- 当前可验证命令是 `swift test` 和 `swift build`。
+- 阶段 2（真实写入版）已完成，包含安全的外部修改检测和原子备份机制。
+- 当前主要验证命令是 `xcodegen generate` 和 `xcodebuild`，同时保留 `swift test` 用于核心逻辑验证。
 
 ## 常用命令
 
 ```bash
-swift build
+# 生成工程
+xcodegen generate
+
+# 命令行构建
+xcodebuild build -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'
+
+# 核心单测
 swift test
-swift run HostCatApp
-swift run HostCatPrivilegedHelper
 ```
 
-如果沙盒限制导致 SwiftPM 无法写用户级 Swift/Clang cache，需要请求用户批准后再运行构建或测试命令。
+如果沙盒限制导致无法写用户级 cache，需要请求用户批准后再运行构建或测试命令。
 
 ## 模块边界
 

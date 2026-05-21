@@ -6,6 +6,12 @@
 
 ### Added
 
+- **【阶段 2 完成】真实写入版已完成：使用 xcodegen 迁移为标准 Xcode 工程，实现真实 XPC 服务、安全写入和完整的 UI 交互。**
+- 添加 `HostCatHelperClient` 真实 XPC 连接封装，实现 SMAppService 注册与开机启动管理。
+- 添加 Privileged Helper (`HostCatPrivilegedHelper`)，基于安全策略执行真实 `/etc/hosts` 写入、权限设置和 DNS 刷新。
+- 添加写入前自动备份、`ExternalModificationDetector` 外部修改检测及 UI 决策覆盖。
+- 增强 HostCatApp UI，包括 Helper 注册引导 (`HelperSetupView`)、备份管理恢复 (`BackupRestoreView`)。
+- 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包。
 - 搭建 SwiftPM 基础开发框架，包含 `HostCatApp`、`HostCatCore`、`HostCatHelperClient`、`HostCatPrivilegedHelper` 和 `HostCatCoreTests`。
 - 添加 `HostCatCore` 数据模型：`AppConfig`、`HostGroup`、`HostNode`、`AppSettings` 和 `AppStateMetadata`。
 - 添加 hosts parser，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
@@ -69,8 +75,6 @@
 
 ### Not Yet Implemented
 
-- 真实 `SMAppService` 注册和审批流程。
-- 真实 XPC 连接与 code signing requirement 验证。
-- 真实 `/private/etc/hosts` 写入、备份、回滚和 DNS 缓存刷新。
 - 语法高亮和冲突解决 UI。
-- 签名、公证、DMG 和 GitHub Release 发布流水线。
+- GitHub Release CI/CD 发布流水线。
+- 自动更新 (Sparkle) 和 iCloud 同步。

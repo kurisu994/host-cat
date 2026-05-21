@@ -22,6 +22,14 @@ struct MergedPreviewView: View {
                 Button("刷新") {
                     viewModel.updateMergedPreview()
                 }
+
+                Button("立即应用") {
+                    Task {
+                        _ = await viewModel.applyImmediately()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.isApplying || !viewModel.lastConflicts.isEmpty)
             }
             .padding()
 

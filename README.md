@@ -2,7 +2,7 @@
 
 HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。目标是提供菜单栏驱动的 hosts 配置切换、分组、节点和跨组组合能力。
 
-当前仓库处于基础开发框架阶段：已经有 SwiftPM 分层骨架、核心 hosts 解析/合并逻辑和单元测试；还没有接入真实 `SMAppService` Helper 注册、签名、公证、DMG 分发和真实 `/etc/hosts` 写入。
+当前仓库处于真实写入版阶段：已经通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、备份恢复、外部修改检测和完整的菜单栏交互，支持签名导出和 DMG 打包。
 
 ## 当前能力
 
@@ -54,31 +54,29 @@ xcodebuild -version
 
 ## 快速开始
 
-构建：
+使用 xcodegen 生成 Xcode 工程：
 
 ```bash
-swift build
+xcodegen generate
 ```
 
-测试：
+用 Xcode 打开生成的 `HostCat.xcodeproj`，或者使用命令行构建：
+
+```bash
+xcodebuild build -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'
+```
+
+运行单元测试（也可以直接用 SwiftPM）：
 
 ```bash
 swift test
 ```
 
-运行当前菜单栏骨架：
+打包 Release DMG（将输出到 `build/HostCat.dmg`）：
 
 ```bash
-swift run HostCatApp
+./scripts/build-release.sh
 ```
-
-运行当前 Helper 骨架：
-
-```bash
-swift run HostCatPrivilegedHelper
-```
-
-当前 Helper 只打印骨架信息，不会写入 `/etc/hosts`。
 
 ## 项目结构
 
@@ -130,11 +128,8 @@ swift run HostCatPrivilegedHelper
 
 ## 下一步
 
-阶段 1（安全预览版）已完成。接下来进入阶段 2（真实写入版）：
+阶段 2（真实写入版）已完成。接下来可以考虑：
 
-- 从 SwiftPM 骨架过渡到 Xcode app/helper target。
-- 接入 `SMAppService` 注册和 Privileged Helper 真实写入。
-- 实现 `NSXPCConnection` 封装和 code signing requirement 验证。
-- 完成安全写入策略：flags 检查、hash 校验、`mkstemp`、原子替换、DNS 刷新。
-- 接入自动备份、外部修改检测和导入/覆盖决策。
-- 配置签名、公证、DMG 打包和 GitHub Release 发布流水线。
+- 自动化 CI/CD 流水线（GitHub Actions）
+- UI 动画细节打磨与自动更新 (Sparkle)
+- iCloud 同步支持
