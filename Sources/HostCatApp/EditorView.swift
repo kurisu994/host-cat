@@ -23,15 +23,19 @@ struct EditorView: View {
         NavigationSplitView {
             VStack(spacing: 0) {
                 // 左侧：分组和节点树
-                List(selection: $selectedNodeID) {
+                List {
                     // 默认节点
                     Section("默认") {
                         NodeRow(
                             name: viewModel.config.defaultNode.name,
                             isActive: viewModel.config.defaultNode.isActive,
-                            isDefault: true
+                            isDefault: true,
+                            isSelected: selectedNodeID == viewModel.config.defaultNode.id
                         )
-                        .tag(viewModel.config.defaultNode.id)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedNodeID = viewModel.config.defaultNode.id
+                        }
                     }
 
                     // 分组
@@ -69,9 +73,13 @@ struct EditorView: View {
                                 NodeRow(
                                     name: node.name,
                                     isActive: node.isActive,
-                                    isDefault: false
+                                    isDefault: false,
+                                    isSelected: selectedNodeID == node.id
                                 )
-                                .tag(node.id)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    selectedNodeID = node.id
+                                }
                                 .contextMenu {
                                     Button("重命名") {
                                         editingNodeToRename = (group.id, node.id)
@@ -316,6 +324,7 @@ private struct NodeRow: View {
     let name: String
     let isActive: Bool
     let isDefault: Bool
+    let isSelected: Bool
 
     var body: some View {
         HStack {
@@ -330,6 +339,15 @@ private struct NodeRow: View {
                     .padding(.vertical, 1)
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(3)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
             }
         }
     }
