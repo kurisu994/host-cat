@@ -29,6 +29,9 @@
 - 菜单栏「查看合成 Hosts」入口打开预览窗口。
 - 添加 `BackupStore`，支持自动命名备份、保留策略（默认3份）、读取恢复。
 - 添加 `BackupStoreTests`，覆盖备份命名、列表排序、保留策略、读取内容。
+- 编辑器侧边栏交互增强：分组折叠/展开、分组和节点拖拽排序、双击分组名称和节点名称重命名、hover 显示删除按钮。
+- 统一为多选模式，移除单选/多选切换逻辑和 UI。
+- 分组和节点删除操作增加确认弹窗。
 
 ### Fixed
 
@@ -45,6 +48,8 @@
 - 修复合并输出中 group/node 名称换行可能注入 hosts 记录的问题。
 - 修复标准 `localhost` IPv4/IPv6 双栈条目被误判为冲突的问题。
 - 修复快速连续备份可能同名覆盖和保留顺序不稳定的问题。
+- 修复 macOS SwiftUI List 内 Section 嵌套 ForEach 无法拖拽排序的问题，改用 `onDrag` + `onDrop(delegate:)` 实现。
+- 修复菜单栏应用中分组重命名 TextField 无法获取键盘焦点的问题，通过 `setActivationPolicy(.regular)` 和 `@FocusState` 解决。
 
 ### Documentation
 
@@ -52,10 +57,15 @@
 - 新增 README、CHANGELOG 和 AGENTS 协作文档。
 - 更新 README，补充 `HostsImporter` 能力和阶段1当前进度。
 
+### Refactored
+
+- 拆分 `EditorView.swift`（747→362 行）为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
+- 拆分 `HostCatApp.swift`（230→79 行）为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
+
 ### Not Yet Implemented
 
 - 真实 `SMAppService` 注册和审批流程。
 - 真实 XPC 连接与 code signing requirement 验证。
 - 真实 `/private/etc/hosts` 写入、备份、回滚和 DNS 缓存刷新。
-- 完整编辑窗口、语法高亮、拖拽排序和冲突解决 UI。
+- 语法高亮和冲突解决 UI。
 - 签名、公证、DMG 和 GitHub Release 发布流水线。

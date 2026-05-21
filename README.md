@@ -1,6 +1,6 @@
 # HostCat
 
-HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。目标是提供菜单栏驱动的 hosts 配置切换、分组、节点、组内单选和跨组组合能力。
+HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。目标是提供菜单栏驱动的 hosts 配置切换、分组、节点和跨组组合能力。
 
 当前仓库处于基础开发框架阶段：已经有 SwiftPM 分层骨架、核心 hosts 解析/合并逻辑和单元测试；还没有接入真实 `SMAppService` Helper 注册、签名、公证、DMG 分发和真实 `/etc/hosts` 写入。
 
@@ -18,7 +18,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - JSON 配置存储，支持默认路径、版本校验、损坏恢复和原子写入。
   - hosts 导入与管理区块解析（`HostsImporter`），支持无区块、完整 v1 区块、缺 Begin、缺 End、未知版本，区块外内容提取为默认节点内容。
   - UTF-8 读取和 Latin-1 fallback，标记编码问题。
-  - 配置变更服务（`ConfigMutationService`），支持 group/node 增删改、排序、单选/多选激活行为，默认节点保护。
+  - 配置变更服务（`ConfigMutationService`），支持 group/node 增删改、排序、多选激活行为，默认节点保护。
   - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
   - 备份存储（`BackupStore`），支持自动命名、保留策略和读取恢复。
 - `HostCatHelperClient`：
@@ -27,7 +27,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - XPC protocol 边界草案（`HostCatHelperXPCProtocol`）。
 - `HostCatApp`：
   - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
-  - 编辑窗口 MVP：左侧分组/节点树、增删改排序、右侧 hosts 文本编辑。
+  - 编辑窗口：左侧分组/节点树，支持分组折叠、拖拽排序（分组和节点）、双击重命名、增删操作、右侧 hosts 文本编辑。
   - 合成预览窗口：展示最终 hosts 文本、重复条目合并数量、冲突详情和定位引导。
 - `HostCatPrivilegedHelper`：
   - 可执行 target 骨架。
@@ -86,6 +86,14 @@ swift run HostCatPrivilegedHelper
 ├── Package.swift
 ├── Sources
 │   ├── HostCatApp
+│   │   ├── HostCatApp.swift          # @main 入口、场景定义、设置视图
+│   │   ├── EditorView.swift          # 编辑器主视图
+│   │   ├── SidebarComponents.swift   # 侧边栏子组件（NodeRow、GroupHeader 等）
+│   │   ├── NameInputDialog.swift     # 名称输入弹窗和 NSTextField 封装
+│   │   ├── NodeReorderDropDelegate.swift  # 节点拖拽排序代理
+│   │   ├── MenuBarContentView.swift  # 菜单栏下拉内容视图
+│   │   ├── MergedPreviewView.swift   # 合成预览窗口
+│   │   └── WindowFocus.swift         # 窗口焦点管理工具
 │   ├── HostCatCore
 │   ├── HostCatHelperClient
 │   └── HostCatPrivilegedHelper
@@ -98,7 +106,7 @@ swift run HostCatPrivilegedHelper
 
 模块职责：
 
-- `HostCatApp`：SwiftUI app target，负责菜单栏、窗口和用户交互。
+- `HostCatApp`：SwiftUI app target，负责菜单栏、编辑器窗口、合成预览和用户交互。已拆分为多个资件文件。
 - `HostCatCore`：纯 Swift 业务核心，负责模型、parser、merge、冲突检测和 hash。
 - `HostCatHelperClient`：主应用内的 Helper client 边界，后续封装 `NSXPCConnection`。
 - `HostCatPrivilegedHelper`：未来以 root Launch Daemon 运行的写入 helper。

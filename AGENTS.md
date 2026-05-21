@@ -12,9 +12,10 @@
 ## 当前项目状态
 
 - 当前是 SwiftPM 基础框架，不是完整 Xcode 发布工程。
-- `HostCatApp` 已实现菜单栏预览体验、编辑窗口 MVP 和合成预览窗口。
+- `HostCatApp` 已实现菜单栏预览体验、编辑窗口（支持分组折叠、拖拽排序、双击重命名、删除确认）和合成预览窗口。
 - `HostCatPrivilegedHelper` 只是可执行 target 骨架，不会写 `/etc/hosts`。
 - `HostCatCore` 已包含模型、parser、merge、conflict、hash、importer、config storage、mutation service、write coordinator 和 backup store。
+- 节点激活统一使用多选模式，`isSingleSelect` 字段保留但 UI 不再暴露切换入口。
 - 阶段 1（安全预览版）已完成，尚未接入真实 `SMAppService` 和 XPC 写入。
 - 当前可验证命令是 `swift test` 和 `swift build`。
 
