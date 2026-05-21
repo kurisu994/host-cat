@@ -37,8 +37,15 @@ public struct ApplyResult: Equatable, Sendable {
     }
 }
 
+public protocol HostsMerging: Sendable {
+    func merge(_ config: AppConfig) throws -> MergedHosts
+}
+
+extension HostsMerger: HostsMerging {}
+
 public actor HostWriteCoordinator {
     private let helperClient: HostHelperClient
+    private let merger: HostsMerging
     private let debounceInterval: Duration
     private let logger = Logger(subsystem: "com.hostcat.app", category: "HostWriteCoordinator")
 
@@ -52,9 +59,11 @@ public actor HostWriteCoordinator {
 
     public init(
         helperClient: HostHelperClient,
+        merger: HostsMerging = HostsMerger(),
         debounceInterval: Duration = .milliseconds(500)
     ) {
         self.helperClient = helperClient
+        self.merger = merger
         self.debounceInterval = debounceInterval
     }
 
@@ -147,7 +156,7 @@ public actor HostWriteCoordinator {
         // 1. 合并配置并执行 parser 校验
         let merged: MergedHosts
         do {
-            merged = try HostsMerger().merge(config)
+            merged = try merger.merge(config)
             logger.info("合并成功: \(merged.records.count) 条记录, \(merged.duplicateCount) 条重复")
         } catch let HostMergeError.conflicts(conflicts) {
             logger.warning("合并冲突: \(conflicts.count) 个")

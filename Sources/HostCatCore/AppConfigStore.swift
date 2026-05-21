@@ -102,6 +102,10 @@ public struct AppConfigStore: Sendable {
         do {
             let data = try JSONEncoder.hostCatConfigEncoder.encode(config)
             try data.write(to: tempURL)
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: tempURL.path
+            )
 
             guard rename(tempURL.path, configURL.path) == 0 else {
                 throw AppConfigStoreError.atomicReplaceFailed(errno: errno)

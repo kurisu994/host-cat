@@ -61,8 +61,12 @@ public struct BackupStore: Sendable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         let now = Date()
         let timestamp = formatter.string(from: now)
-        let orderingToken = String(UInt64(now.timeIntervalSince1970 * 1_000_000_000))
-        let paddedOrderingToken = String(repeating: "0", count: max(0, 20 - orderingToken.count)) + orderingToken
+
+        // 使用 gettimeofday 获取微秒级精度，避免 Double 精度损失和 Y2038 后溢出风险
+        var tv = timeval()
+        gettimeofday(&tv, nil)
+        let orderingToken = UInt64(tv.tv_sec) * 1_000_000_000 + UInt64(tv.tv_usec) * 1_000
+        let paddedOrderingToken = String(format: "%020llu", orderingToken)
         let uniqueSuffix = UUID().uuidString.prefix(8)
         let filename = "\(Self.backupFilePrefix)\(timestamp)_\(paddedOrderingToken)_\(uniqueSuffix).\(Self.backupFileExtension)"
         let fileURL = backupDirectory.appendingPathComponent(filename)

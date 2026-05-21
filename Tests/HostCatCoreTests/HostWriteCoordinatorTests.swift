@@ -182,15 +182,15 @@ final class HostWriteCoordinatorTests: XCTestCase {
 }
 
 extension FakeHostHelperClient {
-    func setShouldSucceed(_ value: Bool) {
+    func setShouldSucceed(_ value: Bool) async {
         shouldSucceed = value
     }
 
-    func setSimulatedError(_ error: Error?) {
+    func setSimulatedError(_ error: Error?) async {
         simulatedError = error
     }
 
-    func setDelayNanoseconds(_ value: UInt64) {
+    func setDelayNanoseconds(_ value: UInt64) async {
         delayNanoseconds = value
     }
 }

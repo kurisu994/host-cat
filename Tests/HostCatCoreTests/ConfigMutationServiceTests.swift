@@ -216,6 +216,36 @@ final class ConfigMutationServiceTests: XCTestCase {
         XCTAssertEqual(config.defaultNode.name, "系统默认")
     }
 
+    // MARK: - Node Activation (Single-Select)
+
+    func testSingleSelectActivatesOneNode() {
+        let n1 = makeNode(name: "N1", isActive: true)
+        let n2 = makeNode(name: "N2", isActive: false)
+        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true, nodes: [n1, n2])])
+        let service = ConfigMutationService()
+        let groupID = config.groups[0].id
+
+        service.setNodeActive(id: n2.id, active: true, inGroup: groupID, in: &config)
+
+        // 单选模式：激活 N2 会自动停用 N1
+        XCTAssertFalse(config.groups[0].nodes[0].isActive)
+        XCTAssertTrue(config.groups[0].nodes[1].isActive)
+    }
+
+    func testSingleSelectAllowsDeactivatingCurrentNode() {
+        let n1 = makeNode(name: "N1", isActive: true)
+        let n2 = makeNode(name: "N2", isActive: false)
+        var config = makeConfig(groups: [makeGroup(name: "G", isSingleSelect: true, nodes: [n1, n2])])
+        let service = ConfigMutationService()
+        let groupID = config.groups[0].id
+
+        service.setNodeActive(id: n1.id, active: false, inGroup: groupID, in: &config)
+
+        // 单选模式允许手动停用当前节点，不自动激活其他节点
+        XCTAssertFalse(config.groups[0].nodes[0].isActive)
+        XCTAssertFalse(config.groups[0].nodes[1].isActive)
+    }
+
     // MARK: - Node Activation (Multi-Select)
 
     func testMultiSelectActivatesIndependently() {
