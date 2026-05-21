@@ -16,10 +16,11 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 同 IP + 同域名重复条目去重计数。
   - hosts 内容 SHA256 hash。
   - JSON 配置存储，支持默认路径、版本校验、损坏恢复和原子写入。
-  - hosts 导入与管理区块解析（`HostsImporter`），支持无区块、完整 v1 区块、缺 Begin、缺 End、未知版本，区块外内容提取为默认节点内容。
+  - hosts 导入与管理区块解析（`HostsImporter`），支持无区块、完整 v1 区块、缺 Begin、缺 End、未知版本，区块外内容提取为默认节点内容，并在 fallback 场景保全已有 HostCat 区块记录。
   - UTF-8 读取和 Latin-1 fallback，标记编码问题。
   - 配置变更服务（`ConfigMutationService`），支持 group/node 增删改、排序、多选激活行为，默认节点保护。
-  - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、成功快照和失败回滚。
+  - 配置草稿保存与 hosts 应用分离，写入失败时保留用户编辑内容并提示 hosts 未应用。
+  - 预览版写入协调器（`HostWriteCoordinator` actor），支持 debounce、冲突检测、首次写入 expected hash、成功快照和失败状态隔离。
   - 备份存储（`BackupStore`），支持自动命名、保留策略和读取恢复。
 - `HostCatHelperClient`：
   - Helper client 协议（`HostHelperClient`）。

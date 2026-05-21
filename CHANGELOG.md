@@ -10,7 +10,7 @@
 - 添加 `HostCatCore` 数据模型：`AppConfig`、`HostGroup`、`HostNode`、`AppSettings` 和 `AppStateMetadata`。
 - 添加 hosts parser，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
 - 添加 hosts 合并逻辑，支持默认节点参与、激活节点合并、重复条目去重和同域名不同 IP 冲突检测。
-- 添加 SHA256 hosts hash 工具，为后续外部修改检测和写入回滚打基础。
+- 添加 SHA256 hosts hash 工具，为后续外部修改检测和写入状态隔离打基础。
 - 添加 JSON 配置存储，支持默认配置创建、版本校验、损坏恢复和原子写入。
 - 添加最小 SwiftUI 菜单栏 app 骨架和 Privileged Helper 可执行 target 骨架。
 - 添加核心单元测试，覆盖配置初始化、hash 稳定性、parser、合并去重和冲突检测。
@@ -19,7 +19,7 @@
 - 支持首次启动时将管理区块外内容导入「默认」节点，避免重复导入。
 - 支持 UTF-8 读取和 Latin-1 fallback，标记编码问题并提示用户。
 - 添加 `HostsImporterTests`，覆盖全部解析场景和编码 fallback。
-- 添加 `ConfigMutationService`，提供 group/node 增删改、排序、单选/多选激活行为，默认节点不可删除/不可停用保护。
+- 添加 `ConfigMutationService`，提供 group/node 增删改、排序、多选激活行为，默认节点不可删除/不可停用保护。
 - 添加 `ConfigMutationServiceTests`，覆盖全部配置变更操作和边界行为。
 - 添加 `MenuBarViewModel`，管理菜单栏内存配置状态、节点激活切换、debounce 写入调度和错误展示。
 - 更新 `HostCatApp` 菜单栏 UI，支持分组标题展示、节点勾选切换、合成预览入口、冲突和错误提示。
@@ -37,7 +37,7 @@
 
 - 修复 `HostsParser` 对纯注释/空行内容误报 `emptyContent` 错误的问题，现在返回空记录数组。
 - 修复 `HostsMergerTests` 中重复的测试方法名 `testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed`。
-- 修复 `HostWriteCoordinator` 写入失败后未回滚内存状态的问题，现在返回 `rolledBackConfig` 供调用方恢复。
+- 修复 `HostWriteCoordinator` 写入失败后的状态隔离问题，现在返回 `rolledBackConfig` 供调用方判断真实 hosts 状态。
 - 放宽 `HostsParser` 的 hostname 校验，支持下划线 `_`。
 - 修复 `EditorView` 中 `ConfigMutationService` 被重复实例化的问题，改为统一使用 `@State` 属性。
 - 为 `HostsParser` 补充制表符分隔、下划线 hostname、纯注释/空内容等边界测试用例。
@@ -50,6 +50,11 @@
 - 修复快速连续备份可能同名覆盖和保留顺序不稳定的问题。
 - 修复 macOS SwiftUI List 内 Section 嵌套 ForEach 无法拖拽排序的问题，改用 `onDrag` + `onDrop(delegate:)` 实现。
 - 修复菜单栏应用中分组重命名 TextField 无法获取键盘焦点的问题，通过 `setActivationPolicy(.regular)` 和 `@FocusState` 解决。
+- 修复首次 hosts 写入缺少 expected hash 的问题，避免覆盖启动后外部修改。
+- 修复已有 HostCat 管理区块在配置缺失或恢复默认配置时可能被静默丢弃的问题。
+- 修复写入失败时菜单栏 ViewModel 可能丢弃用户配置草稿的问题，现在保留草稿并提示 hosts 未应用。
+- 修复旧 `isSingleSelect` 配置继续影响节点激活的问题，加载后统一规范化为多选行为。
+- 修复连续调度 apply 时旧任务可能覆盖最新 `isApplying` 状态的问题。
 
 ### Documentation
 

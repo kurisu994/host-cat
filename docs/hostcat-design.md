@@ -1,12 +1,12 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-20（补充 XPC 安全边界、状态快照、测试策略与分发流水线）
+最后更新：2026-05-21（同步多选模式、首次写入 hash 和草稿保留语义）
 竞品调研：[iHosts 竞品调研](./ihosts-research.md)
 
 ## 概述
 
-HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。核心定位是菜单栏驱动的 hosts 配置切换器，支持分组、节点、组内单选和跨组自由组合。
+HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。核心定位是菜单栏驱动的 hosts 配置切换器，支持分组、节点和跨组自由组合。
 
 发布路线为直接分发（公证签名 DMG / GitHub Release），不做 App Store 版本。
 
@@ -87,7 +87,7 @@ Privileged Helper (root, fixed /private/etc/hosts only)
 - `HostCatCore`：纯 Swift 模块，包含数据模型、hosts parser、合并规则、冲突检测、配置读写、备份索引和状态快照逻辑。此模块不依赖 SwiftUI、AppKit 或 ServiceManagement，便于单元测试。
 - `HostCatHelperClient`：主应用内的 XPC client 包装层，向上暴露 `async throws` API，向下封装 `NSXPCConnection`、code signing requirement 和错误映射。
 - `HostCatPrivilegedHelper`：root Helper 可执行文件，只负责固定路径写入、文件安全校验、DNS 刷新和错误回传。
-- `HostCatCoreTests`：覆盖 parser、merge、dedupe、conflict、encoding、配置迁移、状态回滚和 hosts 导入；Helper 的真实写入只放在签名后的集成或手动 smoke 测试中。
+- `HostCatCoreTests`：覆盖 parser、merge、dedupe、conflict、encoding、配置迁移、状态批次隔离和 hosts 导入；Helper 的真实写入只放在签名后的集成或手动 smoke 测试中。
 
 ## 核心数据模型
 
@@ -105,7 +105,7 @@ struct AppConfig: Codable, Sendable {
 struct HostGroup: Codable, Sendable, Identifiable {
     var id: UUID
     var name: String
-    var isSingleSelect: Bool         // 组内是否单选，默认 true
+    var isSingleSelect: Bool         // 历史兼容字段，加载后统一规范化为 false
     var nodes: [HostNode]            // 数组位置即排序顺序，首版不引入显式 sortOrder
 }
 
@@ -123,15 +123,15 @@ struct AppSettings: Codable, Sendable {
 struct AppStateMetadata: Codable, Sendable {
     var lastAppliedHostsHash: String?     // 上次成功写入后的 /private/etc/hosts 内容 hash
     var lastAppliedAt: Date?
-    var lastExternalHostsHash: String?    // 上次导入或确认处理的外部 hosts hash
+    var lastExternalHostsHash: String?    // 上次导入或确认处理的外部 hosts hash；首次写入时作为 expected hash
 }
 ```
 
-`AppStateMetadata` 持久化的是跨启动仍然有价值的事实，不保存正在进行的 Task、XPC connection 或 UI 临时状态。运行时另外由 `HostWriteCoordinator` actor 维护 `lastSuccessfulConfigSnapshot`、`pendingWriteID` 和当前 debounce task，用于失败回滚和批次隔离。
+`AppStateMetadata` 持久化的是跨启动仍然有价值的事实，不保存正在进行的 Task、XPC connection 或 UI 临时状态。运行时另外由 `HostWriteCoordinator` actor 维护 `lastSuccessfulConfigSnapshot`、`pendingWriteID` 和当前 debounce task，用于失败状态隔离和批次隔离。
 
-「默认」节点定义：应用内置一个不可删除的顶层节点「默认」，始终激活，不属于任何分组。首次启动时自动导入当前 `/etc/hosts` 中非 HostCat 管理区块的内容作为「默认」节点初始内容；导入完成后，HostCat 成为这部分内容的唯一编辑入口，后续写入时不再把同一段系统原始内容额外保留在标记区域外。这样可以避免原始 hosts 同时出现在「默认」节点和标记区外导致重复生效。
+「默认」节点定义：应用内置一个不可删除的顶层节点「默认」，始终激活，不属于任何分组。首次启动时自动导入当前 `/etc/hosts` 中非 HostCat 管理区块的内容作为「默认」节点初始内容，同时记录当前 hosts hash，保证首次写入也能检测启动后的外部修改；导入完成后，HostCat 成为这部分内容的唯一编辑入口，后续写入时不再把同一段系统原始内容额外保留在标记区域外。这样可以避免原始 hosts 同时出现在「默认」节点和标记区外导致重复生效。
 
-「默认」节点是可编辑节点，和普通节点一起参与语法校验、合并输出与冲突检测；区别仅在于它不可删除、不可停用、排序固定在菜单最顶部。若导入时发现 `/etc/hosts` 已包含 HostCat 管理区块，则优先解析管理区块恢复配置；只把管理区块外的内容导入「默认」节点，避免二次导入。
+「默认」节点是可编辑节点，和普通节点一起参与语法校验、合并输出与冲突检测；区别仅在于它不可删除、不可停用、排序固定在菜单最顶部。若导入时发现 `/etc/hosts` 已包含 HostCat 管理区块，则优先解析管理区块恢复配置；只把管理区块外的内容导入「默认」节点，避免二次导入。如果配置文件缺失或损坏导致只能恢复默认配置，fallback 内容会去掉 HostCat 起止 marker 但保留区块内已有 hosts 记录，避免静默丢弃用户曾由 HostCat 管理的记录。
 
 hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时按 UTF-8 解码；如果解码失败，回退到 Latin-1 读取并弹窗提示用户「hosts 文件编码异常，已按 Latin-1 读取。HostCat 写入时会转换为 UTF-8，建议先检查内容」。回退读取只用于最大程度展示和备份原内容，不承诺 byte-for-byte 保留；HostCat 写出时统一使用 UTF-8 编码。
 
@@ -144,7 +144,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 目标：不写入 `/etc/hosts`，先完成 HostCat 的核心模型、编辑体验和合成规则。
 
 - 菜单栏采用平铺 + 标题分隔符风格：分组名作为不可点击的标题分隔符，组内节点平铺显示为可勾选菜单项，节点右侧显示快捷数字键。
-- 支持分组、节点、组内单选。
+- 支持分组、节点和多选激活；旧配置中的 `isSingleSelect` 字段仅保留兼容，加载后统一规范化为多选行为。
 - 支持在编辑窗口中对节点和分组进行拖拽排序（上移/下移）。菜单栏 `NSMenu` 不支持原生拖拽，排序操作统一在编辑窗口的树形列表中完成。
 - 支持编辑节点 hosts 文本（纯文本编辑器 + 语法高亮 + 行号 + 错误标记）。
 - hosts 文本语法校验：每行可为空行、整行注释，或 `IP hostname [alias...] [# comment]`。首版支持 IPv4、IPv6、同一行多个 hostname / alias、连续空白和行尾注释；Apply 时高亮错误行。
@@ -164,7 +164,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持写入前检测 HostCat 管理区块外是否存在非空内容。如果有，弹窗告知用户「检测到 hosts 文件中有 HostCat 管理区块外的内容」，并提供三个选择：推荐的「导入到默认节点并继续」、保守的「取消写入」、显式风险选项「确认覆盖并不再保留」。默认按钮为导入，禁止用含糊的「忽略」表达可能丢失内容的操作。
 - 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
 - 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
-- 支持 Helper 注册、审批状态检测、重新注册引导和写入失败回滚。
+- 支持 Helper 注册、审批状态检测、重新注册引导和写入失败状态隔离。
 
 ### 暂缓功能
 
@@ -273,14 +273,14 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 1. **即时更新 UI**：用户每次点击菜单栏节点，`@MainActor` 上立即更新内存配置和菜单勾选状态，体验上零延迟。
 2. **延迟写入 `/etc/hosts`（debounce 500ms）**：每次状态变更重置 500ms 计时器，最后一次变更后 500ms 无新操作才执行写入。只写入最终累积状态，中间状态全部丢弃。实现上使用 `Task` + `Task.sleep(for:)` 配合取消前序 Task 即可。
 3. **写入中视觉反馈**：菜单栏图标短暂显示小圆点或微动画表示「正在应用」，写入完成后恢复正常图标。不在菜单内加 spinner，避免过重。
-4. **写入失败回滚**：写入期间新的用户操作排入下一批 debounce，不与当前写入批次混合。写入失败时只回滚当前失败批次的状态到上次成功写入的快照，保留写入期间新产生的用户操作待下次 debounce 重试。菜单勾选同步回滚到与实际 hosts 文件一致的状态，弹窗提示错误原因。
+4. **写入失败处理**：写入期间新的用户操作排入下一批 debounce，不与当前写入批次混合。写入失败时不丢弃用户配置草稿；配置先作为草稿持久化，hosts 保持未应用状态，并向用户提示错误原因。`HostWriteCoordinator` 仍维护上次成功快照供服务层判定真实 hosts 状态，但 UI 不用旧快照覆盖用户正在编辑的草稿。
 
 状态批次规则：
 
 - 每次计划写入生成一个 `writeID`，同时捕获本批次的 `configSnapshot`、`expectedCurrentHostsHash` 和合成后的 hosts 文本。
 - `HostWriteCoordinator` actor 串行处理写入。写入开始后，后续用户操作只更新新的待写入快照，不修改正在写入的批次。
 - 写入成功后，更新 `lastSuccessfulConfigSnapshot`、`lastAppliedHostsHash` 和 `lastAppliedAt`，再持久化配置。
-- 写入失败时，只对失败的 `writeID` 做回滚。如果失败期间已经产生更新的待写入批次，不丢弃这些新操作；下一次 debounce 继续尝试写入最新快照。
+- 写入失败时，保留当前配置草稿并提示 hosts 未应用。如果失败期间已经产生更新的待写入批次，不丢弃这些新操作；下一次 debounce 继续尝试写入最新快照。
 - 如果失败原因是 `expectedCurrentHostsHash` 不匹配，不自动重试。必须先让用户选择导入、取消或明确覆盖。
 
 ## 测试策略
@@ -290,11 +290,11 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 单元测试必须覆盖：
 
 - hosts parser：空行、整行注释、行尾注释、IPv4、IPv6、多 hostname、连续空白、非法 IP、非法 hostname。
-- 合并规则：默认节点固定参与、组内单选、跨组组合、重复条目静默去重、同域名不同 IP 冲突阻止。
+- 合并规则：默认节点固定参与、多选激活、跨组组合、重复条目静默去重、同域名不同 IP 冲突阻止。
 - 管理区块解析：无 HostCat 区块、完整 v1 区块、缺 Begin、缺 End、版本号未知、区块外内容导入。
 - 编码处理：UTF-8 正常读取、Latin-1 回退提示、写出统一 UTF-8。
 - 配置存储：`configVersion`、JSON 损坏恢复、原子写入失败不破坏旧配置、未来迁移入口。
-- 状态批次：debounce 合并、写入成功更新快照、写入失败回滚当前批次、失败期间新操作保留、hash 不匹配不自动覆盖。
+- 状态批次：debounce 合并、写入成功更新快照、写入失败保留配置草稿、失败期间新操作保留、hash 不匹配不自动覆盖。
 
 Helper 测试分层处理：
 
@@ -345,7 +345,7 @@ HostCat.xcodeproj
 - **Helper 更新策略**：`SMAppService` 的 Helper 在 app bundle 内，更新 app 即更新 Helper 二进制，注册状态和用户审批保持不变。启动时检查 `service.status`，如果变为 `notRegistered` 则重新 `register()`。
 - **导入已有 hosts**：首次启动时自动导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点；「默认」节点可编辑、不可删除、不可停用，并参与冲突检测。
 - **应用名称**：`HostCat`。"Host" 直接点题，"Cat" 一语双关（Unix `cat` 命令 + 猫咪品牌形象），与 bundle ID（`com.hostcat.*`）和标记格式一致。
-- **菜单栏节流策略**：两阶段模型——点击后立即更新内存状态和菜单 UI，实际写入 debounce 500ms。写入期间菜单栏图标微动画提示，失败时只回滚当前失败批次状态并弹窗，写入期间新产生的用户操作保留待下次 debounce 重试。
+- **菜单栏节流策略**：两阶段模型——点击后立即更新内存状态和菜单 UI，实际写入 debounce 500ms。写入期间菜单栏图标微动画提示，失败时保留配置草稿并提示 hosts 未应用，写入期间新产生的用户操作保留待下次 debounce 重试。
 - **菜单栏展示风格**：平铺 + 标题分隔符。分组名作为不可点击的标题分隔符，组内节点平铺为可勾选菜单项。
 - **排序操作归属**：拖拽排序在编辑窗口的树形列表中完成，菜单栏不支持拖拽。
 - **合并去重策略**：合并输出时静默去重，同域名 + 同 IP 只保留第一次出现；预览界面标注合并数量。

@@ -240,7 +240,7 @@ final class ConfigMutationServiceTests: XCTestCase {
 
         service.setNodeActive(id: n1.id, active: false, inGroup: groupID, in: &config)
 
-        // 单选模式允许手动停用当前节点，不自动激活其他节点
+        // 历史单选字段保留兼容；手动停用当前节点时不自动激活其他节点
         XCTAssertFalse(config.groups[0].nodes[0].isActive)
         XCTAssertFalse(config.groups[0].nodes[1].isActive)
     }
