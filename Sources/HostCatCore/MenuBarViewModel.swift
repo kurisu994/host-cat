@@ -45,6 +45,7 @@ public final class MenuBarViewModel: ObservableObject {
     private let coordinator: HostWriteCoordinator
     private let configStore: AppConfigStore
     private let logger = Logger(subsystem: "com.hostcat.app", category: "MenuBarViewModel")
+    private var applyGeneration = 0
 
     public init(
         config: AppConfig,
@@ -120,49 +121,20 @@ public final class MenuBarViewModel: ObservableObject {
         isApplying = true
         applyError = nil
         lastConflicts = []
+        let generation = nextApplyGeneration()
 
         Task {
             guard persistDraftConfig() else {
-                isApplying = false
+                finishApplyIfCurrent(generation)
                 return
             }
 
             let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config)
-
+            guard isCurrentApplyGeneration(generation) else {
+                return
+            }
             isApplying = false
-
-            if !result.success, rolledBackConfig != nil {
-                logger.warning("写入失败，保留当前配置草稿，hosts 未应用")
-            }
-
-            if result.success {
-                // 更新 config 中的状态
-                if let hash = result.appliedHash {
-                    config.state.lastAppliedHostsHash = hash
-                }
-                if let at = result.appliedAt {
-                    config.state.lastAppliedAt = at
-                }
-
-                // 持久化配置
-                do {
-                    try configStore.save(config)
-                    logger.info("配置持久化成功")
-                } catch {
-                    logger.error("配置持久化失败: \(error.localizedDescription)")
-                    applyError = "配置保存失败: \(error.localizedDescription)"
-                }
-
-                // 更新合并预览
-                updateMergedPreview()
-            } else if let conflicts = result.conflicts {
-                lastConflicts = conflicts
-                applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
-                logger.warning("合并冲突: \(conflicts.count) 个")
-            } else if let errorMessage = result.errorMessage {
-                applyError = "hosts 未应用: \(errorMessage)"
-                logger.error("应用失败，hosts 未应用: \(errorMessage)")
-            }
+            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "写入失败")
         }
     }
 
@@ -170,9 +142,10 @@ public final class MenuBarViewModel: ObservableObject {
         isApplying = true
         applyError = nil
         lastConflicts = []
+        let generation = nextApplyGeneration()
 
         guard persistDraftConfig() else {
-            isApplying = false
+            finishApplyIfCurrent(generation)
             let message = applyError ?? "配置保存失败"
             return ApplyResult(
                 success: false,
@@ -183,10 +156,22 @@ public final class MenuBarViewModel: ObservableObject {
 
         let (result, rolledBackConfig) = await coordinator.applyImmediately(config: config)
 
+        guard isCurrentApplyGeneration(generation) else {
+            return result
+        }
         isApplying = false
+        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "即时应用失败")
 
+        return result
+    }
+
+    private func handleApplyCompletion(
+        result: ApplyResult,
+        rolledBackConfig: AppConfig?,
+        failureLogPrefix: String
+    ) {
         if !result.success, rolledBackConfig != nil {
-            logger.warning("即时应用失败，保留当前配置草稿，hosts 未应用")
+            logger.warning("\(failureLogPrefix)，保留当前配置草稿，hosts 未应用")
         }
 
         if result.success {
@@ -198,22 +183,20 @@ public final class MenuBarViewModel: ObservableObject {
             }
             do {
                 try configStore.save(config)
-                logger.info("即时应用配置持久化成功")
+                logger.info("应用配置持久化成功")
             } catch {
-                logger.error("即时应用配置持久化失败: \(error.localizedDescription)")
+                logger.error("应用配置持久化失败: \(error.localizedDescription)")
                 applyError = "配置保存失败: \(error.localizedDescription)"
             }
             updateMergedPreview()
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
             applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
-            logger.warning("即时应用冲突: \(conflicts.count) 个")
+            logger.warning("应用冲突: \(conflicts.count) 个")
         } else if let errorMessage = result.errorMessage {
             applyError = "hosts 未应用: \(errorMessage)"
-            logger.error("即时应用失败，hosts 未应用: \(errorMessage)")
+            logger.error("\(failureLogPrefix)，hosts 未应用: \(errorMessage)")
         }
-
-        return result
     }
 
     private func persistDraftConfig() -> Bool {
@@ -226,6 +209,20 @@ public final class MenuBarViewModel: ObservableObject {
             applyError = "配置保存失败: \(error.localizedDescription)"
             return false
         }
+    }
+
+    private func nextApplyGeneration() -> Int {
+        applyGeneration += 1
+        return applyGeneration
+    }
+
+    private func isCurrentApplyGeneration(_ generation: Int) -> Bool {
+        generation == applyGeneration
+    }
+
+    private func finishApplyIfCurrent(_ generation: Int) {
+        guard isCurrentApplyGeneration(generation) else { return }
+        isApplying = false
     }
 
     // MARK: - Preview

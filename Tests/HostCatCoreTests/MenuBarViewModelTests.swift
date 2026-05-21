@@ -73,6 +73,24 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertEqual(saved.defaultNode.content, "10.0.0.1 scheduled-draft.test\n")
     }
 
+    func testCancelledOlderApplyDoesNotClearApplyingStateForNewerApply() async {
+        let helper = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(200))
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+
+        viewModel.scheduleApply()
+        viewModel.scheduleApply()
+        try? await Task.sleep(nanoseconds: 20_000_000)
+
+        XCTAssertTrue(viewModel.isApplying)
+    }
+
     private func waitForApplyToFinish(
         _ viewModel: MenuBarViewModel,
         timeoutNanoseconds: UInt64 = 1_000_000_000
