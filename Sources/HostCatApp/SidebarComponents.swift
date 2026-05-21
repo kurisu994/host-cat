@@ -6,11 +6,20 @@ struct NodeRow: View {
     let isActive: Bool
     let isDefault: Bool
     let isSelected: Bool
+    /// 点击激活图标时的回调，nil 表示不可切换（如默认节点）
+    var onToggleActive: (() -> Void)? = nil
 
     var body: some View {
         HStack {
+            // 激活状态图标，非默认节点可点击切换
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isActive ? .green : .secondary)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onToggleActive?()
+                }
+                .allowsHitTesting(onToggleActive != nil)
+
             Text(name)
 
             Spacer()

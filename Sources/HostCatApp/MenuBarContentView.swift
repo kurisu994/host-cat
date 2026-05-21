@@ -14,35 +14,22 @@ struct MenuBarContentView: View {
         Divider()
 
         // 默认节点（始终激活，不可切换）
-        Button {
-            // 默认节点不可停用
-        } label: {
-            HStack {
-                Image(systemName: "checkmark")
-                    .opacity(viewModel.defaultNodeItem.isActive ? 1 : 0)
-                Text(viewModel.defaultNodeItem.name)
-            }
-        }
-        .disabled(true)
+        Toggle(viewModel.defaultNodeItem.name, isOn: .constant(true))
+            .disabled(true)
 
         Divider()
 
-        // 分组和节点
+        // 分组和节点，使用 Toggle 映射到 NSMenuItem 原生 checkmark
         ForEach(viewModel.groupItems) { group in
             Text(group.name)
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
             ForEach(group.nodes) { node in
-                Button {
-                    viewModel.toggleNode(id: node.id, inGroup: node.groupID)
-                } label: {
-                    HStack {
-                        Image(systemName: "checkmark")
-                            .opacity(node.isActive ? 1 : 0)
-                        Text(node.name)
-                    }
-                }
+                Toggle(
+                    node.name,
+                    isOn: nodeActiveBinding(nodeID: node.id, groupID: node.groupID)
+                )
             }
 
             Divider()
@@ -80,5 +67,22 @@ struct MenuBarContentView: View {
     private func openAppWindow(id: String, title: String) {
         openWindow(id: id)
         WindowFocus.focusSoon(title: title)
+    }
+
+    /// 为指定节点创建 isActive 的双向绑定，Toggle 切换时自动同步 config 并触发应用
+    private func nodeActiveBinding(nodeID: UUID, groupID: UUID?) -> Binding<Bool> {
+        Binding(
+            get: {
+                guard let groupID = groupID,
+                      let group = viewModel.config.groups.first(where: { $0.id == groupID }),
+                      let node = group.nodes.first(where: { $0.id == nodeID }) else {
+                    return false
+                }
+                return node.isActive
+            },
+            set: { _ in
+                viewModel.toggleNode(id: nodeID, inGroup: groupID)
+            }
+        )
     }
 }

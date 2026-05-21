@@ -73,7 +73,10 @@ struct EditorView: View {
                                         name: node.name,
                                         isActive: node.isActive,
                                         isDefault: false,
-                                        isSelected: selectedNodeID == node.id
+                                        isSelected: selectedNodeID == node.id,
+                                        onToggleActive: {
+                                            viewModel.toggleNode(id: node.id, inGroup: group.id)
+                                        }
                                     )
                                     .contentShape(Rectangle())
                                     .onTapGesture {
