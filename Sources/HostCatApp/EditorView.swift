@@ -347,7 +347,7 @@ private struct NodeRow: View {
         .background {
             if isSelected {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
+                    .fill(Color.accentColor.opacity(0.18))
             }
         }
     }
