@@ -31,35 +31,6 @@ final class HostsMergerTests: XCTestCase {
         XCTAssertEqual(merged.duplicateCount, 1)
     }
 
-    func testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed() throws {
-        let config = AppConfig(
-            configVersion: 1,
-            defaultNode: HostNode(name: "默认", content: "127.0.0.1 localhost\n", isActive: true),
-            groups: [
-                HostGroup(
-                    name: "项目 A",
-                    isSingleSelect: true,
-                    nodes: [
-                        HostNode(name: "开发", content: "127.0.0.1 localhost\n10.0.0.2 api.test\n", isActive: true),
-                        HostNode(name: "生产", content: "10.0.0.3 api.test\n", isActive: false)
-                    ]
-                )
-            ],
-            settings: AppSettings(launchAtLogin: false),
-            state: AppStateMetadata()
-        )
-
-        let merged = try HostsMerger().merge(config)
-
-        XCTAssertTrue(merged.text.contains("# 默认"))
-        XCTAssertTrue(merged.text.contains("# [项目 A]"))
-        XCTAssertTrue(merged.text.contains("# 开发"))
-        XCTAssertTrue(merged.text.contains("127.0.0.1 localhost"))
-        XCTAssertTrue(merged.text.contains("10.0.0.2 api.test"))
-        XCTAssertFalse(merged.text.contains("10.0.0.3 api.test"))
-        XCTAssertEqual(merged.duplicateCount, 1)
-    }
-
     func testMultipleGroupsMergeCorrectly() throws {
         let config = AppConfig(
             configVersion: 1,

@@ -10,7 +10,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 - Swift 6 strict concurrency 配置。
 - `HostCatCore`：
   - 应用配置、分组、节点和状态元数据模型。
-  - hosts 文本解析，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
+  - hosts 文本解析，支持 IPv4、IPv6、多 hostname、行尾注释、制表符分隔、下划线 hostname 和基础错误定位。
   - hosts 合并输出，包含 HostCat 管理区块。
   - 同域名不同 IP 冲突检测。
   - 同 IP + 同域名重复条目去重计数。

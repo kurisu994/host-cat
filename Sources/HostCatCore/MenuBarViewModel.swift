@@ -121,9 +121,15 @@ public final class MenuBarViewModel: ObservableObject {
         lastConflicts = []
 
         Task {
-            let result = await coordinator.scheduleApply(config: config)
+            let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config)
 
             isApplying = false
+
+            // 如果写入失败且有回滚配置，恢复内存状态
+            if !result.success, let rolledBack = rolledBackConfig {
+                config = rolledBack
+                logger.warning("写入失败，配置已回滚到上次成功状态")
+            }
 
             if result.success {
                 // 更新 config 中的状态
@@ -161,9 +167,15 @@ public final class MenuBarViewModel: ObservableObject {
         applyError = nil
         lastConflicts = []
 
-        let result = await coordinator.applyImmediately(config: config)
+        let (result, rolledBackConfig) = await coordinator.applyImmediately(config: config)
 
         isApplying = false
+
+        // 如果写入失败且有回滚配置，恢复内存状态
+        if !result.success, let rolledBack = rolledBackConfig {
+            config = rolledBack
+            logger.warning("即时应用失败，配置已回滚到上次成功状态")
+        }
 
         if result.success {
             if let hash = result.appliedHash {

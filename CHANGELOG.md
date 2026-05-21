@@ -30,6 +30,16 @@
 - 添加 `BackupStore`，支持自动命名备份、保留策略（默认3份）、读取恢复。
 - 添加 `BackupStoreTests`，覆盖备份命名、列表排序、保留策略、读取内容。
 
+### Fixed
+
+- 修复 `HostsParser` 对纯注释/空行内容误报 `emptyContent` 错误的问题，现在返回空记录数组。
+- 修复 `HostsMergerTests` 中重复的测试方法名 `testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed`。
+- 修复 `HostWriteCoordinator` 写入失败后未回滚内存状态的问题，现在返回 `rolledBackConfig` 供调用方恢复。
+- 放宽 `HostsParser` 的 hostname 校验，支持下划线 `_`。
+- 修复 `EditorView` 中 `ConfigMutationService` 被重复实例化的问题，改为统一使用 `@State` 属性。
+- 为 `HostsParser` 补充制表符分隔、下划线 hostname、纯注释/空内容等边界测试用例。
+- 为 `AppStateMetadata.lastExternalHostsHash` 添加预留注释，说明阶段2外部修改检测用途。
+
 ### Documentation
 
 - 补充开发方案设计，明确 XPC 安全边界、状态快照、写入安全策略、测试策略和构建分发策略。
