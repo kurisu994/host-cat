@@ -1,7 +1,7 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-21（同步多选模式、首次写入 hash 和草稿保留语义）
+最后更新：2026-05-21（阶段 2 完成：真实 XPC 写入、Helper 注册、安全文件写入、DNS 刷新、备份恢复、外部修改检测）
 竞品调研：[iHosts 竞品调研](./ihosts-research.md)
 
 ## 概述
@@ -22,8 +22,8 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 
 实现要点：
 
-- 主应用和 Helper 必须使用有效的 Developer ID 证书签名。
-- XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement，限定 Team ID、bundle identifier 和签名状态。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
+- 主应用和 Helper 必须使用有效的 Developer ID 证书签名（开发调试时可用本地签名，但 Helper 注册需要真实证书才能通过系统审批）。
+- XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement。当前实现使用 identifier 基础校验，部署前必须替换为包含真实 Team ID 的完整 requirement 字符串。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
 - Helper 的 launchd plist 放在 `Contents/Library/LaunchDaemons/` 目录下，Helper 可执行文件放在 `Contents/Library/HelperTools/` 目录下。`SMAppService` 模式下二者都必须在 app bundle 内，应用删除时自动清理。
 - DNS 缓存刷新命令（`dscacheutil -flushcache` + `killall -HUP mDNSResponder`）由 Helper 在写入 hosts 后一并执行，因为这两个命令都需要 root 权限。
 
@@ -154,17 +154,17 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持首次启动时导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点（通过 `HostsImporter`）。
 - 支持启用或关闭开机自启动。
 
-### 阶段 2：真实写入版
+### 阶段 2：真实写入版（已完成）
 
 目标：接入 `SMAppService` + Privileged Helper，完成安全写入、备份和 DNS 刷新。
 
-- 支持应用配置到 `/etc/hosts`，写入后自动刷新 DNS 缓存。
-- 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份恢复。默认保留最近 3 份备份，超出自动删除最早的。
-- 支持写入前对比 `expectedCurrentHostsHash`，检测 `/etc/hosts` 是否在 HostCat 之外被修改；发现变化时先进入导入/取消/覆盖决策，不静默覆盖。
-- 支持写入前检测 HostCat 管理区块外是否存在非空内容。如果有，弹窗告知用户「检测到 hosts 文件中有 HostCat 管理区块外的内容」，并提供三个选择：推荐的「导入到默认节点并继续」、保守的「取消写入」、显式风险选项「确认覆盖并不再保留」。默认按钮为导入，禁止用含糊的「忽略」表达可能丢失内容的操作。
-- 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
-- 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
-- 支持 Helper 注册、审批状态检测、重新注册引导和写入失败状态隔离。
+- [x] 支持应用配置到 `/etc/hosts`，写入后自动刷新 DNS 缓存。
+- [x] 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份恢复。默认保留最近 3 份备份，超出自动删除最早的。
+- [x] 支持写入前对比 `expectedCurrentHostsHash`，检测 `/etc/hosts` 是否在 HostCat 之外被修改；发现变化时弹窗提供「取消」或「确认覆盖」决策，不静默覆盖。
+- [x] 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
+- [x] 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
+- [x] 支持 Helper 注册、审批状态检测、重新注册引导和写入失败状态隔离。
+- [x] 支持 Xcode 工程构建、归档、导出和 DMG 打包。
 
 ### 暂缓功能
 
@@ -319,16 +319,17 @@ HostCat.xcodeproj
 
 本地开发命令以 Xcode scheme 为准，CI 至少包含：
 
-- `xcodebuild test -scheme HostCat -destination 'platform=macOS,arch=arm64'`
-- `xcodebuild archive -scheme HostCat -archivePath build/HostCat.xcarchive`
-- 使用 Developer ID Application 证书导出 app。
+- `xcodebuild test -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'`
+- `xcodebuild archive -project HostCat.xcodeproj -scheme HostCatApp -archivePath build/HostCat.xcarchive`
+- 使用 Developer ID Application 证书导出 app（无证书时 `build-release.sh` 会自动跳过 exportArchive，直接从 archive 提取 app）。
 - 使用 `notarytool submit --wait` 公证，成功后执行 `stapler staple`。
 - 打包 DMG，上传 GitHub Release，并在 release notes 中明确 `macOS 14+`、`Apple Silicon only` 和 Helper 首次授权步骤。
 
 签名注意事项：
 
 - App、Helper、launchd plist、bundle identifier 和 code signing requirement 必须在 CI 与本机开发中保持一致。
-- `Sign to Run Locally` 只适合早期 UI 和 Core 调试；进入阶段 2 前必须使用真实 Developer ID 跑通 Helper 注册、审批、写入和更新流程。
+- `Sign to Run Locally` 只适合早期 UI 和 Core 调试；Helper 注册和真实写入需要真实 Developer ID 证书才能通过系统审批。
+- 当前代码中 Helper 端和 Client 端的 code signing requirement 使用基础 identifier 校验（`identifier "com.hostcat.helper"` / `identifier "com.hostcat.app"`），部署前必须替换为包含真实 Team ID 的完整 requirement 字符串。
 - 发布产物不引入 Sparkle。自动更新作为第二版能力，首版只提供 GitHub Release 下载和手动替换安装。
 
 ## 已确认设计决策

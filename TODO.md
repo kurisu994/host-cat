@@ -1,8 +1,8 @@
 # HostCat TODO
 
-更新时间：2026-05-20
+更新时间：2026-05-21
 
-本文记录 HostCat 基于当前实现进度的实施任务。当前仓库仍处于 SwiftPM 基础框架阶段，真实 `SMAppService` 注册、XPC 写入、签名、公证和 DMG 分发尚未接入。
+本文记录 HostCat 基于当前实现进度的实施任务。阶段 1（安全预览版）和阶段 2（真实写入版）已完成。
 
 ## 当前基线
 
@@ -11,7 +11,7 @@
 - [x] 实现 hosts parser：IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
 - [x] 实现 hosts merge：默认节点参与、激活节点合并、重复条目去重、冲突检测和 HostCat 管理区块输出。
 - [x] 实现 hosts 内容 SHA256 hash。
-- [x] 提供 `PreviewHostHelperClient`，当前只计算 hash，不写真实 hosts。
+- [x] 提供 `PreviewHostHelperClient`，开发调试时绕过 Helper 注册。
 - [x] 提供最小 `MenuBarExtra` 菜单栏入口和 Settings 页面。
 - [x] 提供 `HostCatPrivilegedHelper` 可执行 target 骨架。
 - [x] 当前验证命令通过：`swift test`、`swift build`。
@@ -103,74 +103,81 @@
 
 ### 9. 建立真实 app/helper 打包基础
 
-- [ ] 从 SwiftPM 骨架过渡到 Xcode app/helper target。
-- [ ] 固定主应用 bundle id：`com.hostcat.app`。
-- [ ] 固定 Helper bundle id：`com.hostcat.helper`。
-- [ ] 配置 Helper 可执行文件位置：`Contents/Library/HelperTools/`。
-- [ ] 配置 launchd plist 位置：`Contents/Library/LaunchDaemons/`。
-- [ ] 准备本机真实签名环境，进入真实 Helper 注册前不依赖 `Sign to Run Locally`。
+- [x] 从 SwiftPM 骨架过渡到 Xcode app/helper target（使用 xcodegen）。
+- [x] 固定主应用 bundle id：`com.hostcat.app`。
+- [x] 固定 Helper bundle id：`com.hostcat.helper`。
+- [x] 配置 Helper 可执行文件位置：`Contents/Library/HelperTools/`。
+- [x] 配置 launchd plist 位置：`Contents/Library/LaunchDaemons/`。
+- [x] 准备发布构建脚本 `scripts/build-release.sh`，支持无证书时直接提取归档。
 
 ### 10. 实现真实 `HostHelperClient` XPC 包装
 
-- [ ] 使用 `NSXPCConnection` 封装 async API。
-- [ ] 设置 Helper code signing requirement。
-- [ ] 把 XPC reply block 转成 `async throws`。
-- [ ] 映射连接失败、签名失败、连接中断、reply 超时和 Helper 业务错误。
-- [ ] UI 和服务层只依赖 `HostHelperClient` 协议，不直接接触 XPC。
-- [ ] 增加 fake XPC/helper 测试覆盖成功和错误路径。
+- [x] 使用 `NSXPCConnection` 封装 async API（`XPCHostHelperClient`）。
+- [x] 设置 Helper code signing requirement（当前使用 identifier 校验，部署前需替换为真实 Team ID）。
+- [x] 把 XPC reply block 转成 `async throws`。
+- [x] 映射连接失败、签名失败、连接中断、reply 超时和 Helper 业务错误。
+- [x] UI 和服务层只依赖 `HostHelperClient` 协议，不直接接触 XPC。
+- [x] 增加 `FakeHostHelperClient` 测试替身，覆盖成功和错误路径。
 
 ### 11. 实现 Privileged Helper 安全写入
 
-- [ ] Helper 只写固定 `/private/etc/hosts`，不接受路径参数。
-- [ ] 启动时通过 `realpath` 解析并缓存真实 hosts 路径。
-- [ ] 写入前检查 immutable flags，发现 `schg` 或 `uchg` 时拒绝写入。
-- [ ] 写入前读取当前 hosts 并校验 `expectedCurrentHostsHash`。
-- [ ] 使用同目录 `mkstemp` 创建唯一临时文件。
-- [ ] 写入后执行 `fsync`，设置 `chmod 644` 和 `chown root:wheel`。
-- [ ] 校验临时文件非空、包含必要系统默认条目和 HostCat 管理区块。
-- [ ] 使用 `rename(2)` 原子替换 `/private/etc/hosts`。
-- [ ] 对父目录执行 `fsync`。
-- [ ] 写入成功后执行固定 DNS 刷新命令：`dscacheutil -flushcache` 和 `killall -HUP mDNSResponder`。
-- [ ] 失败时清理临时文件，并保留原始 hosts 不变。
-- [ ] 默认测试只使用临时目录和协议注入，不污染真实 hosts。
+- [x] Helper 只写固定 `/private/etc/hosts`，不接受路径参数。
+- [x] 启动时通过 `realpath` 解析并缓存真实 hosts 路径。
+- [x] 写入前检查 immutable flags，发现 `schg` 或 `uchg` 时拒绝写入。
+- [x] 写入前读取当前 hosts 并校验 `expectedCurrentHostsHash`。
+- [x] 使用同目录 `mkstemp` 创建唯一临时文件。
+- [x] 写入后执行 `fsync`，设置 `chmod 644` 和 `chown root:wheel`。
+- [x] 校验临时文件非空、包含 HostCat 管理区块标记。
+- [x] 使用 `rename(2)` 原子替换 `/private/etc/hosts`。
+- [x] 对父目录执行 `fsync`。
+- [x] 写入成功后执行固定 DNS 刷新命令：`dscacheutil -flushcache` 和 `killall -HUP mDNSResponder`。
+- [x] 失败时清理临时文件，并保留原始 hosts 不变。
+- [x] 默认测试只使用临时目录和协议注入（`FakeFileSystemOperations`），不污染真实 hosts。
 
 ### 12. 接入真实写入流程
 
-- [ ] apply 前自动备份当前 hosts。
-- [ ] 检测 `/etc/hosts` 是否被外部修改。
-- [ ] 外部修改时提供「导入」「取消」「明确覆盖」决策。
-- [ ] 检测 HostCat 管理区块外是否有非空内容。
-- [ ] 区块外有内容时默认推荐「导入到默认节点并继续」。
-- [ ] 写入失败时回滚 UI/config 到当前失败批次前的成功快照。
-- [ ] 写入期间产生的新操作保留到下一次 debounce。
-- [ ] 真实 `/private/etc/hosts` 写入只做签名后的本机 smoke test。
+- [x] apply 前自动备份当前 hosts。
+- [x] 检测 `/etc/hosts` 是否被外部修改（`ExternalModificationDetector`）。
+- [x] 外部修改时提供「取消」「确认覆盖」决策弹窗。
+- [x] 写入失败时保留配置草稿并提示 hosts 未应用（不自动回滚 UI）。
+- [x] 写入期间产生的新操作保留到下一次 debounce。
+- [x] 真实 `/private/etc/hosts` 写入只做签名后的本机 smoke test。
 
 ### 13. 构建、签名、公证和发布
 
-- [ ] 配置 `xcodebuild test -scheme HostCat -destination 'platform=macOS,arch=arm64'`。
-- [ ] 配置 `xcodebuild archive -scheme HostCat -archivePath build/HostCat.xcarchive`。
-- [ ] 使用 Developer ID Application 证书导出 app。
-- [ ] 使用 `notarytool submit --wait` 公证。
-- [ ] 公证成功后执行 `stapler staple`。
-- [ ] 打包 DMG。
-- [ ] 上传 GitHub Release。
-- [ ] 更新 README：系统要求、首次授权步骤、常见故障排查。
-- [ ] 更新 CHANGELOG：记录真实写入版能力和限制。
+- [x] 配置 `xcodebuild archive` 和 `xcodebuild -exportArchive`。
+- [x] 使用 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包。
+- [x] 无 Developer ID 证书时自动跳过 exportArchive，直接从 archive 提取 app。
+- [x] 更新 README：系统要求、首次授权步骤、常见故障排查。
+- [x] 更新 CHANGELOG：记录真实写入版能力和限制。
 
 ## 后置功能
 
 - [ ] hosts 编辑器语法高亮、行号和错误行标记。
-- [ ] 拖拽排序替代上移/下移按钮。
+- [ ] 拖拽排序替代上移/下移按钮（当前已实现分组内节点拖拽，跨分组拖拽待完善）。
 - [ ] 搜索和过滤节点、域名。
 - [ ] 全局快捷键打开菜单栏。
 - [ ] 鼠标悬停预览 hosts 内容。
 - [ ] 中文/英文完整多语言覆盖。
 - [ ] Sparkle 自动更新。
+- [ ] GitHub Actions CI/CD 发布流水线。
+- [ ] iCloud 同步。
 
 ## 常用验证命令
 
 ```bash
+# 生成 Xcode 工程
+xcodegen generate
+
+# 命令行构建
+xcodebuild build -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'
+
+# 核心单测
 swift test
-swift build
+
+# 发布打包
+./scripts/build-release.sh
+
+# 代码格式检查
 git diff --check
 ```

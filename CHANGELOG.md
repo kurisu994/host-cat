@@ -7,11 +7,19 @@
 ### Added
 
 - **【阶段 2 完成】真实写入版已完成：使用 xcodegen 迁移为标准 Xcode 工程，实现真实 XPC 服务、安全写入和完整的 UI 交互。**
-- 添加 `HostCatHelperClient` 真实 XPC 连接封装，实现 SMAppService 注册与开机启动管理。
+- 添加 `HostCatHelperClient` 真实 XPC 连接封装（`XPCHostHelperClient`），实现 SMAppService 注册与开机启动管理（`HelperRegistrationManager`）。
 - 添加 Privileged Helper (`HostCatPrivilegedHelper`)，基于安全策略执行真实 `/etc/hosts` 写入、权限设置和 DNS 刷新。
-- 添加写入前自动备份、`ExternalModificationDetector` 外部修改检测及 UI 决策覆盖。
-- 增强 HostCatApp UI，包括 Helper 注册引导 (`HelperSetupView`)、备份管理恢复 (`BackupRestoreView`)。
-- 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包。
+- 添加 `HostsFileWriter` 安全文件写入器，实现 immutable flags 检查、mkstemp 临时文件、fsync、chmod/chown、rename 原子替换和目录 fsync。
+- 添加 `DNSRefresher`（`SystemDNSRefresher` / `StubDNSRefresher`），执行固定 DNS 刷新命令。
+- 添加 `ExternalModificationDetector` 外部修改检测及 UI 决策弹窗（`ExternalModificationAlert`）。
+- 添加写入前自动备份（`HostWriteCoordinator` 在写入前调用 `BackupStore.createBackup`）。
+- 增强 HostCatApp UI：Helper 注册引导 (`HelperSetupView`)、备份管理恢复 (`BackupRestoreView`)、外部修改弹窗。
+- 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包；无证书时自动跳过 exportArchive。
+- 添加应用图标资源（Assets.xcassets，7 个尺寸）。
+- 拆分 `EditorView.swift` 为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
+- 拆分 `HostCatApp.swift` 为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
+- 添加 `MenuBarViewModelTests` 验证写入失败时保留配置草稿。
+- 添加 `TestDoubles.swift`（`FakeHostHelperClient`、`StubDNSRefresher`）。
 - 搭建 SwiftPM 基础开发框架，包含 `HostCatApp`、`HostCatCore`、`HostCatHelperClient`、`HostCatPrivilegedHelper` 和 `HostCatCoreTests`。
 - 添加 `HostCatCore` 数据模型：`AppConfig`、`HostGroup`、`HostNode`、`AppSettings` 和 `AppStateMetadata`。
 - 添加 hosts parser，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
@@ -67,14 +75,21 @@
 - 补充开发方案设计，明确 XPC 安全边界、状态快照、写入安全策略、测试策略和构建分发策略。
 - 新增 README、CHANGELOG 和 AGENTS 协作文档。
 - 更新 README，补充 `HostsImporter` 能力和阶段1当前进度。
+- 更新 TODO.md，标记阶段 1 和阶段 2 全部完成。
+- 更新 AGENTS.md，同步项目状态为阶段 2 完成。
 
 ### Refactored
 
 - 拆分 `EditorView.swift`（747→362 行）为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
 - 拆分 `HostCatApp.swift`（230→79 行）为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
+- 从 SwiftPM 骨架迁移到 Xcode 工程（project.yml → HostCat.xcodeproj），保留 Package.swift 用于核心测试。
 
 ### Not Yet Implemented
 
-- 语法高亮和冲突解决 UI。
+- 语法高亮和冲突解决 UI（冲突定位按钮当前仅显示提示）。
 - GitHub Release CI/CD 发布流水线。
-- 自动更新 (Sparkle) 和 iCloud 同步。
+- 自动更新 (Sparkle)。
+- iCloud 同步。
+- 全局快捷键打开菜单栏。
+- 搜索/过滤节点和域名。
+- 完整多语言覆盖。
