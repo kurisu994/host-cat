@@ -158,7 +158,6 @@ private struct WindowFocusView: NSViewRepresentable {
 
     private final class FocusHostingView: NSView {
         var title: String
-        private var focusedWindowID: ObjectIdentifier?
 
         init(title: String) {
             self.title = title
@@ -177,16 +176,15 @@ private struct WindowFocusView: NSViewRepresentable {
 
         func focusWindowIfAvailable() {
             guard let window else { return }
-            let windowID = ObjectIdentifier(window)
-            guard focusedWindowID != windowID else { return }
-            focusedWindowID = windowID
-            WindowFocus.focus(window: window)
+            WindowFocus.focusOnce(window: window)
         }
     }
 }
 
 @MainActor
 private enum WindowFocus {
+    private static var focusedWindowIDs: Set<ObjectIdentifier> = []
+
     static func focusSoon(title: String) {
         focus(title: title)
         Task { @MainActor in
@@ -201,6 +199,12 @@ private enum WindowFocus {
     static func focus(title: String) {
         NSApplication.shared.activate(ignoringOtherApps: true)
         guard let window = NSApplication.shared.windows.first(where: { $0.title == title }) else { return }
+        focus(window: window)
+    }
+
+    static func focusOnce(window: NSWindow) {
+        let windowID = ObjectIdentifier(window)
+        guard focusedWindowIDs.insert(windowID).inserted else { return }
         focus(window: window)
     }
 

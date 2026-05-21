@@ -96,6 +96,7 @@ struct EditorView: View {
 
                         Button("添加节点") {
                             selectedGroupForNewNode = group.id
+                            newNodeName = ""
                             showAddNodeSheet = true
                         }
                         .buttonStyle(.plain)
@@ -108,6 +109,7 @@ struct EditorView: View {
             .toolbar {
                 ToolbarItem {
                     Button("添加分组") {
+                        newGroupName = ""
                         showAddGroupSheet = true
                     }
                 }
@@ -181,24 +183,40 @@ struct EditorView: View {
             }
         }
         .sheet(isPresented: $showAddGroupSheet) {
-            AddGroupSheet(name: $newGroupName) {
-                guard !newGroupName.isEmpty else { return }
-                let service = mutationService
-                service.addGroup(named: newGroupName, to: &viewModel.config)
-                viewModel.scheduleApply()
-                newGroupName = ""
-                showAddGroupSheet = false
-            }
+            AddGroupSheet(
+                name: $newGroupName,
+                onCancel: {
+                    newGroupName = ""
+                    showAddGroupSheet = false
+                },
+                onAdd: {
+                    guard !newGroupName.isEmpty else { return }
+                    let service = mutationService
+                    service.addGroup(named: newGroupName, to: &viewModel.config)
+                    viewModel.scheduleApply()
+                    newGroupName = ""
+                    showAddGroupSheet = false
+                }
+            )
         }
         .sheet(isPresented: $showAddNodeSheet) {
-            AddNodeSheet(name: $newNodeName) {
-                guard !newNodeName.isEmpty, let groupID = selectedGroupForNewNode else { return }
-                let service = mutationService
-                service.addNode(named: newNodeName, content: "", toGroup: groupID, in: &viewModel.config)
-                viewModel.scheduleApply()
-                newNodeName = ""
-                showAddNodeSheet = false
-            }
+            AddNodeSheet(
+                name: $newNodeName,
+                onCancel: {
+                    newNodeName = ""
+                    selectedGroupForNewNode = nil
+                    showAddNodeSheet = false
+                },
+                onAdd: {
+                    guard !newNodeName.isEmpty, let groupID = selectedGroupForNewNode else { return }
+                    let service = mutationService
+                    service.addNode(named: newNodeName, content: "", toGroup: groupID, in: &viewModel.config)
+                    viewModel.scheduleApply()
+                    newNodeName = ""
+                    selectedGroupForNewNode = nil
+                    showAddNodeSheet = false
+                }
+            )
         }
         .alert("确认删除", isPresented: $showDeleteConfirmation) {
             Button("删除", role: .destructive) {
@@ -216,16 +234,24 @@ struct EditorView: View {
             Text("删除后无法恢复，是否继续？")
         }
         .sheet(isPresented: $showRenameNodeSheet) {
-            RenameNodeSheet(name: $renameNodeNewName) {
-                guard !renameNodeNewName.isEmpty,
-                      let (groupID, nodeID) = editingNodeToRename else { return }
-                let service = mutationService
-                service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
-                viewModel.scheduleApply()
-                renameNodeNewName = ""
-                editingNodeToRename = nil
-                showRenameNodeSheet = false
-            }
+            RenameNodeSheet(
+                name: $renameNodeNewName,
+                onCancel: {
+                    renameNodeNewName = ""
+                    editingNodeToRename = nil
+                    showRenameNodeSheet = false
+                },
+                onRename: {
+                    guard !renameNodeNewName.isEmpty,
+                          let (groupID, nodeID) = editingNodeToRename else { return }
+                    let service = mutationService
+                    service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
+                    viewModel.scheduleApply()
+                    renameNodeNewName = ""
+                    editingNodeToRename = nil
+                    showRenameNodeSheet = false
+                }
+            )
         }
         .frame(minWidth: 700, minHeight: 500)
     }
@@ -355,75 +381,106 @@ private struct GroupHeader: View {
 
 private struct AddGroupSheet: View {
     @Binding var name: String
+    let onCancel: () -> Void
     let onAdd: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("新建分组")
-                .font(.headline)
-
-            TextField("分组名称", text: $name)
-                .textFieldStyle(.roundedBorder)
-
-            HStack {
-                Button("取消", role: .cancel) {}
-                Button("添加") {
-                    onAdd()
-                }
-                .disabled(name.isEmpty)
-            }
-        }
-        .padding()
-        .frame(width: 300)
+        NameInputSheet(
+            title: "新建分组",
+            placeholder: "分组名称",
+            confirmTitle: "添加",
+            name: $name,
+            onCancel: onCancel,
+            onSubmit: onAdd
+        )
     }
 }
 
 private struct AddNodeSheet: View {
     @Binding var name: String
+    let onCancel: () -> Void
     let onAdd: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("新建节点")
-                .font(.headline)
-
-            TextField("节点名称", text: $name)
-                .textFieldStyle(.roundedBorder)
-
-            HStack {
-                Button("取消", role: .cancel) {}
-                Button("添加") {
-                    onAdd()
-                }
-                .disabled(name.isEmpty)
-            }
-        }
-        .padding()
-        .frame(width: 300)
+        NameInputSheet(
+            title: "新建节点",
+            placeholder: "节点名称",
+            confirmTitle: "添加",
+            name: $name,
+            onCancel: onCancel,
+            onSubmit: onAdd
+        )
     }
 }
 
 private struct RenameNodeSheet: View {
     @Binding var name: String
+    let onCancel: () -> Void
     let onRename: () -> Void
 
     var body: some View {
+        NameInputSheet(
+            title: "重命名节点",
+            placeholder: "新名称",
+            confirmTitle: "确认",
+            name: $name,
+            onCancel: onCancel,
+            onSubmit: onRename
+        )
+    }
+}
+
+private struct NameInputSheet: View {
+    let title: String
+    let placeholder: String
+    let confirmTitle: String
+    @Binding var name: String
+    let onCancel: () -> Void
+    let onSubmit: () -> Void
+
+    @FocusState private var isNameFocused: Bool
+
+    var body: some View {
         VStack(spacing: 16) {
-            Text("重命名节点")
+            Text(title)
                 .font(.headline)
 
-            TextField("新名称", text: $name)
+            TextField(placeholder, text: $name)
                 .textFieldStyle(.roundedBorder)
+                .focused($isNameFocused)
+                .onSubmit(submit)
 
             HStack {
-                Button("取消", role: .cancel) {}
-                Button("确认") {
-                    onRename()
+                Button("取消", role: .cancel) {
+                    onCancel()
                 }
-                .disabled(name.isEmpty)
+
+                Button(confirmTitle) {
+                    submit()
+                }
+                .disabled(!canSubmit)
             }
         }
         .padding()
         .frame(width: 300)
+        .task {
+            await focusNameField()
+        }
+    }
+
+    private var canSubmit: Bool {
+        !name.isEmpty
+    }
+
+    @MainActor
+    private func submit() {
+        guard canSubmit else { return }
+        onSubmit()
+    }
+
+    @MainActor
+    private func focusNameField() async {
+        await Task.yield()
+        isNameFocused = true
     }
 }
