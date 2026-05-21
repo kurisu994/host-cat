@@ -20,6 +20,7 @@ struct EditorView: View {
     @State private var renameNodeNewName: String = ""
     @State private var mutationService = ConfigMutationService()
     @State private var draggingNodeID: UUID?
+    @State private var collapsedGroupIDs: Set<UUID> = []
 
     var body: some View {
         NavigationSplitView {
@@ -45,6 +46,16 @@ struct EditorView: View {
                         Section(header: GroupHeader(
                             name: group.name,
                             isSingleSelect: group.isSingleSelect,
+                            isCollapsed: collapsedGroupIDs.contains(group.id),
+                            onToggleCollapse: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    if collapsedGroupIDs.contains(group.id) {
+                                        collapsedGroupIDs.remove(group.id)
+                                    } else {
+                                        collapsedGroupIDs.insert(group.id)
+                                    }
+                                }
+                            },
                             onRename: { newName in
                                 let service = mutationService
                                 service.renameGroup(id: group.id, to: newName, in: &viewModel.config)
@@ -61,48 +72,50 @@ struct EditorView: View {
                                 viewModel.scheduleApply()
                             }
                         )) {
-                            ForEach(group.nodes) { node in
-                                NodeRow(
-                                    name: node.name,
-                                    isActive: node.isActive,
-                                    isDefault: false,
-                                    isSelected: selectedNodeID == node.id
-                                )
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selectedNodeID = node.id
-                                }
-                                .contextMenu {
-                                    Button("重命名") {
-                                        editingNodeToRename = (group.id, node.id)
-                                        renameNodeNewName = node.name
-                                        showRenameNodeDialog = true
-                                    }
-                                    Button("删除") {
-                                        nodeToDelete = (group.id, node.id)
-                                        showDeleteConfirmation = true
-                                    }
-                                }
-                                .opacity(draggingNodeID == node.id ? 0.4 : 1.0)
-                                .onDrag {
-                                    draggingNodeID = node.id
-                                    return NSItemProvider(object: node.id.uuidString as NSString)
-                                }
-                                .onDrop(
-                                    of: [UTType.text],
-                                    delegate: NodeReorderDropDelegate(
-                                        targetNodeID: node.id,
-                                        groupID: group.id,
-                                        draggingNodeID: $draggingNodeID,
-                                        viewModel: viewModel
+                            if !collapsedGroupIDs.contains(group.id) {
+                                ForEach(group.nodes) { node in
+                                    NodeRow(
+                                        name: node.name,
+                                        isActive: node.isActive,
+                                        isDefault: false,
+                                        isSelected: selectedNodeID == node.id
                                     )
-                                )
-                            }
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        selectedNodeID = node.id
+                                    }
+                                    .contextMenu {
+                                        Button("重命名") {
+                                            editingNodeToRename = (group.id, node.id)
+                                            renameNodeNewName = node.name
+                                            showRenameNodeDialog = true
+                                        }
+                                        Button("删除") {
+                                            nodeToDelete = (group.id, node.id)
+                                            showDeleteConfirmation = true
+                                        }
+                                    }
+                                    .opacity(draggingNodeID == node.id ? 0.4 : 1.0)
+                                    .onDrag {
+                                        draggingNodeID = node.id
+                                        return NSItemProvider(object: node.id.uuidString as NSString)
+                                    }
+                                    .onDrop(
+                                        of: [UTType.text],
+                                        delegate: NodeReorderDropDelegate(
+                                            targetNodeID: node.id,
+                                            groupID: group.id,
+                                            draggingNodeID: $draggingNodeID,
+                                            viewModel: viewModel
+                                        )
+                                    )
+                                }
 
-                            AddNodeButton {
-                                selectedGroupForNewNode = group.id
-                                newNodeName = ""
-                                showAddNodeDialog = true
+                                AddNodeButton {
+                                    selectedGroupForNewNode = group.id
+                                    newNodeName = ""
+                                    showAddNodeDialog = true
+                                }
                             }
                         }
                     }
@@ -127,18 +140,11 @@ struct EditorView: View {
             // 右侧：hosts 文本编辑
             if let nodeID = selectedNodeID {
                 VStack(alignment: .leading, spacing: 0) {
-                    // 标题
-                    Text("编辑器")
-                        .font(.title2.bold())
-                        .padding(.horizontal, 16)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
-
                     // 工具栏
                     HStack {
-                        TextField("节点名称", text: $editingName)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(maxWidth: 200)
+                        Text(editingName)
+                            .font(.headline)
+                            .lineLimit(1)
 
                         Spacer()
 
@@ -149,13 +155,13 @@ struct EditorView: View {
                         .keyboardShortcut(.return, modifiers: .command)
 
                         Button("撤销") {
-                            loadNodeContent(id: nodeID)
+                            reloadContent(id: nodeID)
                         }
                         .buttonStyle(.bordered)
                         .keyboardShortcut("z", modifiers: .command)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
+                    .padding(.vertical, 12)
 
                     Divider()
 
@@ -303,18 +309,31 @@ struct EditorView: View {
         }
     }
 
+    /// 撤销时只重置编辑内容，不影响节点名称
+    private func reloadContent(id: UUID) {
+        if id == viewModel.config.defaultNode.id {
+            editingContent = viewModel.config.defaultNode.content
+            return
+        }
+
+        for group in viewModel.config.groups {
+            if let node = group.nodes.first(where: { $0.id == id }) {
+                editingContent = node.content
+                return
+            }
+        }
+    }
+
     private func saveCurrentNode() {
         guard let id = selectedNodeID else { return }
         let service = mutationService
 
         if id == viewModel.config.defaultNode.id {
             service.updateDefaultNodeContent(editingContent, in: &viewModel.config)
-            service.renameDefaultNode(to: editingName, in: &viewModel.config)
         } else {
             for group in viewModel.config.groups {
                 if group.nodes.contains(where: { $0.id == id }) {
                     service.updateNodeContent(id: id, content: editingContent, inGroup: group.id, in: &viewModel.config)
-                    service.renameNode(id: id, to: editingName, inGroup: group.id, in: &viewModel.config)
                     break
                 }
             }
@@ -371,6 +390,8 @@ private struct NodeRow: View {
 private struct GroupHeader: View {
     let name: String
     let isSingleSelect: Bool
+    let isCollapsed: Bool
+    let onToggleCollapse: () -> Void
     let onRename: (String) -> Void
     let onToggleSingleSelect: () -> Void
     let onDelete: () -> Void
@@ -380,6 +401,16 @@ private struct GroupHeader: View {
 
     var body: some View {
         HStack {
+            // 折叠箭头
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .rotationEffect(.degrees(isCollapsed ? 0 : 90))
+                .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+                .onTapGesture {
+                    onToggleCollapse()
+                }
+
             if isRenaming {
                 TextField("分组名称", text: $renameText)
                     .textFieldStyle(.roundedBorder)
