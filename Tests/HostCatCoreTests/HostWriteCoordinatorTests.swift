@@ -68,7 +68,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
         let coordinator = HostWriteCoordinator(helperClient: fakeClient)
         let config = makeConfig(defaultContent: "127.0.0.1 localhost\n::1 localhost")
 
-        let result = await coordinator.scheduleApply(config: config)
+        let (result, _) = await coordinator.scheduleApply(config: config)
 
         XCTAssertTrue(result.success)
         XCTAssertNotNil(result.appliedHash)
@@ -78,17 +78,43 @@ final class HostWriteCoordinatorTests: XCTestCase {
         XCTAssertEqual(writes.count, 1)
     }
 
-    func testWriteFailureDoesNotUpdateState() async {
+    func testWriteFailureDoesNotUpdateStateAndReturnsRolledBackConfig() async {
         let fakeClient = FakeHostHelperClient()
         await fakeClient.setShouldSucceed(false)
         let coordinator = HostWriteCoordinator(helperClient: fakeClient)
         let config = makeConfig()
 
-        let result = await coordinator.scheduleApply(config: config)
+        let (result, rolledBack) = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
         XCTAssertNil(result.appliedHash)
         XCTAssertNil(result.appliedAt)
+        // 首次写入失败时，没有上次成功的快照，rolledBack 应为 nil
+        XCTAssertNil(rolledBack)
+    }
+
+    func testWriteFailureRollsBackToLastSuccessfulConfig() async {
+        let fakeClient = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
+        let config2 = makeConfig(defaultContent: "10.0.0.1 bad.com")
+
+        // 先成功写入一次
+        let (result1, _) = await coordinator.scheduleApply(config: config1)
+        XCTAssertTrue(result1.success)
+
+        // 然后失败
+        await fakeClient.setShouldSucceed(false)
+        let (result2, rolledBack) = await coordinator.scheduleApply(config: config2)
+        XCTAssertFalse(result2.success)
+
+        // 应回滚到 config1
+        XCTAssertNotNil(rolledBack)
+        XCTAssertEqual(rolledBack?.defaultNode.content, "127.0.0.1 localhost")
+
+        // coordinator 内部状态也应保持为 config1
+        let lastSuccessful = await coordinator.lastSuccessfulConfigSnapshot
+        XCTAssertEqual(lastSuccessful?.defaultNode.content, "127.0.0.1 localhost")
     }
 
     func testNewOperationsPreservedDuringWrite() async {
@@ -127,7 +153,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
         await fakeClient.setShouldSucceed(false)
         await fakeClient.setSimulatedError(HostHelperClientError.unavailable("hosts 已被外部修改"))
 
-        let result = await coordinator.scheduleApply(config: config)
+        let (result, _) = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
     }
@@ -143,7 +169,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
             HostGroup(name: "G", isSingleSelect: false, nodes: [node1, node2])
         ]
 
-        let result = await coordinator.scheduleApply(config: config)
+        let (result, _) = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
         XCTAssertNotNil(result.conflicts)
@@ -152,27 +178,6 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
         let writes = await fakeClient.writtenContents
         XCTAssertEqual(writes.count, 0)
-    }
-
-    func testRollbackOnFailure() async {
-        let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
-        let config = makeConfig(defaultContent: "127.0.0.1 localhost")
-
-        // 先成功写入一次
-        let result1 = await coordinator.scheduleApply(config: config)
-        XCTAssertTrue(result1.success)
-
-        // 然后失败
-        let config2 = makeConfig(defaultContent: "10.0.0.1 bad.com")
-        await fakeClient.setShouldSucceed(false)
-
-        let result2 = await coordinator.scheduleApply(config: config2)
-        XCTAssertFalse(result2.success)
-
-        // 状态应回滚到上一次成功的配置
-        let lastSuccessful = await coordinator.lastSuccessfulConfigSnapshot
-        XCTAssertEqual(lastSuccessful?.defaultNode.content, "127.0.0.1 localhost")
     }
 }
 

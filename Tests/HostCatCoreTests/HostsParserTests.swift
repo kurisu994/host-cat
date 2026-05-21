@@ -72,12 +72,29 @@ final class HostsParserTests: XCTestCase {
         }
     }
 
-    func testRejectsEmptyContent() {
-        XCTAssertThrowsError(try HostsParser().parse("")) { error in
-            guard case HostsParseError.emptyContent = error else {
-                return XCTFail("Expected emptyContent error, got \(error)")
-            }
-        }
+    func testParsesOnlyCommentsReturnsEmptyRecords() throws {
+        let records = try HostsParser().parse("# This is a comment\n# Another comment\n")
+        XCTAssertEqual(records.count, 0)
+    }
+
+    func testParsesEmptyContentReturnsEmptyRecords() throws {
+        let records = try HostsParser().parse("")
+        XCTAssertEqual(records.count, 0)
+    }
+
+    func testParsesTabSeparatedLine() throws {
+        let records = try HostsParser().parse("127.0.0.1\tlocalhost\tlocal.test\n")
+
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0].ipAddress, "127.0.0.1")
+        XCTAssertEqual(records[0].hostnames, ["localhost", "local.test"])
+    }
+
+    func testParsesHostnameWithUnderscore() throws {
+        let records = try HostsParser().parse("127.0.0.1 my_host.local\n")
+
+        XCTAssertEqual(records.count, 1)
+        XCTAssertEqual(records[0].hostnames, ["my_host.local"])
     }
 
     func testTracksLineNumbers() throws {

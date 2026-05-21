@@ -81,12 +81,16 @@ public struct AppSettings: Codable, Equatable, Sendable {
 public struct AppStateMetadata: Codable, Equatable, Sendable {
     public var lastAppliedHostsHash: String?
     public var lastAppliedAt: Date?
+    /// 预留字段：阶段2实现外部 hosts 修改检测时，记录上次导入/确认的外部 hosts hash
+    public var lastExternalHostsHash: String?
 
     public init(
         lastAppliedHostsHash: String? = nil,
-        lastAppliedAt: Date? = nil
+        lastAppliedAt: Date? = nil,
+        lastExternalHostsHash: String? = nil
     ) {
         self.lastAppliedHostsHash = lastAppliedHostsHash
         self.lastAppliedAt = lastAppliedAt
+        self.lastExternalHostsHash = lastExternalHostsHash
     }
 }

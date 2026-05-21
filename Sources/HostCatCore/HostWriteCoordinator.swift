@@ -57,7 +57,7 @@ public actor HostWriteCoordinator {
 
     /// 调度一次 apply 操作。如果当前已有待执行的 debounce，会取消旧任务并重新开始计时。
     /// 返回的 ApplyResult 表示本次 schedule 最终是否成功完成写入。
-    public func scheduleApply(config: AppConfig) async -> ApplyResult {
+    public func scheduleApply(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         // 取消之前的 debounce 任务
         pendingTask?.cancel()
 
@@ -66,17 +66,23 @@ public actor HostWriteCoordinator {
             do {
                 try await Task.sleep(for: debounceInterval)
                 guard !Task.isCancelled else {
-                    return ApplyResult(
-                        success: false,
-                        status: .cancelled
+                    return (
+                        ApplyResult(
+                            success: false,
+                            status: .cancelled
+                        ),
+                        nil
                     )
                 }
 
                 return await self.performWrite(config: config)
             } catch {
-                return ApplyResult(
-                    success: false,
-                    status: .cancelled
+                return (
+                    ApplyResult(
+                        success: false,
+                        status: .cancelled
+                    ),
+                    nil
                 )
             }
         }
@@ -88,20 +94,23 @@ public actor HostWriteCoordinator {
     }
 
     /// 立即执行写入，不经过 debounce。用于编辑窗口的 Apply 按钮等需要即时反馈的场景。
-    public func applyImmediately(config: AppConfig) async -> ApplyResult {
+    public func applyImmediately(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         pendingTask?.cancel()
         return await performWrite(config: config)
     }
 
     // MARK: - Private
 
-    private func performWrite(config: AppConfig) async -> ApplyResult {
+    private func performWrite(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         guard !isWriting else {
             logger.warning("写入正在进行中，跳过本次请求")
-            return ApplyResult(
-                success: false,
-                errorMessage: "写入正在进行中",
-                status: .writeFailed("写入正在进行中")
+            return (
+                ApplyResult(
+                    success: false,
+                    errorMessage: "写入正在进行中",
+                    status: .writeFailed("写入正在进行中")
+                ),
+                nil
             )
         }
 
@@ -115,18 +124,24 @@ public actor HostWriteCoordinator {
             logger.info("合并成功: \(merged.records.count) 条记录, \(merged.duplicateCount) 条重复")
         } catch let HostMergeError.conflicts(conflicts) {
             logger.warning("合并冲突: \(conflicts.count) 个")
-            return ApplyResult(
-                success: false,
-                conflicts: conflicts,
-                status: .conflicts(conflicts)
+            return (
+                ApplyResult(
+                    success: false,
+                    conflicts: conflicts,
+                    status: .conflicts(conflicts)
+                ),
+                nil
             )
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("合并失败: \(message)")
-            return ApplyResult(
-                success: false,
-                errorMessage: message,
-                status: .mergeFailed(message)
+            return (
+                ApplyResult(
+                    success: false,
+                    errorMessage: message,
+                    status: .mergeFailed(message)
+                ),
+                nil
             )
         }
 
@@ -144,20 +159,27 @@ public actor HostWriteCoordinator {
 
             logger.info("写入成功, hash: \(result.finalHostsHash.prefix(8))...")
 
-            return ApplyResult(
-                success: true,
-                appliedHash: result.finalHostsHash,
-                appliedAt: lastAppliedAt,
-                status: .success
+            return (
+                ApplyResult(
+                    success: true,
+                    appliedHash: result.finalHostsHash,
+                    appliedAt: lastAppliedAt,
+                    status: .success
+                ),
+                nil
             )
         } catch {
-            // 4. 写入失败：只回滚当前失败批次，保留写入期间的新操作
+            // 4. 写入失败：回滚到上次成功的配置快照
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("写入失败: \(message)")
-            return ApplyResult(
-                success: false,
-                errorMessage: message,
-                status: .writeFailed(message)
+            let rolledBack = lastSuccessfulConfigSnapshot
+            return (
+                ApplyResult(
+                    success: false,
+                    errorMessage: message,
+                    status: .writeFailed(message)
+                ),
+                rolledBack
             )
         }
     }

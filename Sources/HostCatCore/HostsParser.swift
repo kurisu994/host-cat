@@ -114,10 +114,6 @@ public struct HostsParser: Sendable {
             )
         }
 
-        guard !records.isEmpty else {
-            throw HostsParseError.emptyContent
-        }
-
         return records
     }
 
@@ -141,7 +137,7 @@ public struct HostsParser: Sendable {
             }
 
             return label.unicodeScalars.allSatisfy { scalar in
-                CharacterSet.alphanumerics.contains(scalar) || scalar == "-"
+                CharacterSet.alphanumerics.contains(scalar) || scalar == "-" || scalar == "_"
             }
         }
     }
