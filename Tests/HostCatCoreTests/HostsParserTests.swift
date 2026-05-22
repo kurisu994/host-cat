@@ -108,4 +108,32 @@ final class HostsParserTests: XCTestCase {
         XCTAssertEqual(records[0].lineNumber, 3)
         XCTAssertEqual(records[1].lineNumber, 4)
     }
+
+    func testValidateCollectsMultipleErrors() {
+        let content = """
+            999.0.0.1 bad.test
+            127.0.0.1
+            10.0.0.1 valid.test
+            ::ggg bad_ipv6.test
+            """
+        let errors = HostsParser().validate(content)
+        XCTAssertEqual(errors.count, 3)
+
+        guard case .invalidIPAddress(let line1, let val1) = errors[0] else {
+            return XCTFail("Expected invalidIPAddress error on line 1, got \(errors[0])")
+        }
+        XCTAssertEqual(line1, 1)
+        XCTAssertEqual(val1, "999.0.0.1")
+
+        guard case .missingHostname(let line2) = errors[1] else {
+            return XCTFail("Expected missingHostname error on line 2, got \(errors[1])")
+        }
+        XCTAssertEqual(line2, 2)
+
+        guard case .invalidIPAddress(let line4, let val4) = errors[2] else {
+            return XCTFail("Expected invalidIPAddress error on line 4, got \(errors[2])")
+        }
+        XCTAssertEqual(line4, 4)
+        XCTAssertEqual(val4, "::ggg")
+    }
 }

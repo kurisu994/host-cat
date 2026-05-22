@@ -7,6 +7,7 @@ struct EditorView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @State private var selectedNodeID: UUID?
     @State private var editingContent: String = ""
+    @State private var errorLines: Set<Int> = []
     @State private var editingName: String = ""
     @State private var showDeleteConfirmation = false
     @State private var nodeToDelete: (groupID: UUID, nodeID: UUID)?
@@ -163,12 +164,12 @@ struct EditorView: View {
 
                     Divider()
 
-                    // 文本编辑器
-                    TextEditor(text: $editingContent)
-                        .font(.system(.body, design: .monospaced))
-                        .scrollContentBackground(.hidden)
-                        .background(Color(NSColor.textBackgroundColor))
+                    // 文本编辑器（NSTextView 桥接，带语法高亮和行号）
+                    HostsTextView(text: $editingContent, errorLines: errorLines)
                         .frame(minWidth: 400, minHeight: 300)
+                        .onChange(of: editingContent) { _, newValue in
+                            validateContent(newValue)
+                        }
 
                     // 状态栏
                     HStack {
@@ -189,6 +190,12 @@ struct EditorView: View {
                         }
 
                         Spacer()
+
+                        if !errorLines.isEmpty {
+                            Label("\(errorLines.count) 个语法错误", systemImage: "exclamationmark.triangle")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                        }
 
                         Text("\(editingContent.count) 字符")
                             .font(.caption)
@@ -353,6 +360,24 @@ struct EditorView: View {
         }
 
         viewModel.scheduleApply()
+    }
+
+    /// 校验编辑内容，提取所有错误行号
+    private func validateContent(_ content: String) {
+        let parser = HostsParser()
+        let errors = parser.validate(content)
+        var lines = Set<Int>()
+        for error in errors {
+            switch error {
+            case .invalidIPAddress(let line, _),
+                 .missingHostname(let line),
+                 .invalidHostname(let line, _):
+                lines.insert(line)
+            case .emptyContent:
+                break
+            }
+        }
+        errorLines = lines
     }
 
     private func moveGroups(from source: IndexSet, to destination: Int) {

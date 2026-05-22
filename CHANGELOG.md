@@ -6,6 +6,13 @@
 
 ### Added
 
+- **【语法高亮与行号】hosts 编辑器语法高亮与多行错误定位标记：使用 TextKit 2 与 NSRulerView 实现极佳的等宽 hosts 编辑与校验体验。**
+- 添加 `HostsSyntaxHighlighter` 语法高亮引擎，基于 TextKit 2 渲染 IP (蓝色)、hostname (绿色)、注释 (灰色)、HostCat 标记 (橙色粗体)，并对语法错误行进行红色半透明背景高亮。
+- 添加 `LineNumberRulerView` 自定义行号组件（`NSRulerView` + TextKit 2 `NSTextLayoutManager`），支持精确的滚动同步、当前行粗体加亮、并在错误行显示红色数字和红点标识。
+- 添加 `HostsTextView` 桥接组件（`NSViewRepresentable` 封装 `NSTextView` 和 `NSScrollView`），禁用自动纠错、智能引号等行为，提供完美的程序员 hosts 编辑环境。
+- 升级 `HostsParser` 增加非抛出错误的 `validate(_:)` 方法，能够单次收集整个 hosts 文本中所有的语法错误行。
+- 升级 `EditorView` 语法校验，使编辑器能同时在文本及行号栏中高亮所有错误行，并在底部状态栏展示语法错误数。
+- 添加 `HostsParserTests.testValidateCollectsMultipleErrors` 测试，验证能够同时检测并提取多行错误。
 - **【阶段 2 完成】真实写入版已完成：使用 xcodegen 迁移为标准 Xcode 工程，实现真实 XPC 服务、安全写入和完整的 UI 交互。**
 - 添加 `HostCatHelperClient` 真实 XPC 连接封装（`XPCHostHelperClient`），实现 SMAppService 注册与开机启动管理（`HelperRegistrationManager`）。
 - 添加 Privileged Helper (`HostCatPrivilegedHelper`)，基于安全策略执行真实 `/etc/hosts` 写入、权限设置和 DNS 刷新。
@@ -83,6 +90,8 @@
 
 ### Refactored
 
+- 将 `EditorView` 中原有的标准 `TextEditor` 替换为自定义的 `HostsTextView` 桥接组件，极大改善了 hosts 编辑体验。
+- 重构 `HostsSyntaxHighlighter` 为 `@MainActor` 并使用主 Actor 级别的 static 属性，完美符合 Swift 6 Strict Concurrency 严格并发安全校验。
 - 拆分 `EditorView.swift`（747→362 行）为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
 - 拆分 `HostCatApp.swift`（230→79 行）为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
 - 从 SwiftPM 骨架迁移到 Xcode 工程（project.yml → HostCat.xcodeproj），保留 Package.swift 用于核心测试。

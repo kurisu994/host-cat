@@ -117,6 +117,47 @@ public struct HostsParser: Sendable {
         return records
     }
 
+    public func validate(_ content: String) -> [HostsParseError] {
+        var errors: [HostsParseError] = []
+        let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
+
+        for (offset, rawLine) in lines.enumerated() {
+            let lineNumber = offset + 1
+            let line = String(rawLine)
+            let split = line.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
+            let body = String(split.first ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard !body.isEmpty else {
+                continue
+            }
+
+            let tokens = body
+                .split(whereSeparator: { $0 == " " || $0 == "\t" })
+                .map(String.init)
+
+            guard let ipAddress = tokens.first else {
+                continue
+            }
+
+            guard isValidIPAddress(ipAddress) else {
+                errors.append(HostsParseError.invalidIPAddress(lineNumber: lineNumber, value: ipAddress))
+                continue
+            }
+
+            let hostnames = Array(tokens.dropFirst())
+            guard !hostnames.isEmpty else {
+                errors.append(HostsParseError.missingHostname(lineNumber: lineNumber))
+                continue
+            }
+
+            for hostname in hostnames where !isValidHostname(hostname) {
+                errors.append(HostsParseError.invalidHostname(lineNumber: lineNumber, value: hostname))
+            }
+        }
+
+        return errors
+    }
+
     private func isValidIPAddress(_ value: String) -> Bool {
         IPv4Address(value) != nil || IPv6Address(value) != nil
     }

@@ -355,6 +355,8 @@ HostCat.xcodeproj
 - **合并去重策略**：合并输出时静默去重，同域名 + 同 IP 只保留第一次出现；预览界面标注合并数量。
 - **hosts 文件编码**：读取按 UTF-8，解码失败回退 Latin-1 并提示用户写入时会转换为 UTF-8；回退读取用于展示和备份，不承诺 byte-for-byte 保留；写出统一 UTF-8。
 - **应用自更新**：计划第二版引入 Sparkle 框架实现自动更新，首版暂不包含。
+- **hosts 编辑器语法高亮与行号组件**：采用 AppKit 的 `NSTextView` 通过 SwiftUI `NSViewRepresentable` 进行桥接，并使用 **TextKit 2**（即 `NSTextLayoutManager`）进行文本行段计算与渲染。高亮引擎 `HostsSyntaxHighlighter` 实现了对 IP（蓝色）、hostname（绿色）、注释（灰色）、管理区块起止符（橙色粗体）的多色渲染，并为所有语法错误行赋予红色半透明背景；自定义行号栏 `LineNumberRulerView`（`NSRulerView` 子类）能基于 TextKit 2 完美执行滚动与缩放计算，高亮显示当前行，并对错误行号标识为红字与红点。同时，语法高亮整个结构体添加了 `@MainActor` 修饰，完美适配 Swift 6 严格并发校验。
+- **全量多行语法错误收集**：在 `HostsParser` 中新增非抛出的 `validate(_:)` 方法，单次运行即可将整个 hosts 文本中所有不合规的行号与具体错误类型抓取至数组。编辑器 `EditorView` 结合该功能，做到了同时渲染出多行红字背景与红点 gutter 的直观报错体验，取代了单次仅暴露单行错误的中断性流程。
 
 ## 初步取舍
 

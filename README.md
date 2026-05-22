@@ -38,6 +38,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 备份管理窗口（`BackupRestoreView`）：列出历史备份、预览内容、手动创建备份和事务式恢复。
   - 外部修改弹窗（`ExternalModificationAlert`）：检测到外部修改时提供「取消」或「确认覆盖」决策。
   - 设置页面：开机自启动 Toggle、Helper 状态显示、注册/刷新操作。
+  - 程序员专享的 hosts 编辑体验：等宽字体、全量语法高亮渲染（IP、hostname、注释、管理标记）、当前行高亮、滚动同步行号栏、语法错误行整行红色背景及行号栏红点标识、以及多行错误实时收集。
 - `HostCatPrivilegedHelper`：
   - 基于 `SMAppService` 注册的 LaunchDaemon，以 root 身份运行。
   - 通过 XPC 接收主应用写入请求，调用 `HostsFileWriter` 执行安全写入。
@@ -112,6 +113,9 @@ swift test
 │   │   ├── SidebarComponents.swift       # 侧边栏子组件（NodeRow、GroupHeader 等）
 │   │   ├── NameInputDialog.swift         # 名称输入弹窗和 NSTextField 封装
 │   │   ├── NodeReorderDropDelegate.swift # 节点拖拽排序代理
+│   │   ├── HostsTextView.swift           # NSTextView 桥接的 SwiftUI 视图
+│   │   ├── LineNumberRulerView.swift     # 基于 TextKit 2 的自定义行号标尺栏
+│   │   ├── HostsSyntaxHighlighter.swift  # 基于 TextKit 2 的 hosts 语法高亮引擎
 │   │   ├── MergedPreviewView.swift       # 合成预览窗口
 │   │   ├── HelperSetupView.swift         # Helper 注册引导
 │   │   ├── BackupRestoreView.swift       # 备份管理和事务式恢复
@@ -192,8 +196,9 @@ swift test
 
 ## 下一步
 
-阶段 2（真实写入版）已完成。接下来可以考虑：
-
+阶段 2（真实写入版）与 hosts 编辑器高亮等功能已完成。接下来可以考虑：
+- 拖拽排序替代上移/下移按钮（跨分组拖拽完善）
+- 搜索/过滤节点和域名
 - 自动化 CI/CD 流水线（GitHub Actions）
 - UI 动画细节打磨与自动更新 (Sparkle)
 - iCloud 同步支持
