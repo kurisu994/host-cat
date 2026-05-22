@@ -83,9 +83,11 @@ struct HostsTextView: NSViewRepresentable {
         // 仅在外部 text 变化时更新（避免编辑时光标跳动）
         var didReplaceText = false
         if textView.string != text {
+            context.coordinator.isUpdatingFromSwiftUI = true
             let selectedRanges = textView.selectedRanges
             textView.string = text
             textView.selectedRanges = selectedRanges
+            context.coordinator.isUpdatingFromSwiftUI = false
             didReplaceText = true
         }
 

@@ -241,7 +241,8 @@ public final class MenuBarViewModel: ObservableObject {
             logger.warning("应用冲突: \(conflicts.count) 个")
         } else if let errorMessage = result.errorMessage {
             // 区分外部修改和其他写入错误
-            if result.status == .writeFailed(HostHelperClientError.hashMismatch.localizedDescription) {
+            if case .writeFailed(let msg) = result.status,
+               msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true
                 applyError = "hosts 文件已在 HostCat 之外被修改"
                 logger.warning("检测到外部修改")

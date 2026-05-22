@@ -34,8 +34,11 @@ final class LineNumberRulerView: NSRulerView {
     // MARK: - Init
 
     init(textView: NSTextView) {
+        guard let scrollView = textView.enclosingScrollView else {
+            fatalError("LineNumberRulerView 要求 textView 必须已添加到 NSScrollView 中")
+        }
         super.init(
-            scrollView: textView.enclosingScrollView!,
+            scrollView: scrollView,
             orientation: .verticalRuler
         )
         self.clientView = textView

@@ -174,6 +174,7 @@ struct BackupRestoreView: View {
                 isLoading = false
                 if result.success {
                     errorMessage = nil
+                    refreshBackups()
                 } else {
                     errorMessage = "恢复失败: \(result.errorMessage ?? "未知错误")"
                 }
