@@ -12,12 +12,9 @@ struct HostCatApplication: App {
         let config = Self.loadInitialConfig()
 
         #if DEBUG
-        // 开发环境：可以用 PreviewHostHelperClient 绕过 Helper 注册
-        let helperClient: any HostHelperClient = {
-            // 如果 Helper 可用就用真实 client，否则回退到 Preview
-            let xpc = XPCHostHelperClient()
-            return xpc
-        }()
+        // 开发环境：使用 PreviewHostHelperClient 绕过 Helper 注册，
+        // 避免开发时必须安装 Privileged Helper
+        let helperClient: any HostHelperClient = PreviewHostHelperClient()
         #else
         let helperClient: any HostHelperClient = XPCHostHelperClient()
         #endif

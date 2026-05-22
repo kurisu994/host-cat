@@ -172,6 +172,37 @@ public final class MenuBarViewModel: ObservableObject {
         return result
     }
 
+    /// 从 hosts 备份内容恢复配置；写入成功前不替换当前草稿配置。
+    public func restoreBackup(content: String) async -> ApplyResult {
+        isApplying = true
+        applyError = nil
+        lastConflicts = []
+        let generation = nextApplyGeneration()
+
+        let importResult = HostsImporter().importHosts(content)
+        var restoredConfig = config
+        restoredConfig.defaultNode.content = importResult.safeDefaultNodeContent
+        for groupIndex in restoredConfig.groups.indices {
+            for nodeIndex in restoredConfig.groups[groupIndex].nodes.indices {
+                restoredConfig.groups[groupIndex].nodes[nodeIndex].isActive = false
+            }
+        }
+
+        let (result, rolledBackConfig) = await coordinator.applyImmediately(config: restoredConfig)
+
+        guard isCurrentApplyGeneration(generation) else {
+            return result
+        }
+        isApplying = false
+
+        if result.success {
+            config = restoredConfig
+        }
+        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "备份恢复失败")
+
+        return result
+    }
+
     /// 强制写入，跳过 hash 校验（用于用户确认覆盖外部修改后）
     public func forceApply() {
         // 清除 lastAppliedHostsHash 让 coordinator 不做 hash 校验

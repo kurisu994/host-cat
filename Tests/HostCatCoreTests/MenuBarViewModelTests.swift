@@ -6,7 +6,11 @@ final class MenuBarViewModelTests: XCTestCase {
     func testFailedApplyDoesNotDiscardEditedDraftConfig() async throws {
         let helper = FakeHostHelperClient()
         await helper.setShouldSucceed(false)
-        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(1))
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
         let storeURL = makeStoreURL()
         defer { try? FileManager.default.removeItem(at: storeURL) }
         var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
@@ -71,6 +75,43 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertNotNil(viewModel.applyError)
         let saved = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: Data(contentsOf: storeURL))
         XCTAssertEqual(saved.defaultNode.content, "10.0.0.1 scheduled-draft.test\n")
+    }
+
+    func testRestoreBackupFailureKeepsOriginalConfigAndPersistedConfig() async throws {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        var originalConfig = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        originalConfig.groups = [
+            HostGroup(name: "开发", nodes: [
+                HostNode(name: "API", content: "10.0.0.1 api.local\n", isActive: true),
+            ]),
+        ]
+        try AppConfigStore(configURL: storeURL).save(originalConfig)
+        let viewModel = MenuBarViewModel(
+            config: originalConfig,
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+        let backupContent = """
+        # --- HostCat Begin (v1) ---
+        # 默认
+        10.0.0.2 restored.local
+        # --- HostCat End ---
+        """
+
+        let result = await viewModel.restoreBackup(content: backupContent)
+
+        XCTAssertFalse(result.success)
+        XCTAssertEqual(viewModel.config, originalConfig)
+        let saved = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: Data(contentsOf: storeURL))
+        XCTAssertEqual(saved, originalConfig)
     }
 
     func testCancelledOlderApplyDoesNotClearApplyingStateForNewerApply() async {

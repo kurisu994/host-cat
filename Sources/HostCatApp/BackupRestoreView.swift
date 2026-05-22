@@ -169,19 +169,16 @@ struct BackupRestoreView: View {
         errorMessage = nil
 
         Task {
-            let result = await viewModel.applyImmediately()
+            let result = await viewModel.restoreBackup(content: content)
             await MainActor.run {
                 isLoading = false
-                if !result.success {
+                if result.success {
+                    errorMessage = nil
+                } else {
                     errorMessage = "恢复失败: \(result.errorMessage ?? "未知错误")"
                 }
             }
         }
-
-        // 注意：实际恢复是通过修改 config 然后写入来实现的
-        // 这里暂时用 applyImmediately 占位，
-        // 完整实现需要 parse 备份内容并更新节点配置
-        _ = content
     }
 }
 

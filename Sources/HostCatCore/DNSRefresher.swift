@@ -43,20 +43,3 @@ public struct SystemDNSRefresher: DNSRefreshing, Sendable {
         }
     }
 }
-
-/// 测试用 DNS 刷新 stub
-public struct StubDNSRefresher: DNSRefreshing, Sendable {
-    public var shouldSucceed: Bool
-    public var errorMessage: String
-
-    public init(shouldSucceed: Bool = true, errorMessage: String = "stub DNS 刷新失败") {
-        self.shouldSucceed = shouldSucceed
-        self.errorMessage = errorMessage
-    }
-
-    public func refreshDNSCache() throws {
-        if !shouldSucceed {
-            throw HostsWriteError.dnsRefreshFailed(errorMessage)
-        }
-    }
-}
