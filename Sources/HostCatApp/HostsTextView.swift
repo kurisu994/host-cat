@@ -192,7 +192,7 @@ struct HostsTextView: NSViewRepresentable {
         weak var rulerView: LineNumberRulerView?
 
         /// 防止 updateNSView 和 textDidChange 循环触发
-        private var isUpdatingFromSwiftUI = false
+        var isUpdatingFromSwiftUI = false
 
         init(parent: HostsTextView) {
             self.parent = parent

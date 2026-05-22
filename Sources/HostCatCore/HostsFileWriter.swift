@@ -154,6 +154,12 @@ public struct HostsWriteOutcome: Equatable, Sendable {
 
 /// hosts 内容写入前校验
 public struct HostsContentValidator: Sendable {
+    private static let requiredSystemEntries: [(ipAddress: String, hostname: String)] = [
+        ("127.0.0.1", "localhost"),
+        ("255.255.255.255", "broadcasthost"),
+        ("::1", "localhost")
+    ]
+
     public init() {}
 
     /// 校验即将写入的 hosts 内容是否完整有效
@@ -170,6 +176,26 @@ public struct HostsContentValidator: Sendable {
         }
         guard content.contains(HostsImporter.endMarker) else {
             throw HostsWriteError.contentValidationFailed("缺少 HostCat End 标记")
+        }
+
+        let records: [HostRecord]
+        do {
+            records = try HostsParser().parse(content)
+        } catch {
+            let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            throw HostsWriteError.contentValidationFailed(message)
+        }
+
+        for required in Self.requiredSystemEntries {
+            let containsEntry = records.contains { record in
+                record.ipAddress == required.ipAddress
+                    && record.hostnames.contains { $0.lowercased() == required.hostname }
+            }
+            guard containsEntry else {
+                throw HostsWriteError.contentValidationFailed(
+                    "缺少系统默认条目 \(required.ipAddress) \(required.hostname)"
+                )
+            }
         }
     }
 }

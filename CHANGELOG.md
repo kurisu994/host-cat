@@ -21,7 +21,7 @@
 - 添加 `ExternalModificationDetector` 外部修改检测及 UI 决策弹窗（`ExternalModificationAlert`）。
 - 添加写入前自动备份（`HostWriteCoordinator` 在写入前调用 `BackupStore.createBackup`）。
 - 增强 HostCatApp UI：Helper 注册引导 (`HelperSetupView`)、备份管理与事务式恢复 (`BackupRestoreView`)、外部修改弹窗。
-- 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包；无证书时自动跳过 exportArchive。
+- 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包；发布构建要求显式提供 Developer ID 证书和 Team ID。
 - 添加应用图标资源（Assets.xcassets，7 个尺寸）。
 - 拆分 `EditorView.swift` 为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
 - 拆分 `HostCatApp.swift` 为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
@@ -57,6 +57,15 @@
 
 ### Fixed
 
+- 修复 Xcode App target 构建失败问题，`HostsTextView` 的 SwiftUI 更新标记不再被错误声明为 `private`。
+- 修复 Privileged Helper/App XPC 签名校验过宽的问题，改为包含 `anchor apple generic`、bundle identifier 和 Team ID 的完整 requirement。
+- 修复 XPC reply 丢失、连接中断或超时时可能永久挂起的问题，现在 pending reply 会在错误、取消、超时或连接失效时收敛。
+- 修复写入前备份失败仍继续覆盖 hosts 的问题，现在备份失败会阻止真实写入。
+- 修复强制覆盖失败后会清空持久化 hash、削弱后续外部修改保护的问题，现在强制写入使用一次性参数。
+- 修复 hosts 写入内容未强制包含系统默认条目的问题，Helper 写入前会校验 `localhost` 与 `broadcasthost` 默认条目。
+- 修复备份读取和手动备份未复用 Latin-1 fallback 的问题。
+- 修复配置损坏或未来版本恢复默认时未保留原始配置文件的问题。
+- 修复外部修改确认弹窗只挂在编辑器窗口的问题，现在菜单栏、合成预览和备份窗口入口也能处理外部修改。
 - 修复 `HostsParser` 对纯注释/空行内容误报 `emptyContent` 错误的问题，现在返回空记录数组。
 - 修复 `HostsMergerTests` 中重复的测试方法名 `testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed`。
 - 修复 `HostWriteCoordinator` 写入失败后的状态隔离问题，现在返回 `rolledBackConfig` 供调用方判断真实 hosts 状态。

@@ -8,7 +8,13 @@ echo "🚀 开始构建 HostCat Release 版本..."
 
 # 环境变量检查
 if [ -z "$DEVELOPER_ID_APPLICATION" ]; then
-    echo "⚠️ 未设置 DEVELOPER_ID_APPLICATION，将使用默认本地签名"
+    echo "❌ 未设置 DEVELOPER_ID_APPLICATION，Release 包必须使用 Developer ID 签名"
+    exit 1
+fi
+
+if [ -z "$DEVELOPMENT_TEAM" ]; then
+    echo "❌ 未设置 DEVELOPMENT_TEAM，Privileged Helper 的 XPC requirement 需要真实 Team ID"
+    exit 1
 fi
 
 APP_NAME="HostCat"
@@ -16,6 +22,7 @@ PROJECT_DIR=$(pwd)
 BUILD_DIR="${PROJECT_DIR}/build"
 ARCHIVE_PATH="${BUILD_DIR}/${APP_NAME}.xcarchive"
 EXPORT_PATH="${BUILD_DIR}/export"
+EXPORT_OPTIONS_PATH="${BUILD_DIR}/ExportOptions.plist"
 APP_BUNDLE="${EXPORT_PATH}/${APP_NAME}.app"
 DMG_PATH="${BUILD_DIR}/${APP_NAME}.dmg"
 
@@ -36,21 +43,19 @@ xcodebuild archive \
     -configuration Release \
     -destination 'platform=macOS,arch=arm64' \
     -archivePath "$ARCHIVE_PATH" \
+    DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+    CODE_SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION" \
+    CODE_SIGN_STYLE=Manual \
     -quiet
 
-# 4. 导出 (Export) 或提取 App
+# 4. 导出 (Export)
 echo "📤 导出 App..."
-if [ -z "$DEVELOPER_ID_APPLICATION" ]; then
-    echo "⚠️ 缺少证书，跳过标准 exportArchive，直接从 archive 中提取 app"
-    mkdir -p "$EXPORT_PATH"
-    cp -a "${ARCHIVE_PATH}/Products/Applications/${APP_NAME}.app" "${EXPORT_PATH}/"
-else
-    xcodebuild -exportArchive \
-        -archivePath "$ARCHIVE_PATH" \
-        -exportOptionsPlist scripts/ExportOptions.plist \
-        -exportPath "$EXPORT_PATH" \
-        -quiet
-fi
+sed "s/YOUR_TEAM_ID/${DEVELOPMENT_TEAM}/g" scripts/ExportOptions.plist > "$EXPORT_OPTIONS_PATH"
+xcodebuild -exportArchive \
+    -archivePath "$ARCHIVE_PATH" \
+    -exportOptionsPlist "$EXPORT_OPTIONS_PATH" \
+    -exportPath "$EXPORT_PATH" \
+    -quiet
 
 # 5. 打包 DMG (使用 hdiutil)
 echo "💿 创建 DMG..."

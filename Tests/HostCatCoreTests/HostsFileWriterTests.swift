@@ -10,6 +10,7 @@ private let validHostsContent = """
 # ==============================
 # 默认
 127.0.0.1 localhost
+255.255.255.255 broadcasthost
 ::1 localhost
 
 # --- HostCat End ---
@@ -190,6 +191,32 @@ struct HostsFileWriterTests {
         #expect {
             _ = try writer.write(
                 content: noEnd,
+                targetPath: targetPath,
+                expectedHash: nil,
+                fileOps: ops
+            )
+        } throws: { error in
+            if case HostsWriteError.contentValidationFailed = error {
+                return true
+            }
+            return false
+        }
+    }
+
+    @Test("缺少系统默认条目阻止写入")
+    func missingRequiredSystemEntryBlocksWrite() throws {
+        var ops = FakeFileSystemOperations()
+        ops.fileContents[targetPath] = Data(existingHostsContent.utf8)
+        let missingBroadcasthost = """
+        # --- HostCat Begin (v1) ---
+        127.0.0.1 localhost
+        ::1 localhost
+        # --- HostCat End ---
+        """
+
+        #expect {
+            _ = try writer.write(
+                content: missingBroadcasthost,
                 targetPath: targetPath,
                 expectedHash: nil,
                 fileOps: ops

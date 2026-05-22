@@ -2,6 +2,7 @@ import Foundation
 import os.log
 
 private typealias ApplyOutcome = (result: ApplyResult, rolledBackConfig: AppConfig?)
+private typealias WritePlan = (merged: MergedHosts, expectedHash: String?)
 
 /// 应用结果状态码，区分不同结果类型
 public enum ApplyStatus: Equatable, Sendable {
@@ -75,7 +76,10 @@ public actor HostWriteCoordinator {
 
     /// 调度一次 apply 操作。如果当前已有待执行的 debounce，会取消旧任务并重新开始计时。
     /// 返回的 ApplyResult 表示本次 schedule 最终是否成功完成写入。
-    public func scheduleApply(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
+    public func scheduleApply(
+        config: AppConfig,
+        force: Bool = false
+    ) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         // 取消之前的 debounce 任务
         pendingTask?.cancel()
         pendingGeneration += 1
@@ -96,7 +100,7 @@ public actor HostWriteCoordinator {
                 }
 
                 self.clearPendingTask(ifGeneration: generation)
-                return await self.performWrite(config: config)
+                return await self.performWrite(config: config, force: force)
             } catch {
                 return (
                     ApplyResult(
@@ -115,10 +119,13 @@ public actor HostWriteCoordinator {
     }
 
     /// 立即执行写入，不经过 debounce。用于编辑窗口的 Apply 按钮等需要即时反馈的场景。
-    public func applyImmediately(config: AppConfig) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
+    public func applyImmediately(
+        config: AppConfig,
+        force: Bool = false
+    ) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
         pendingTask?.cancel()
         pendingTask = nil
-        return await performWrite(config: config)
+        return await performWrite(config: config, force: force)
     }
 
     // MARK: - Private
@@ -145,7 +152,7 @@ public actor HostWriteCoordinator {
         return true
     }
 
-    private func performWrite(config: AppConfig) async -> ApplyOutcome {
+    private func performWrite(config: AppConfig, force: Bool) async -> ApplyOutcome {
         guard await waitUntilCurrentWriteFinishes() else {
             return (
                 ApplyResult(
@@ -160,9 +167,13 @@ public actor HostWriteCoordinator {
         defer { isWriting = false }
 
         // 1. 合并配置并执行 parser 校验
-        let merged: MergedHosts
+        let writePlan: WritePlan
         do {
-            merged = try merger.merge(config)
+            let merged = try merger.merge(config)
+            let expectedHash = force
+                ? nil
+                : config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
+            writePlan = (merged, expectedHash)
             logger.info("合并成功: \(merged.records.count) 条记录, \(merged.duplicateCount) 条重复")
         } catch let HostMergeError.conflicts(conflicts) {
             logger.warning("合并冲突: \(conflicts.count) 个")
@@ -191,21 +202,28 @@ public actor HostWriteCoordinator {
         if let backupStore {
             do {
                 let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
-                let currentHostsText = String(data: currentHostsData, encoding: .utf8) ?? ""
-                if !currentHostsText.isEmpty {
-                    _ = try backupStore.createBackup(content: currentHostsText)
-                    logger.info("写入前备份成功")
-                }
+                let currentHostsText = HostsImporter().importHostsWithFallback(data: currentHostsData).decodedContent
+                _ = try backupStore.createBackup(content: currentHostsText)
+                logger.info("写入前备份成功")
             } catch {
-                logger.warning("写入前备份失败，继续写入: \(error.localizedDescription)")
+                let message = "写入前备份失败: \(error.localizedDescription)"
+                logger.error("\(message)")
+                return (
+                    ApplyResult(
+                        success: false,
+                        errorMessage: message,
+                        status: .writeFailed(message)
+                    ),
+                    lastSuccessfulConfigSnapshot
+                )
             }
         }
 
         // 3. 调用 helper client 写入
         do {
             let result = try await helperClient.writeHosts(
-                merged.text,
-                expectedCurrentHostsHash: config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
+                writePlan.merged.text,
+                expectedCurrentHostsHash: writePlan.expectedHash
             )
 
             // 4. 写入成功：更新状态

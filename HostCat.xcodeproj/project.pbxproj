@@ -22,6 +22,7 @@
 		42DE5C1BA01F6AA46EE86F2B /* HostCatPrivilegedHelperMain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */; };
 		43082EE1A7A45942B27116A4 /* BackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 012F9428E3ED97A9216A38DE /* BackupRestoreView.swift */; };
 		444E430AC60F1911A996CF87 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C10ECAA17224040C3046F84 /* Models.swift */; };
+		493690B838AFADDAEA560106 /* CodeSigningRequirementsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */; };
 		51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */; };
 		520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
 		5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */; };
@@ -42,6 +43,7 @@
 		82406C6856ECDFCA63BD1CA3 /* HostsImporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */; };
 		8636804EA1B5E8916038D2A8 /* HostsTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E69B5B3946975FB8A31D8755 /* HostsTextView.swift */; };
 		8BFBED698502A3FACE80865A /* WindowFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7C78F009E32AECCA011883 /* WindowFocus.swift */; };
+		8E23ADD50916C3ADB7527A2F /* HostCatCodeSigningRequirements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */; };
 		909A2FA9970E2982279E83F9 /* ExternalModificationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26065AECBA24A83ECDC521B0 /* ExternalModificationDetector.swift */; };
 		912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EBCC23847724F1472FDC48 /* TestDoubles.swift */; };
 		9B2CC295C59A13A66B6EBD77 /* HostsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014FF435AFEA5342833791B7 /* HostsParser.swift */; };
@@ -162,9 +164,11 @@
 		5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeReorderDropDelegate.swift; sourceTree = "<group>"; };
 		5584A791D448EB4268A8164B /* HelperDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperDelegate.swift; sourceTree = "<group>"; };
 		57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalModificationDetectorTests.swift; sourceTree = "<group>"; };
+		5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatCodeSigningRequirements.swift; sourceTree = "<group>"; };
 		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
 		733820B6D7E17E8DD3F50DC5 /* HelperSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperSetupView.swift; sourceTree = "<group>"; };
 		7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatPrivilegedHelperMain.swift; sourceTree = "<group>"; };
+		810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSigningRequirementsTests.swift; sourceTree = "<group>"; };
 		8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
 		8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarComponents.swift; sourceTree = "<group>"; };
 		93A07209DF12BB43C1A2EFAA /* HostCatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HostCatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -239,6 +243,7 @@
 				721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */,
 				BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */,
 				26065AECBA24A83ECDC521B0 /* ExternalModificationDetector.swift */,
+				5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */,
 				080D17737691D76CE83D4ED8 /* HostHelperClient.swift */,
 				C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */,
 				42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */,
@@ -294,6 +299,7 @@
 				BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */,
 				DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */,
 				1170E06A567EC5F28A7CC50D /* BackupStoreTests.swift */,
+				810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */,
 				0CBB2BC9AD0E1D4E9DCD57D1 /* ConfigMutationServiceTests.swift */,
 				57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */,
 				A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */,
@@ -561,6 +567,7 @@
 				A854C9E2C21C4350D1A3AFDC /* AppConfigStoreTests.swift in Sources */,
 				B1DC4984DA362BD870025F5F /* AppConfigTests.swift in Sources */,
 				9E870546E70E7ECB9D5D329F /* BackupStoreTests.swift in Sources */,
+				493690B838AFADDAEA560106 /* CodeSigningRequirementsTests.swift in Sources */,
 				F8A706BE662A35C074D61652 /* ConfigMutationServiceTests.swift in Sources */,
 				1C1EF3C299739617BA334B69 /* ExternalModificationDetectorTests.swift in Sources */,
 				D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */,
@@ -583,6 +590,7 @@
 				6BAD6BBFB88BD5DCCAB72D14 /* ConfigMutationService.swift in Sources */,
 				C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */,
 				909A2FA9970E2982279E83F9 /* ExternalModificationDetector.swift in Sources */,
+				8E23ADD50916C3ADB7527A2F /* HostCatCodeSigningRequirements.swift in Sources */,
 				2DCCF82A00983C3E0A0A8F00 /* HostHelperClient.swift in Sources */,
 				7B4D199688960B4D1EED2645 /* HostWriteCoordinator.swift in Sources */,
 				81ACA36DAAB37D49763BB40F /* HostsFileWriter.swift in Sources */,

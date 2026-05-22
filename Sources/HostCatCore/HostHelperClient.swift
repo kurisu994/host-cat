@@ -22,6 +22,8 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
     case connectionInterrupted
     /// XPC 连接永久失效
     case connectionInvalidated
+    /// XPC 请求超时
+    case requestTimedOut
     /// Helper 返回 hash 不匹配
     case hashMismatch
     /// Helper 返回 hosts 文件被 immutable flags 保护
@@ -41,6 +43,8 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
             "与 Helper 的连接中断，请重试"
         case .connectionInvalidated:
             "与 Helper 的连接已失效，请检查 Helper 状态"
+        case .requestTimedOut:
+            "与 Helper 通信超时，请重试"
         case .hashMismatch:
             "hosts 文件已在 HostCat 之外被修改"
         case .fileImmutable:

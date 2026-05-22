@@ -114,9 +114,44 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertEqual(saved, originalConfig)
     }
 
+    func testForceApplyFailurePreservesStoredHashes() async throws {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        config.state.lastAppliedHostsHash = "applied_hash"
+        config.state.lastExternalHostsHash = "external_hash"
+        let viewModel = MenuBarViewModel(
+            config: config,
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+
+        viewModel.forceApply()
+        await waitForApplyToFinish(viewModel)
+
+        XCTAssertEqual(viewModel.config.state.lastAppliedHostsHash, "applied_hash")
+        XCTAssertEqual(viewModel.config.state.lastExternalHostsHash, "external_hash")
+        let saved = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: Data(contentsOf: storeURL))
+        XCTAssertEqual(saved.state.lastAppliedHostsHash, "applied_hash")
+        XCTAssertEqual(saved.state.lastExternalHostsHash, "external_hash")
+        let expectedHashes = await helper.expectedHashes
+        XCTAssertEqual(expectedHashes, [nil])
+    }
+
     func testCancelledOlderApplyDoesNotClearApplyingStateForNewerApply() async {
         let helper = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(200))
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(200)
+        )
         let storeURL = makeStoreURL()
         defer { try? FileManager.default.removeItem(at: storeURL) }
         let viewModel = MenuBarViewModel(

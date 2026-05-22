@@ -16,6 +16,8 @@ actor FakeHostHelperClient: HostHelperClient {
             try await Task.sleep(nanoseconds: delayNanoseconds)
         }
 
+        expectedHashes.append(expectedCurrentHostsHash)
+
         if !shouldSucceed {
             if let error = simulatedError {
                 throw error
@@ -25,7 +27,6 @@ actor FakeHostHelperClient: HostHelperClient {
         }
 
         writtenContents.append(contents)
-        expectedHashes.append(expectedCurrentHostsHash)
         return HostHelperWriteResult(
             finalHostsHash: HostsHash.sha256Hex(contents),
             didRefreshDNS: true

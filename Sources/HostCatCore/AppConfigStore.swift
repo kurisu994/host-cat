@@ -73,6 +73,7 @@ public struct AppConfigStore: Sendable {
         do {
             decodedConfig = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: data)
         } catch {
+            try preserveRecoverableConfig(reason: "corrupt")
             return try recoverDefault(
                 defaultHosts: defaultHosts,
                 currentHostsHash: currentHostsHash,
@@ -81,6 +82,7 @@ public struct AppConfigStore: Sendable {
         }
 
         guard decodedConfig.configVersion == Self.currentConfigVersion else {
+            try preserveRecoverableConfig(reason: "unsupported")
             return try recoverDefault(
                 defaultHosts: defaultHosts,
                 currentHostsHash: currentHostsHash,
@@ -136,6 +138,26 @@ public struct AppConfigStore: Sendable {
         let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
         try save(config)
         return AppConfigLoadResult(config: config, status: .recoveredDefault(reason))
+    }
+
+    private func preserveRecoverableConfig(reason: String) throws {
+        guard FileManager.default.fileExists(atPath: configURL.path) else {
+            return
+        }
+
+        let parentURL = configURL.deletingLastPathComponent()
+        let preservedURL = parentURL.appendingPathComponent(
+            "\(configURL.lastPathComponent).\(reason).\(timestampForPreservedConfig()).\(UUID().uuidString)",
+            isDirectory: false
+        )
+        try FileManager.default.copyItem(at: configURL, to: preservedURL)
+    }
+
+    private func timestampForPreservedConfig() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HHmmss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: Date())
     }
 
     private func normalizedForCurrentRules(_ config: AppConfig) -> AppConfig {

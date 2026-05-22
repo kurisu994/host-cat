@@ -42,7 +42,7 @@
 - XPC 只传稳定桥接类型，例如 `String`、`Data`、`Bool`、`NSNumber`、`NSDictionary`、`NSError`。
 - 真实写入前必须保留 `expectedCurrentHostsHash` 检查，避免覆盖外部修改。
 - DNS 刷新只允许固定命令：`dscacheutil -flushcache` 和 `killall -HUP mDNSResponder`。
-- Helper 端 code signing requirement 当前使用 identifier 校验，部署前必须替换为包含真实 Team ID 的完整 requirement 字符串。
+- Helper 与主应用的 code signing requirement 必须包含 `anchor apple generic`、固定 bundle identifier 和真实 Team ID；发布构建需显式传入 `DEVELOPMENT_TEAM`。
 
 ## 开发原则
 

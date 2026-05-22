@@ -15,19 +15,19 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 同域名不同 IP 冲突检测（按地址族区分，避免 IPv4/IPv6 localhost 误判）。
   - 同 IP + 同域名重复条目去重计数。
   - hosts 内容 SHA256 hash。
-  - JSON 配置存储，支持默认路径、版本校验、损坏恢复和原子写入（rename）。
+  - JSON 配置存储，支持默认路径、版本校验、损坏恢复、原配置保留和原子写入（rename）。
   - hosts 导入与管理区块解析（`HostsImporter`），支持无区块、完整 v1 区块、缺 Begin、缺 End、未知版本，区块外内容提取为默认节点内容，并在 fallback 场景保全已有 HostCat 区块记录。
   - UTF-8 读取和 Latin-1 fallback，标记编码问题。
   - 配置变更服务（`ConfigMutationService`），支持 group/node 增删改、排序、多选激活行为，默认节点保护。
-  - 配置草稿保存与 hosts 应用分离，写入失败时保留用户编辑内容并提示 hosts 未应用；备份恢复采用事务式写入，成功前不替换当前配置。
+  - 配置草稿保存与 hosts 应用分离，写入失败时保留用户编辑内容并提示 hosts 未应用；备份失败会阻止真实写入，备份恢复采用事务式写入，成功前不替换当前配置。
   - 写入协调器（`HostWriteCoordinator` actor），支持 debounce（500ms）、冲突检测、首次写入 expected hash、成功快照和失败状态隔离。
   - 备份存储（`BackupStore`），支持自动命名（含微秒级时间戳防冲突）、保留策略（默认 3 份）和读取恢复。
   - 外部修改检测（`ExternalModificationDetector`），通过 hash 比对检测 hosts 是否在 HostCat 之外被修改。
-  - 安全文件写入器（`HostsFileWriter`），实现 immutable flags 检查、mkstemp 临时文件、fsync、chmod 644 / chown root:wheel、rename 原子替换、目录 fsync。
+  - 安全文件写入器（`HostsFileWriter`），实现 immutable flags 检查、系统默认条目校验、mkstemp 临时文件、fsync、chmod 644 / chown root:wheel、rename 原子替换、目录 fsync。
   - DNS 刷新器（`SystemDNSRefresher`），执行固定命令 `dscacheutil -flushcache` 和 `killall -HUP mDNSResponder`。
 - `HostCatHelperClient`：
   - Helper client 协议（`HostHelperClient`），UI 和服务层只依赖此协议。
-  - 真实 XPC client（`XPCHostHelperClient`），通过 `NSXPCConnection` 与 Privileged Helper 通信，将 reply block 转为 `async throws`。
+  - 真实 XPC client（`XPCHostHelperClient`），通过 `NSXPCConnection` 与 Privileged Helper 通信，将 reply block 转为 `async throws`，并处理连接错误、取消和超时。
   - Helper 注册管理器（`HelperRegistrationManager`），封装 `SMAppService.daemon` 注册、状态检测、审批引导和主应用开机自启动管理。
   - XPC 协议定义（`HostCatHelperXPCProtocol`），使用 `@objc` protocol + `NSDictionary` 参数，支持 `NSString`、`Bool` 等稳定桥接类型。
 - `HostCatApp`：
@@ -43,7 +43,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 基于 `SMAppService` 注册的 LaunchDaemon，以 root 身份运行。
   - 通过 XPC 接收主应用写入请求，调用 `HostsFileWriter` 执行安全写入。
   - 写入成功后刷新 DNS 缓存。
-  - Helper 端验证调用方 code signing requirement。
+  - Helper 端验证调用方 code signing requirement，要求 `anchor apple generic`、固定 bundle identifier 和真实 Team ID。
 - `HostCatCoreTests`：
   - 数据模型（`ModelsTests`）Codable/Equatable 单元测试。
   - parser、merge、conflict、config/hash、importer 单元测试。
@@ -89,9 +89,11 @@ xcodebuild build -project HostCat.xcodeproj -scheme HostCatApp -destination 'pla
 swift test
 ```
 
-打包 Release DMG（将输出到 `build/HostCat.dmg`）：
+打包 Release DMG（将输出到 `build/HostCat.dmg`，需要真实 Developer ID 证书和 Team ID）：
 
 ```bash
+export DEVELOPER_ID_APPLICATION="Developer ID Application: Your Name (TEAMID)"
+export DEVELOPMENT_TEAM="TEAMID"
 ./scripts/build-release.sh
 ```
 

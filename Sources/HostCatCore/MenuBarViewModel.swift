@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import os.log
 
@@ -205,10 +206,24 @@ public final class MenuBarViewModel: ObservableObject {
 
     /// 强制写入，跳过 hash 校验（用于用户确认覆盖外部修改后）
     public func forceApply() {
-        // 清除 lastAppliedHostsHash 让 coordinator 不做 hash 校验
-        config.state.lastAppliedHostsHash = nil
-        config.state.lastExternalHostsHash = nil
-        scheduleApply()
+        isApplying = true
+        applyError = nil
+        lastConflicts = []
+        let generation = nextApplyGeneration()
+
+        Task {
+            guard persistDraftConfig() else {
+                finishApplyIfCurrent(generation)
+                return
+            }
+
+            let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config, force: true)
+            guard isCurrentApplyGeneration(generation) else {
+                return
+            }
+            isApplying = false
+            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "强制写入失败")
+        }
     }
 
     private func handleApplyCompletion(

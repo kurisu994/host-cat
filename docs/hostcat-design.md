@@ -23,7 +23,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 实现要点：
 
 - 主应用和 Helper 必须使用有效的 Developer ID 证书签名（开发调试时可用本地签名，但 Helper 注册需要真实证书才能通过系统审批）。
-- XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement。当前实现使用 identifier 基础校验，部署前必须替换为包含真实 Team ID 的完整 requirement 字符串。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
+- XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement。当前实现使用包含 `anchor apple generic`、固定 bundle identifier 和 Team ID 的完整 requirement；Team ID 由 Info.plist 的 `HostCatTeamIdentifier` 注入。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
 - Helper 的 launchd plist 放在 `Contents/Library/LaunchDaemons/` 目录下，Helper 可执行文件放在 `Contents/Library/HelperTools/` 目录下。`SMAppService` 模式下二者都必须在 app bundle 内，应用删除时自动清理。
 - DNS 缓存刷新命令（`dscacheutil -flushcache` + `killall -HUP mDNSResponder`）由 Helper 在写入 hosts 后一并执行，因为这两个命令都需要 root 权限。
 
@@ -324,7 +324,7 @@ HostCat.xcodeproj
 
 - `xcodebuild test -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'`
 - `xcodebuild archive -project HostCat.xcodeproj -scheme HostCatApp -archivePath build/HostCat.xcarchive`
-- 使用 Developer ID Application 证书导出 app（无证书时 `build-release.sh` 会自动跳过 exportArchive，直接从 archive 提取 app）。
+- 使用 Developer ID Application 证书导出 app；`build-release.sh` 缺少 `DEVELOPER_ID_APPLICATION` 或 `DEVELOPMENT_TEAM` 时直接失败，避免生成无法验证 Helper requirement 的发布包。
 - 使用 `notarytool submit --wait` 公证，成功后执行 `stapler staple`。
 - 打包 DMG，上传 GitHub Release，并在 release notes 中明确 `macOS 14+`、`Apple Silicon only` 和 Helper 首次授权步骤。
 
@@ -332,7 +332,7 @@ HostCat.xcodeproj
 
 - App、Helper、launchd plist、bundle identifier 和 code signing requirement 必须在 CI 与本机开发中保持一致。
 - `Sign to Run Locally` 只适合早期 UI 和 Core 调试；Helper 注册和真实写入需要真实 Developer ID 证书才能通过系统审批。
-- 当前代码中 Helper 端和 Client 端的 code signing requirement 使用基础 identifier 校验（`identifier "com.hostcat.helper"` / `identifier "com.hostcat.app"`），部署前必须替换为包含真实 Team ID 的完整 requirement 字符串。
+- Helper 端和 Client 端的 code signing requirement 必须使用完整形式：`anchor apple generic and identifier "..." and certificate leaf[subject.OU] = "TEAM_ID"`；发布脚本会把 `DEVELOPMENT_TEAM` 注入 app/helper Info.plist 和 export options。
 - 发布产物不引入 Sparkle。自动更新作为第二版能力，首版只提供 GitHub Release 下载和手动替换安装。
 
 ## 已确认设计决策

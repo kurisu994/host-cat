@@ -109,7 +109,10 @@ public struct BackupStore: Sendable {
 
     /// 读取指定备份文件的内容
     public func readBackup(at url: URL) -> String? {
-        try? String(contentsOf: url, encoding: .utf8)
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return HostsImporter().importHostsWithFallback(data: data).decodedContent
     }
 
     /// 从文件名中提取日期（用于测试和展示）

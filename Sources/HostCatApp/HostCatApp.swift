@@ -26,6 +26,7 @@ struct HostCatApplication: App {
     var body: some Scene {
         MenuBarExtra("HostCat", systemImage: "pawprint") {
             MenuBarContentView(viewModel: viewModel)
+                .externalModificationAlert(viewModel: viewModel)
         }
         .menuBarExtraStyle(.menu)
 
@@ -38,6 +39,7 @@ struct HostCatApplication: App {
 
         Window("合成预览", id: "preview") {
             MergedPreviewView(viewModel: viewModel)
+                .externalModificationAlert(viewModel: viewModel)
                 .background(WindowFocusView(title: "合成预览"))
         }
         .defaultSize(width: 700, height: 500)
@@ -49,6 +51,7 @@ struct HostCatApplication: App {
 
         Window("备份管理", id: "backup") {
             BackupRestoreView(viewModel: viewModel)
+                .externalModificationAlert(viewModel: viewModel)
         }
         .defaultSize(width: 700, height: 450)
 
@@ -177,4 +180,3 @@ private struct SettingsView: View {
         }
     }
 }
-

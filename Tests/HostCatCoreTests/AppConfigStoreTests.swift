@@ -130,7 +130,8 @@ final class AppConfigStoreTests: XCTestCase {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let configURL = directory.appendingPathComponent("config.json")
-        try Data("{ invalid json".utf8).write(to: configURL)
+        let corruptData = Data("{ invalid json".utf8)
+        try corruptData.write(to: configURL)
         let store = AppConfigStore(configURL: configURL)
 
         let result = try store.load(defaultHosts: "::1 localhost\n")
@@ -138,6 +139,9 @@ final class AppConfigStoreTests: XCTestCase {
         XCTAssertEqual(result.status, .recoveredDefault(.invalidJSON))
         assertDefaultConfig(result.config, defaultHosts: "::1 localhost\n")
         XCTAssertEqual(try decodeConfig(at: configURL), result.config)
+        let preserved = try preservedConfigs(in: directory, containing: ".corrupt.")
+        XCTAssertEqual(preserved.count, 1)
+        XCTAssertEqual(try Data(contentsOf: preserved[0]), corruptData)
         XCTAssertNotNil(AppConfigRecoveryReason.invalidJSON.errorDescription)
     }
 
@@ -156,6 +160,9 @@ final class AppConfigStoreTests: XCTestCase {
         XCTAssertEqual(result.status, .recoveredDefault(.unsupportedVersion(99)))
         assertDefaultConfig(result.config, defaultHosts: "255.255.255.255 broadcasthost\n")
         XCTAssertEqual(try decodeConfig(at: configURL), result.config)
+        let preserved = try preservedConfigs(in: directory, containing: ".unsupported.")
+        XCTAssertEqual(preserved.count, 1)
+        XCTAssertEqual(try decodeConfig(at: preserved[0]), unsupported)
         XCTAssertNotNil(AppConfigRecoveryReason.unsupportedVersion(99).errorDescription)
     }
 
@@ -189,6 +196,16 @@ final class AppConfigStoreTests: XCTestCase {
     private func decodeConfig(at url: URL) throws -> AppConfig {
         let data = try Data(contentsOf: url)
         return try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: data)
+    }
+
+    private func preservedConfigs(in directory: URL, containing token: String) throws -> [URL] {
+        try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        ).filter {
+            $0.lastPathComponent.hasPrefix("config.json")
+                && $0.lastPathComponent.contains(token)
+        }
     }
 
     private func assertDefaultConfig(

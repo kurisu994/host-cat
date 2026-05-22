@@ -109,12 +109,12 @@
 - [x] 固定 Helper bundle id：`com.hostcat.helper`。
 - [x] 配置 Helper 可执行文件位置：`Contents/Library/HelperTools/`。
 - [x] 配置 launchd plist 位置：`Contents/Library/LaunchDaemons/`。
-- [x] 准备发布构建脚本 `scripts/build-release.sh`，支持无证书时直接提取归档。
+- [x] 准备发布构建脚本 `scripts/build-release.sh`，要求 Developer ID 证书与 Team ID 后执行签名导出。
 
 ### 10. 实现真实 `HostHelperClient` XPC 包装
 
 - [x] 使用 `NSXPCConnection` 封装 async API（`XPCHostHelperClient`）。
-- [x] 设置 Helper code signing requirement（当前使用 identifier 校验，部署前需替换为真实 Team ID）。
+- [x] 设置 Helper code signing requirement，使用 `anchor apple generic`、固定 bundle identifier 和真实 Team ID。
 - [x] 把 XPC reply block 转成 `async throws`。
 - [x] 映射连接失败、签名失败、连接中断、reply 超时和 Helper 业务错误。
 - [x] UI 和服务层只依赖 `HostHelperClient` 协议，不直接接触 XPC。
@@ -149,7 +149,7 @@
 
 - [x] 配置 `xcodebuild archive` 和 `xcodebuild -exportArchive`。
 - [x] 使用 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包。
-- [x] 无 Developer ID 证书时自动跳过 exportArchive，直接从 archive 提取 app。
+- [x] 缺少 Developer ID 证书或 `DEVELOPMENT_TEAM` 时发布脚本直接失败，避免生成不可验证的 release 包。
 - [x] 更新 README：系统要求、首次授权步骤、常见故障排查。
 - [x] 更新 CHANGELOG：记录真实写入版能力和限制。
 

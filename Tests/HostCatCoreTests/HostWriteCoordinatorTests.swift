@@ -17,7 +17,11 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testDebounceMergesRapidChanges() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(50))
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(50)
+        )
         let config = makeConfig()
 
         // 快速连续触发 3 次
@@ -37,7 +41,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testWriteSuccessUpdatesState() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config = makeConfig(defaultContent: "127.0.0.1 localhost\n::1 localhost")
 
         let (result, _) = await coordinator.scheduleApply(config: config)
@@ -52,7 +56,11 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testFirstApplyUsesLastExternalHostsHashWhenNoAppliedHashExists() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(1))
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
         var config = makeConfig()
         config.state.lastExternalHostsHash = "external_hash"
 
@@ -66,7 +74,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
     func testWriteFailureDoesNotUpdateStateAndReturnsRolledBackConfig() async {
         let fakeClient = FakeHostHelperClient()
         await fakeClient.setShouldSucceed(false)
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config = makeConfig()
 
         let (result, rolledBack) = await coordinator.scheduleApply(config: config)
@@ -80,7 +88,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testWriteFailureRollsBackToLastSuccessfulConfig() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
         let config2 = makeConfig(defaultContent: "10.0.0.1 bad.com")
 
@@ -163,5 +171,42 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
         let writes = await fakeClient.writtenContents
         XCTAssertEqual(writes.count, 0)
+    }
+
+    func testBackupFailurePreventsWrite() async throws {
+        let fakeClient = FakeHostHelperClient()
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let hostsURL = directory.appendingPathComponent("hosts")
+        try "127.0.0.1 localhost\n".write(to: hostsURL, atomically: true, encoding: .utf8)
+
+        let blockingFile = directory.appendingPathComponent("backup-blocker")
+        try Data("not a directory".utf8).write(to: blockingFile)
+
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: BackupStore(backupDirectory: blockingFile),
+            hostsPath: hostsURL.path,
+            debounceInterval: .milliseconds(1)
+        )
+
+        let (result, _) = await coordinator.applyImmediately(config: makeConfig())
+
+        XCTAssertFalse(result.success)
+        if case .writeFailed(let message) = result.status {
+            XCTAssertTrue(message.contains("备份"))
+        } else {
+            XCTFail("预期备份失败应返回 writeFailed")
+        }
+        let writes = await fakeClient.writtenContents
+        XCTAssertEqual(writes.count, 0)
+    }
+
+    private func makeTemporaryDirectory() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("HostCatCoreTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
     }
 }

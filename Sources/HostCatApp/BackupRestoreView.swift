@@ -151,7 +151,7 @@ struct BackupRestoreView: View {
     private func createManualBackup() {
         do {
             let hostsData = try Data(contentsOf: URL(fileURLWithPath: "/etc/hosts"))
-            let hostsText = String(data: hostsData, encoding: .utf8) ?? ""
+            let hostsText = HostsImporter().importHostsWithFallback(data: hostsData).decodedContent
             guard !hostsText.isEmpty else {
                 errorMessage = "当前 hosts 文件为空"
                 return

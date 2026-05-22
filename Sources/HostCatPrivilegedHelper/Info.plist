@@ -12,9 +12,11 @@
 	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>HostCatTeamIdentifier</key>
+	<string>$(DEVELOPMENT_TEAM)</string>
 	<key>SMAuthorizedClients</key>
 	<array>
-		<string>identifier "com.hostcat.app"</string>
+		<string>anchor apple generic and identifier "com.hostcat.app" and certificate leaf[subject.OU] = "$(DEVELOPMENT_TEAM)"</string>
 	</array>
 </dict>
 </plist>

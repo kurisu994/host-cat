@@ -3,9 +3,9 @@ import HostCatCore
 
 /// XPC Listener Delegate，负责验证调用方签名并分发请求
 final class HelperDelegate: NSObject, NSXPCListenerDelegate {
-    // TODO: 部署前替换为真实 Team ID
-    // 格式："anchor apple generic and identifier \"com.hostcat.app\" and certificate leaf[subject.OU] = \"TEAM_ID\""
-    private let callerRequirement = "identifier \"com.hostcat.app\""
+    private let callerRequirement = HostCatCodeSigningRequirements.appRequirement(
+        teamIdentifier: HostCatCodeSigningRequirements.teamIdentifier()
+    )
 
     func listener(
         _ listener: NSXPCListener,

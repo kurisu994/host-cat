@@ -8,10 +8,7 @@
     <string>manual</string>
     <key>destination</key>
     <string>export</string>
-    <!-- Placeholder for when actual provisioning is setup -->
-    <!-- 
     <key>teamID</key>
-    <string>YOUR_TEAM_ID</string> 
-    -->
+    <string>YOUR_TEAM_ID</string>
 </dict>
 </plist>

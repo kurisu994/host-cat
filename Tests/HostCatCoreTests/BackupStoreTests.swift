@@ -69,6 +69,17 @@ final class BackupStoreTests: XCTestCase {
         XCTAssertEqual(readContent, content)
     }
 
+    func testReadBackupFallsBackToLatin1() throws {
+        let store = BackupStore(backupDirectory: tempDir, maxBackups: 3)
+        let backupURL = tempDir.appendingPathComponent("hosts_2099-01-01_000000_00000000000000000000_latin1.bak")
+        let latin1Data = Data([0x31, 0x32, 0x37, 0x2e, 0x30, 0x2e, 0x30, 0x2e, 0x31, 0x20, 0x63, 0x61, 0x66, 0xe9, 0x2e, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x0a])
+        try latin1Data.write(to: backupURL)
+
+        let readContent = store.readBackup(at: backupURL)
+
+        XCTAssertEqual(readContent, "127.0.0.1 café.local\n")
+    }
+
     func testReadNonExistentBackupReturnsNil() {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 3)
         let fakeURL = tempDir.appendingPathComponent("hosts_2099-01-01_000000.bak")
