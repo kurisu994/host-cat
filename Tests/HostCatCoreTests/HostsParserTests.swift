@@ -136,4 +136,28 @@ final class HostsParserTests: XCTestCase {
         XCTAssertEqual(line4, 4)
         XCTAssertEqual(val4, "::ggg")
     }
+
+    func testValidateCollectsInvalidHostnamesWithoutStoppingAtFirstOne() {
+        let content = """
+            # comment
+            127.0.0.1 valid.test -bad.test bad..test
+
+            10.0.0.1 ok.test
+            """
+
+        let errors = HostsParser().validate(content)
+
+        XCTAssertEqual(errors.count, 2)
+        guard case .invalidHostname(let line2a, let value2a) = errors[0] else {
+            return XCTFail("Expected invalidHostname error on line 2, got \(errors[0])")
+        }
+        XCTAssertEqual(line2a, 2)
+        XCTAssertEqual(value2a, "-bad.test")
+
+        guard case .invalidHostname(let line2b, let value2b) = errors[1] else {
+            return XCTFail("Expected invalidHostname error on line 2, got \(errors[1])")
+        }
+        XCTAssertEqual(line2b, 2)
+        XCTAssertEqual(value2b, "bad..test")
+    }
 }

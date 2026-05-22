@@ -37,9 +37,16 @@ struct HostsTextView: NSViewRepresentable {
         // 内容边距
         textView.textContainerInset = NSSize(width: 4, height: 8)
 
-        // 自动换行关闭，允许水平滚动
-        textView.isHorizontallyResizable = false
-        textView.textContainer?.widthTracksTextView = true
+        // 关闭自动换行，允许水平滚动，保留 hosts 文件的一行一行编辑语义。
+        scrollView.hasHorizontalScroller = true
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = true
+        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.containerSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+        textView.textContainer?.widthTracksTextView = false
 
         // 设置 delegate
         textView.delegate = context.coordinator
@@ -124,6 +131,7 @@ struct HostsTextView: NSViewRepresentable {
             rulerView?.needsDisplay = true
         }
 
+        @MainActor
         @objc func boundsDidChange(_: Notification) {
             rulerView?.needsDisplay = true
         }

@@ -170,11 +170,7 @@ final class LineNumberRulerView: NSRulerView {
         let selectedRange = textView.selectedRange()
         guard selectedRange.location != NSNotFound else { return nil }
 
-        // 将 NSRange 转换为 NSTextLocation
-        guard let selectedLocation = textContentManager.location(
-            textContentManager.documentRange.location,
-            offsetBy: selectedRange.location
-        ) else { return nil }
+        let documentLength = (textView.string as NSString).length
 
         // 遍历 fragments 找到选区所在行
         var lineNumber = 1
@@ -184,14 +180,20 @@ final class LineNumberRulerView: NSRulerView {
             options: [.ensuresLayout, .ensuresExtraLineFragment]
         ) { fragment in
             let fragmentRange = fragment.rangeInElement
-            if let start = fragmentRange.location as? NSTextLocation,
-               let end = fragmentRange.endLocation as? NSTextLocation {
-                let startOffset = textContentManager.offset(from: textContentManager.documentRange.location, to: start)
-                let endOffset = textContentManager.offset(from: textContentManager.documentRange.location, to: end)
-                if selectedRange.location >= startOffset && selectedRange.location <= endOffset {
-                    foundLine = lineNumber
-                    return false
-                }
+            let startOffset = textContentManager.offset(
+                from: textContentManager.documentRange.location,
+                to: fragmentRange.location
+            )
+            let endOffset = textContentManager.offset(
+                from: textContentManager.documentRange.location,
+                to: fragmentRange.endLocation
+            )
+            let isInLine = selectedRange.location >= startOffset &&
+                (selectedRange.location < endOffset ||
+                    (selectedRange.location == documentLength && selectedRange.location == endOffset))
+            if isInLine {
+                foundLine = lineNumber
+                return false
             }
             lineNumber += 1
             return true
