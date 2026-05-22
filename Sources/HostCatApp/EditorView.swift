@@ -139,29 +139,13 @@ struct EditorView: View {
             // 右侧：hosts 文本编辑
             if let nodeID = selectedNodeID {
                 VStack(alignment: .leading, spacing: 0) {
-                    // 工具栏
-                    HStack {
-                        Text(editingName)
-                            .font(.headline)
-                            .lineLimit(1)
-
-                        Spacer()
-
-                        Button("应用") {
-                            saveCurrentNode()
-                        }
-                        .buttonStyle(.bordered)
-                        .keyboardShortcut(.return, modifiers: .command)
-
-                        Button("撤销") {
+                    EditorToolbar(
+                        title: editingName,
+                        onApply: saveCurrentNode,
+                        onRevert: {
                             reloadContent(id: nodeID)
                         }
-                        .buttonStyle(.bordered)
-                        .keyboardShortcut("z", modifiers: .command)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-
+                    )
                     Divider()
 
                     // 文本编辑器（NSTextView 桥接，带语法高亮和行号）
@@ -384,7 +368,49 @@ struct EditorView: View {
         viewModel.config.groups.move(fromOffsets: source, toOffset: destination)
         viewModel.scheduleApply()
     }
-
-
 }
 
+private struct EditorToolbar: View {
+    let title: String
+    let onApply: () -> Void
+    let onRevert: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            Text(title.isEmpty ? "未命名节点" : title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            Spacer(minLength: 16)
+
+            Button {
+                onRevert()
+            } label: {
+                Label("撤销", systemImage: "arrow.uturn.backward")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.regular)
+            .keyboardShortcut("z", modifiers: .command)
+            .help("撤销当前编辑")
+
+            Button {
+                onApply()
+            } label: {
+                Label("应用", systemImage: "checkmark")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .keyboardShortcut(.return, modifiers: .command)
+            .help("应用当前节点内容")
+        }
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .background(Color(NSColor.windowBackgroundColor))
+    }
+}

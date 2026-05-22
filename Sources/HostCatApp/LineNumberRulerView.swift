@@ -1,6 +1,6 @@
 import AppKit
 
-/// 行号 gutter，使用 TextKit 2 的 NSTextLayoutManager 定位每行的 y 坐标
+/// 行号 gutter，使用 NSLayoutManager 定位每行的 y 坐标
 ///
 /// 挂载到 NSScrollView 的 verticalRulerView 上，随文本滚动自动刷新。
 /// 支持当前行高亮和错误行标记。
@@ -14,7 +14,7 @@ final class LineNumberRulerView: NSRulerView {
     }
 
     /// gutter 宽度
-    private let gutterWidth: CGFloat = 44
+    private let gutterWidth: CGFloat = 48
 
     /// 行号字体
     private let lineNumberFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
@@ -73,136 +73,136 @@ final class LineNumberRulerView: NSRulerView {
     // MARK: - Drawing
 
     override func drawHashMarksAndLabels(in rect: NSRect) {
+        drawBackground(in: rect)
+
         guard let textView = clientView as? NSTextView,
-              let textLayoutManager = textView.textLayoutManager,
-              let textContentManager = textLayoutManager.textContentManager
+              let layoutManager = textView.layoutManager,
+              let textContainer = textView.textContainer
         else { return }
-
-        // 背景
-        let bgColor = NSColor.controlBackgroundColor
-        bgColor.setFill()
-        rect.fill()
-
-        // 右侧分隔线
-        let separatorColor = NSColor.separatorColor
-        separatorColor.setStroke()
-        let separatorX = bounds.maxX - 0.5
-        let separatorPath = NSBezierPath()
-        separatorPath.move(to: NSPoint(x: separatorX, y: rect.minY))
-        separatorPath.line(to: NSPoint(x: separatorX, y: rect.maxY))
-        separatorPath.lineWidth = 0.5
-        separatorPath.stroke()
 
         // 当前选区所在行（用于高亮当前行号）
         let currentLineNumber = currentLineNumberForSelection(textView: textView)
+        let visibleRect = textView.visibleRect
+        let textContainerOrigin = textView.textContainerOrigin
+        let visibleContainerRect = NSRect(
+            x: visibleRect.minX - textContainerOrigin.x,
+            y: visibleRect.minY - textContainerOrigin.y,
+            width: visibleRect.width,
+            height: visibleRect.height
+        )
 
-        // 可见区域偏移
-        let visibleRect = scrollView?.contentView.bounds ?? .zero
-        let yOffset = visibleRect.origin.y
+        layoutManager.ensureLayout(for: textContainer)
 
-        // 遍历 text layout fragments 计算行号
-        var lineNumber = 1
-        textLayoutManager.enumerateTextLayoutFragments(
-            from: textContentManager.documentRange.location,
-            options: [.ensuresLayout, .ensuresExtraLineFragment]
-        ) { fragment in
-            let fragmentFrame = fragment.layoutFragmentFrame
+        if layoutManager.numberOfGlyphs == 0 {
+            drawLineNumber(
+                1,
+                lineY: textContainerOrigin.y - visibleRect.minY,
+                lineHeight: lineNumberFont.boundingRectForFont.height,
+                isCurrentLine: currentLineNumber == 1
+            )
+            return
+        }
 
-            // 跳过不在可见区域的 fragment
-            let lineY = fragmentFrame.origin.y - yOffset
-            guard lineY + fragmentFrame.height >= rect.minY,
-                  lineY <= rect.maxY else {
-                lineNumber += 1
-                return true
-            }
+        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleContainerRect, in: textContainer)
+        var lineNumber = lineNumberForGlyph(at: glyphRange.location, layoutManager: layoutManager, textView: textView)
 
-            // 确定行号颜色
-            let color: NSColor
-            if lineNumber == currentLineNumber {
-                color = currentLineColor
-            } else if errorLines.contains(lineNumber) {
-                color = errorLineNumberColor
-            } else {
-                color = lineNumberColor
-            }
-
-            // 确定字体粗细
-            let font: NSFont
-            if lineNumber == currentLineNumber {
-                font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
-            } else {
-                font = lineNumberFont
-            }
-
-            // 绘制行号
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: color,
-            ]
-            let lineStr = "\(lineNumber)" as NSString
-            let strSize = lineStr.size(withAttributes: attrs)
-
-            // 右对齐，留 8pt 右边距
-            let x = gutterWidth - strSize.width - 8
-            let y = lineY + (fragmentFrame.height - strSize.height) / 2
-
-            lineStr.draw(at: NSPoint(x: x, y: y), withAttributes: attrs)
-
-            // 错误行：绘制红色圆点
-            if errorLines.contains(lineNumber) {
-                let dotSize: CGFloat = 4
-                let dotX: CGFloat = 4
-                let dotY = lineY + (fragmentFrame.height - dotSize) / 2
-                let dotRect = NSRect(x: dotX, y: dotY, width: dotSize, height: dotSize)
-                errorDotColor.setFill()
-                NSBezierPath(ovalIn: dotRect).fill()
-            }
-
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { _, usedRect, _, _, _ in
+            let lineY = textContainerOrigin.y + usedRect.minY - visibleRect.minY
+            self.drawLineNumber(
+                lineNumber,
+                lineY: lineY,
+                lineHeight: usedRect.height,
+                isCurrentLine: lineNumber == currentLineNumber
+            )
             lineNumber += 1
-            return true
         }
     }
 
     // MARK: - Private
 
+    private func drawBackground(in rect: NSRect) {
+        NSColor.controlBackgroundColor.setFill()
+        rect.fill()
+
+        let separatorX = bounds.maxX - 0.5
+        let separatorPath = NSBezierPath()
+        separatorPath.move(to: NSPoint(x: separatorX, y: rect.minY))
+        separatorPath.line(to: NSPoint(x: separatorX, y: rect.maxY))
+        separatorPath.lineWidth = 0.5
+        NSColor.separatorColor.setStroke()
+        separatorPath.stroke()
+    }
+
+    private func drawLineNumber(
+        _ lineNumber: Int,
+        lineY: CGFloat,
+        lineHeight: CGFloat,
+        isCurrentLine: Bool
+    ) {
+        let isErrorLine = errorLines.contains(lineNumber)
+        let color: NSColor
+        if isCurrentLine {
+            color = currentLineColor
+        } else if isErrorLine {
+            color = errorLineNumberColor
+        } else {
+            color = lineNumberColor
+        }
+
+        let font = isCurrentLine
+            ? NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+            : lineNumberFont
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: color,
+        ]
+        let lineStr = "\(lineNumber)" as NSString
+        let strSize = lineStr.size(withAttributes: attrs)
+        let x = bounds.width - strSize.width - 10
+        let y = lineY + (lineHeight - strSize.height) / 2
+
+        lineStr.draw(at: NSPoint(x: x, y: y), withAttributes: attrs)
+
+        if isErrorLine {
+            let dotSize: CGFloat = 4
+            let dotY = lineY + (lineHeight - dotSize) / 2
+            let dotRect = NSRect(x: 6, y: dotY, width: dotSize, height: dotSize)
+            errorDotColor.setFill()
+            NSBezierPath(ovalIn: dotRect).fill()
+        }
+    }
+
+    private func lineNumberForGlyph(
+        at glyphIndex: Int,
+        layoutManager: NSLayoutManager,
+        textView: NSTextView
+    ) -> Int {
+        guard layoutManager.numberOfGlyphs > 0 else { return 1 }
+        let safeGlyphIndex = min(glyphIndex, layoutManager.numberOfGlyphs - 1)
+        let characterIndex = layoutManager.characterIndexForGlyph(at: safeGlyphIndex)
+        return lineNumber(atCharacterIndex: characterIndex, in: textView.string)
+    }
+
     /// 获取当前选区所在的行号（1-indexed）
     private func currentLineNumberForSelection(textView: NSTextView) -> Int? {
-        guard let textLayoutManager = textView.textLayoutManager,
-              let textContentManager = textLayoutManager.textContentManager else { return nil }
-
         let selectedRange = textView.selectedRange()
         guard selectedRange.location != NSNotFound else { return nil }
 
         let documentLength = (textView.string as NSString).length
+        let characterIndex = min(selectedRange.location, documentLength)
+        return lineNumber(atCharacterIndex: characterIndex, in: textView.string)
+    }
 
-        // 遍历 fragments 找到选区所在行
+    private func lineNumber(atCharacterIndex characterIndex: Int, in text: String) -> Int {
+        let nsString = text as NSString
+        guard characterIndex > 0, nsString.length > 0 else { return 1 }
+
         var lineNumber = 1
-        var foundLine: Int?
-        textLayoutManager.enumerateTextLayoutFragments(
-            from: textContentManager.documentRange.location,
-            options: [.ensuresLayout, .ensuresExtraLineFragment]
-        ) { fragment in
-            let fragmentRange = fragment.rangeInElement
-            let startOffset = textContentManager.offset(
-                from: textContentManager.documentRange.location,
-                to: fragmentRange.location
-            )
-            let endOffset = textContentManager.offset(
-                from: textContentManager.documentRange.location,
-                to: fragmentRange.endLocation
-            )
-            let isInLine = selectedRange.location >= startOffset &&
-                (selectedRange.location < endOffset ||
-                    (selectedRange.location == documentLength && selectedRange.location == endOffset))
-            if isInLine {
-                foundLine = lineNumber
-                return false
-            }
+        let upperBound = min(characterIndex, nsString.length)
+        for index in 0..<upperBound where nsString.character(at: index) == 10 {
             lineNumber += 1
-            return true
         }
-
-        return foundLine
+        return lineNumber
     }
 
     // MARK: - Notifications
