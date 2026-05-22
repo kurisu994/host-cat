@@ -10,16 +10,17 @@
 - 添加 `HostCatHelperClient` 真实 XPC 连接封装（`XPCHostHelperClient`），实现 SMAppService 注册与开机启动管理（`HelperRegistrationManager`）。
 - 添加 Privileged Helper (`HostCatPrivilegedHelper`)，基于安全策略执行真实 `/etc/hosts` 写入、权限设置和 DNS 刷新。
 - 添加 `HostsFileWriter` 安全文件写入器，实现 immutable flags 检查、mkstemp 临时文件、fsync、chmod/chown、rename 原子替换和目录 fsync。
-- 添加 `DNSRefresher`（`SystemDNSRefresher` / `StubDNSRefresher`），执行固定 DNS 刷新命令。
+- 添加 `DNSRefresher`（`SystemDNSRefresher`），执行固定 DNS 刷新命令。
 - 添加 `ExternalModificationDetector` 外部修改检测及 UI 决策弹窗（`ExternalModificationAlert`）。
 - 添加写入前自动备份（`HostWriteCoordinator` 在写入前调用 `BackupStore.createBackup`）。
-- 增强 HostCatApp UI：Helper 注册引导 (`HelperSetupView`)、备份管理恢复 (`BackupRestoreView`)、外部修改弹窗。
+- 增强 HostCatApp UI：Helper 注册引导 (`HelperSetupView`)、备份管理与事务式恢复 (`BackupRestoreView`)、外部修改弹窗。
 - 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包；无证书时自动跳过 exportArchive。
 - 添加应用图标资源（Assets.xcassets，7 个尺寸）。
 - 拆分 `EditorView.swift` 为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
 - 拆分 `HostCatApp.swift` 为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
-- 添加 `MenuBarViewModelTests` 验证写入失败时保留配置草稿。
-- 添加 `TestDoubles.swift`（`FakeHostHelperClient`、`StubDNSRefresher`）。
+- 添加 `MenuBarViewModelTests` 验证写入失败时保留配置草稿、备份恢复失败时不污染当前配置和持久化配置。
+- 添加 `ModelsTests` 覆盖核心模型 Codable/Equatable 行为。
+- 添加 `TestDoubles.swift`（`FakeHostHelperClient`、`FakeFileSystemOperations`、`StubDNSRefresher`）。
 - 搭建 SwiftPM 基础开发框架，包含 `HostCatApp`、`HostCatCore`、`HostCatHelperClient`、`HostCatPrivilegedHelper` 和 `HostCatCoreTests`。
 - 添加 `HostCatCore` 数据模型：`AppConfig`、`HostGroup`、`HostNode`、`AppSettings` 和 `AppStateMetadata`。
 - 添加 hosts parser，支持 IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
@@ -67,6 +68,8 @@
 - 修复首次 hosts 写入缺少 expected hash 的问题，避免覆盖启动后外部修改。
 - 修复已有 HostCat 管理区块在配置缺失或恢复默认配置时可能被静默丢弃的问题。
 - 修复写入失败时菜单栏 ViewModel 可能丢弃用户配置草稿的问题，现在保留草稿并提示 hosts 未应用。
+- 修复从备份恢复失败时可能提前替换并持久化当前配置的问题，现在恢复写入成功前不会替换当前草稿。
+- 修复 DEBUG 构建未使用 `PreviewHostHelperClient` 的问题，开发调试不再要求安装 Privileged Helper。
 - 修复旧 `isSingleSelect` 配置继续影响节点激活的问题，加载后统一规范化为多选行为。
 - 修复连续调度 apply 时旧任务可能覆盖最新 `isApplying` 状态的问题。
 
@@ -83,6 +86,7 @@
 - 拆分 `EditorView.swift`（747→362 行）为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
 - 拆分 `HostCatApp.swift`（230→79 行）为 `HostCatApp`、`MenuBarContentView`、`WindowFocus` 三个文件。
 - 从 SwiftPM 骨架迁移到 Xcode 工程（project.yml → HostCat.xcodeproj），保留 Package.swift 用于核心测试。
+- 统一核心测试替身到 `TestDoubles.swift`，将 `FakeFileSystemOperations` 和 `StubDNSRefresher` 移出生产/单测局部定义。
 
 ### Not Yet Implemented
 

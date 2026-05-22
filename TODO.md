@@ -1,6 +1,6 @@
 # HostCat TODO
 
-更新时间：2026-05-21
+更新时间：2026-05-22
 
 本文记录 HostCat 基于当前实现进度的实施任务。阶段 1（安全预览版）和阶段 2（真实写入版）已完成。
 
@@ -8,6 +8,7 @@
 
 - [x] 搭建 SwiftPM 分层骨架：`HostCatApp`、`HostCatCore`、`HostCatHelperClient`、`HostCatPrivilegedHelper`。
 - [x] 实现核心模型：`AppConfig`、`HostGroup`、`HostNode`、`AppSettings`、`AppStateMetadata`。
+- [x] 补充核心模型 Codable/Equatable 覆盖，以及备份恢复失败回归测试。
 - [x] 实现 hosts parser：IPv4、IPv6、多 hostname、行尾注释和基础错误定位。
 - [x] 实现 hosts merge：默认节点参与、激活节点合并、重复条目去重、冲突检测和 HostCat 管理区块输出。
 - [x] 实现 hosts 内容 SHA256 hash。
@@ -141,6 +142,7 @@
 - [x] 外部修改时提供「取消」「确认覆盖」决策弹窗。
 - [x] 写入失败时保留配置草稿并提示 hosts 未应用（不自动回滚 UI）。
 - [x] 写入期间产生的新操作保留到下一次 debounce。
+- [x] 从备份恢复采用事务式写入，写入成功前不替换当前配置，失败时保留当前配置和持久化配置。
 - [x] 真实 `/private/etc/hosts` 写入只做签名后的本机 smoke test。
 
 ### 13. 构建、签名、公证和发布

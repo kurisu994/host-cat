@@ -1,7 +1,7 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-21（阶段 2 完成：真实 XPC 写入、Helper 注册、安全文件写入、DNS 刷新、备份恢复、外部修改检测）
+最后更新：2026-05-22（阶段 2 完成：真实 XPC 写入、Helper 注册、安全文件写入、DNS 刷新、事务式备份恢复、外部修改检测）
 竞品调研：[iHosts 竞品调研](./ihosts-research.md)
 
 ## 概述
@@ -159,7 +159,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 目标：接入 `SMAppService` + Privileged Helper，完成安全写入、备份和 DNS 刷新。
 
 - [x] 支持应用配置到 `/etc/hosts`，写入后自动刷新 DNS 缓存。
-- [x] 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份恢复。默认保留最近 3 份备份，超出自动删除最早的。
+- [x] 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份事务式恢复。默认保留最近 3 份备份，超出自动删除最早的。
 - [x] 支持写入前对比 `expectedCurrentHostsHash`，检测 `/etc/hosts` 是否在 HostCat 之外被修改；发现变化时弹窗提供「取消」或「确认覆盖」决策，不静默覆盖。
 - [x] 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
 - [x] 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
@@ -220,7 +220,8 @@ Apple 没有提供公开的 Swift/C API 直接刷新 DNS 缓存，调用命令�
 - 在设置界面或菜单中提供「备份当前 Hosts」手动操作。
 - 备份写入 `~/Library/Application Support/com.hostcat.app/backups/` 目录。文件名包含时间戳，例如 `hosts_2026-05-20_114000.bak`。
 - 默认保留最近 3 份备份，超出时自动删除最早的备份文件。
-- 提供「从备份恢复」功能，用户可选择历史备份文件，主应用读取备份内容后通过 XPC 发送给 Helper 写入 `/etc/hosts`。
+- 提供「从备份恢复」功能，用户可选择历史备份文件。主应用读取备份内容后先通过 `HostsImporter` 生成临时恢复配置，再复用正常合并、校验和写入流程应用到 `/etc/hosts`。
+- 备份恢复采用事务式写入语义：只有 hosts 写入成功后才替换当前 `config` 并尝试持久化；如果 Helper 写入或 hash 校验失败，当前编辑草稿和已保存配置都保持原状。若写入成功但后续配置持久化失败，UI 保留已恢复状态并提示配置保存失败。
 - 备份路径使用 `FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)` 获取，避免硬编码 `~` 展开歧义。
 
 ### 写入安全策略
@@ -281,6 +282,7 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 - `HostWriteCoordinator` actor 串行处理写入。写入开始后，后续用户操作只更新新的待写入快照，不修改正在写入的批次。
 - 写入成功后，更新 `lastSuccessfulConfigSnapshot`、`lastAppliedHostsHash` 和 `lastAppliedAt`，再持久化配置。
 - 写入失败时，保留当前配置草稿并提示 hosts 未应用。如果失败期间已经产生更新的待写入批次，不丢弃这些新操作；下一次 debounce 继续尝试写入最新快照。
+- 备份恢复是独立的事务式 apply：先构造临时恢复配置并尝试写入，成功后才替换当前配置；失败时不把备份内容写入当前草稿或配置文件。
 - 如果失败原因是 `expectedCurrentHostsHash` 不匹配，不自动重试。必须先让用户选择导入、取消或明确覆盖。
 
 ## 测试策略
@@ -294,7 +296,8 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 - 管理区块解析：无 HostCat 区块、完整 v1 区块、缺 Begin、缺 End、版本号未知、区块外内容导入。
 - 编码处理：UTF-8 正常读取、Latin-1 回退提示、写出统一 UTF-8。
 - 配置存储：`configVersion`、JSON 损坏恢复、原子写入失败不破坏旧配置、未来迁移入口。
-- 状态批次：debounce 合并、写入成功更新快照、写入失败保留配置草稿、失败期间新操作保留、hash 不匹配不自动覆盖。
+- 状态批次：debounce 合并、写入成功更新快照、写入失败保留配置草稿、失败期间新操作保留、hash 不匹配不自动覆盖、备份恢复失败不污染当前配置和持久化配置。
+- 测试基础设施：核心测试替身集中放在 `TestDoubles.swift`，覆盖 fake helper client、fake 文件系统操作和 DNS 刷新 stub。
 
 Helper 测试分层处理：
 
