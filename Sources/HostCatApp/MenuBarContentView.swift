@@ -36,13 +36,13 @@ struct MenuBarContentView: View {
         }
 
         // 操作菜单
-        Button("查看合成 Hosts") {
+         Button("编辑Hosts") {
+            openAppWindow(id: "editor", title: "编辑器")
+        }
+        
+        Button("查看Hosts") {
             viewModel.updateMergedPreview()
             openAppWindow(id: "preview", title: "合成预览")
-        }
-
-        Button("打开编辑器") {
-            openAppWindow(id: "editor", title: "编辑器")
         }
 
         Divider()

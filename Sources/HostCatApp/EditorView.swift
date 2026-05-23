@@ -141,6 +141,7 @@ struct EditorView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     EditorToolbar(
                         title: editingName,
+                        hasUnsavedEdits: hasUnsavedEdits,
                         onApply: saveCurrentNode,
                         onRevert: {
                             reloadContent(id: nodeID)
@@ -313,6 +314,28 @@ struct EditorView: View {
         }
     }
 
+    private var hasUnsavedEdits: Bool {
+        guard let id = selectedNodeID, let currentContent = currentNodeContent(id: id) else {
+            return false
+        }
+
+        return editingContent != currentContent
+    }
+
+    private func currentNodeContent(id: UUID) -> String? {
+        if id == viewModel.config.defaultNode.id {
+            return viewModel.config.defaultNode.content
+        }
+
+        for group in viewModel.config.groups {
+            if let node = group.nodes.first(where: { $0.id == id }) {
+                return node.content
+            }
+        }
+
+        return nil
+    }
+
     /// 撤销时只重置编辑内容，不影响节点名称
     private func reloadContent(id: UUID) {
         if id == viewModel.config.defaultNode.id {
@@ -374,6 +397,7 @@ private struct EditorToolbar: View {
     private static let titleLeadingInset: CGFloat = 56
 
     let title: String
+    let hasUnsavedEdits: Bool
     let onApply: () -> Void
     let onRevert: () -> Void
 
@@ -396,6 +420,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut("z", modifiers: .command)
             .help("撤销当前编辑")
+            .disabled(!hasUnsavedEdits)
 
             Button {
                 onApply()
@@ -406,6 +431,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut(.return, modifiers: .command)
             .help("应用当前节点内容")
+            .disabled(!hasUnsavedEdits)
         }
         .padding(.leading, Self.titleLeadingInset)
         .padding(.trailing, 16)
