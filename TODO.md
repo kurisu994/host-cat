@@ -158,7 +158,7 @@
 - [x] hosts 编辑器语法高亮、行号和错误行标记。
 - [x] 编辑器工具栏（节点名称展示、撤销/应用按钮、未保存状态提示）。
 - [x] 修复编辑器行号与标题栏样式问题。
-- [ ] 跨分组拖拽排序（当前已实现分组内节点拖拽）。
+- [x] ~~跨分组拖拽排序（当前已实现分组内节点拖拽）~~ — **已砍**，产品决策：跨组拖拽引入的交互复杂度和意外行为风险大于收益，保持分组内拖拽即可满足核心排序需求。
 - [ ] 搜索和过滤节点、域名。
 - [ ] 全局快捷键打开菜单栏。
 - [ ] 鼠标悬停预览 hosts 内容。
@@ -166,6 +166,103 @@
 - [ ] Sparkle 自动更新。
 - [ ] GitHub Actions CI/CD 发布流水线。
 - [ ] iCloud 同步。
+
+## 阶段 3：上线准备（新增）
+
+目标：完善发布链路、用户体验和运营基础设施，达到可公开分发的 1.0 标准。
+
+### 14. 版本号与发布管理
+
+- [ ] 确定版本号方案（semver）。
+- [ ] Info.plist / `CFBundleShortVersionString` 与 Git tag 对齐。
+- [ ] 构建脚本自动注入版本号和 commit hash。
+- [ ] 首次打 `1.0.0` tag，完成从「未发布」到「正式版」的过渡。
+
+### 15. 中英文多语言覆盖
+
+- [ ] 提取所有 UI 文本到 `Localizable.xcstrings`。
+- [ ] 覆盖中文（简体）和英文两套语言。
+- [ ] 菜单栏项、弹窗、错误提示、设置页面全部本地化。
+
+### 16. Sparkle 自动更新
+
+- [ ] 引入 Sparkle 框架（Swift Package Manager）。
+- [ ] 配置 `SUFeedURL` 指向 GitHub Releases appcast XML。
+- [ ] 首次发版时生成 `appcast.xml` 并随 Release 附件上传。
+- [ ] 设置更新检查间隔（默认 24 小时）。
+
+### 17. GitHub Actions CI/CD 发布流水线
+
+- [ ] 配置 GitHub Actions workflow：触发条件为 tag push。
+- [ ] 步骤：安装证书和 provisioning profile（通过 secrets）。
+- [ ] 步骤：`xcodebuild archive` + `xcodebuild -exportArchive`。
+- [ ] 步骤：`xcrun notarytool` 公证。
+- [ ] 步骤：生成 DMG（`build-release.sh` 或 `create-dmg`）。
+- [ ] 步骤：生成 Sparkle `appcast.xml`。
+- [ ] 步骤：自动创建 GitHub Release，上传 DMG + appcast.xml。
+
+### 18. 全局快捷键
+
+- [ ] 引入 `MASShortcut` 或 `KeyboardShortcuts`（推荐 SwiftUI 友好方案）。
+- [ ] 支持「打开菜单栏」全局快捷键（默认未绑定，首次设置时引导）。
+- [ ] 快捷键偏好持久化到 `AppSettings`。
+- [ ] 注册/注销 `CGEventTap` 或 `NSEvent` 全局监听。
+
+### 19. 搜索和过滤
+
+- [ ] 编辑器侧边栏顶部添加搜索框。
+- [ ] 实时过滤分组和节点名称（支持拼音模糊匹配）。
+- [ ] 过滤结果保持树状结构展示。
+- [ ] 支持搜索 hosts 域名（在节点内容中匹配）。
+- [ ] 空结果时展示空状态提示。
+
+### 20. 配置导入导出
+
+- [ ] 编辑器菜单增加「导出配置」入口，输出 `config.json`。
+- [ ] 编辑器菜单增加「导入配置」入口，校验版本后合并或替换。
+- [ ] 导入时冲突处理：提示用户选择「替换」或「合并」。
+- [ ] 支持从旧版本配置平滑迁移。
+
+### 21. 通知中心集成
+
+- [ ] 注册 `UNUserNotificationCenter` 权限。
+- [ ] hosts 写入成功时发送通知（可选，可在设置中关闭）。
+- [ ] hosts 写入失败时发送通知（重要，提醒用户查看）。
+- [ ] 外部修改检测到时发送通知。
+- [ ] 通知点击行为：打开编辑器或菜单栏。
+
+### 22. 崩溃报告与诊断日志
+
+- [ ] 集成崩溃报告（Sentry 或 Apple Crash Reports 符号化）。
+- [ ] 增加结构化日志系统（`OSLog` 或 `swift-log`），覆盖关键路径：XPC、写入、备份、配置加载。
+- [ ] 设置页面增加「导出诊断日志」按钮。
+- [ ] 日志级别：error、warning、info、debug。
+
+### 23. 大文件性能与稳定性验证
+
+- [ ] 测试 5000+ 行 hosts 文件的解析和合并性能。
+- [ ] 测试 TextKit 2 语法高亮在超大文件下的响应。
+- [ ] 验证长时间运行（>7 天）内存占用是否稳定。
+- [ ] 验证 XPC 连接断开后自动重连是否可靠。
+
+### 24. 可访问性（Accessibility）
+
+- [ ] 菜单栏项支持 VoiceOver 朗读。
+- [ ] 编辑器侧边栏支持 VoiceOver 导航。
+- [ ] 所有按钮和控件添加 `accessibilityLabel` 和 `accessibilityHint`。
+- [ ] 支持键盘完全操作（Tab 导航、Enter/Space 触发）。
+
+### 25. 隐私政策与合规
+
+- [ ] 编写 `PRIVACY.md`：声明不收集用户数据、不联网（除 Sparkle 更新检查）。
+- [ ] 首次启动展示隐私政策摘要（可跳过）。
+- [ ] 如集成 Sentry，明确说明收集的崩溃信息范围。
+
+### 26. 分发渠道决策
+
+- [x] 确定走**独立官网分发**（LaunchDaemon 方案不支持 Mac App Store）。
+- [ ] 准备官网 landing page（或 GitHub 页面作为临时官网）。
+- [ ] 准备 DMG 背景图和拖拽安装指引。
 
 ## 常用验证命令
 

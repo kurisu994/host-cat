@@ -198,7 +198,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 ## 下一步
 
 阶段 2（真实写入版）与 hosts 编辑器高亮等功能已完成。接下来可以考虑：
-1.跨分组拖拽排序完善
+1.~~跨分组拖拽排序~~（已砍：产品决策不实现）
 2.搜索/过滤节点和域名
 3.自动化 CI/CD 流水线（GitHub Actions）
 4.UI 动画细节打磨与自动更新 (Sparkle)

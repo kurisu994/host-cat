@@ -27,6 +27,10 @@
 
 如果沙盒限制导致无法写用户级 cache，需要请求用户批准后再运行构建或测试命令。
 
+## CHANGELOG 规则
+
+- 有版本号的栏目是已发布历史，**绝对不能**往里添加。未发布改动**必须**记录在 `## 未发布`。
+
 ## 已知问题与注意事项
 
 - `HostsTextView` 的 `updateNSView` 中 `isUpdatingFromSwiftUI` 标记用于防止编辑时光标跳动，此标记不可声明为 `private` 否则会导致 Xcode 构建失败。
