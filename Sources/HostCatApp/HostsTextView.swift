@@ -170,8 +170,15 @@ struct HostsTextView: NSViewRepresentable {
     }
 
     private static func resetHorizontalScroll(in scrollView: NSScrollView) {
+        let rulerOffset: CGFloat
+        if scrollView.hasVerticalRuler, scrollView.rulersVisible {
+            rulerOffset = scrollView.verticalRulerView?.ruleThickness ?? 0
+        } else {
+            rulerOffset = 0
+        }
+
         let currentY = scrollView.contentView.bounds.origin.y
-        scrollView.contentView.scroll(to: NSPoint(x: 0, y: currentY))
+        scrollView.contentView.scroll(to: NSPoint(x: -rulerOffset, y: currentY))
         scrollView.reflectScrolledClipView(scrollView.contentView)
     }
 

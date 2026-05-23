@@ -377,10 +377,6 @@ private struct EditorToolbar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: "doc.text")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.secondary)
-
             Text(title.isEmpty ? "未命名节点" : title)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.primary)

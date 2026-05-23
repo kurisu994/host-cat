@@ -85,9 +85,10 @@ final class LineNumberRulerView: NSRulerView {
         let visibleRect = textView.visibleRect
         let textContainerOrigin = textView.textContainerOrigin
         let visibleContainerRect = NSRect(
-            x: visibleRect.minX - textContainerOrigin.x,
+            // 行号只依赖垂直可见范围；horizontal scroll / ruler offset 不应影响行号定位。
+            x: 0,
             y: visibleRect.minY - textContainerOrigin.y,
-            width: visibleRect.width,
+            width: max(textContainer.containerSize.width, visibleRect.width),
             height: visibleRect.height
         )
 
@@ -121,13 +122,16 @@ final class LineNumberRulerView: NSRulerView {
     // MARK: - Private
 
     private func drawBackground(in rect: NSRect) {
+        let gutterRect = bounds.intersection(rect)
+        guard !gutterRect.isEmpty else { return }
+
         NSColor.controlBackgroundColor.setFill()
-        rect.fill()
+        gutterRect.fill()
 
         let separatorX = bounds.maxX - 0.5
         let separatorPath = NSBezierPath()
-        separatorPath.move(to: NSPoint(x: separatorX, y: rect.minY))
-        separatorPath.line(to: NSPoint(x: separatorX, y: rect.maxY))
+        separatorPath.move(to: NSPoint(x: separatorX, y: gutterRect.minY))
+        separatorPath.line(to: NSPoint(x: separatorX, y: gutterRect.maxY))
         separatorPath.lineWidth = 0.5
         NSColor.separatorColor.setStroke()
         separatorPath.stroke()
