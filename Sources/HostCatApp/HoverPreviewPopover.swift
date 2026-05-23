@@ -47,7 +47,7 @@ struct HoverPreviewContent: View {
             .padding([.horizontal, .bottom])
             .padding(.top, 4)
         }
-        .frame(width: 420, height: 280)
+        .frame(width: 520, height: 360)
     }
 }
 
@@ -55,7 +55,7 @@ struct HoverPreviewContent: View {
 @MainActor
 final class HoverPreviewPanelController: ObservableObject {
     private enum Layout {
-        static let size = NSSize(width: 420, height: 280)
+        static let size = NSSize(width: 520, height: 360)
         static let pointerSpacing: CGFloat = 14
     }
 
