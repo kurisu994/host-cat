@@ -184,7 +184,6 @@ export DEVELOPMENT_TEAM="TEAMID"
 ## 设计文档
 
 - [开发方案设计](docs/hostcat-design.md)
-- [iHosts 竞品调研](docs/ihosts-research.md)
 - [变更日志](CHANGELOG.md)
 - [Agent 协作说明](AGENTS.md)
 
