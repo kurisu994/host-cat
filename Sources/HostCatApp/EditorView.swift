@@ -371,6 +371,8 @@ struct EditorView: View {
 }
 
 private struct EditorToolbar: View {
+    private static let titleLeadingInset: CGFloat = 56
+
     let title: String
     let onApply: () -> Void
     let onRevert: () -> Void
@@ -405,7 +407,8 @@ private struct EditorToolbar: View {
             .keyboardShortcut(.return, modifiers: .command)
             .help("应用当前节点内容")
         }
-        .padding(.horizontal, 16)
+        .padding(.leading, Self.titleLeadingInset)
+        .padding(.trailing, 16)
         .frame(height: 52)
         .background(Color(NSColor.windowBackgroundColor))
     }
