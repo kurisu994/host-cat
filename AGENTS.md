@@ -12,7 +12,7 @@
 ## 当前项目状态
 
 - 当前已通过 `xcodegen` 迁移为标准 Xcode 工程，支持构建带 Privileged Helper 的 macOS App。
-- `HostCatApp` 已实现菜单栏预览体验、编辑窗口、合成预览窗口、Helper 安装引导（`HelperSetupView`）和备份恢复界面（`BackupRestoreView`）。
+- `HostCatApp` 已实现菜单栏预览体验、编辑窗口（含语法高亮、行号、错误标记、工具栏）、合成预览窗口、Helper 安装引导（`HelperSetupView`）和备份恢复界面（`BackupRestoreView`）。
 - `HostCatPrivilegedHelper` 已实现基于 `SMAppService` 注册的 XPC 服务，支持安全的 `/etc/hosts` 真实写入和 DNS 刷新。
 - `HostCatCore` 已包含模型、parser、merge、conflict、hash、importer、config storage、mutation service、write coordinator、backup store、external modification detector、hosts file writer 和 DNS refresher。
 - `HostCatHelperClient` 已包含真实 XPC client（`XPCHostHelperClient`）和 Helper 注册管理器（`HelperRegistrationManager`）。
@@ -26,6 +26,11 @@
   - `./scripts/build-release.sh`：发布打包（archive + DMG）
 
 如果沙盒限制导致无法写用户级 cache，需要请求用户批准后再运行构建或测试命令。
+
+## 已知问题与注意事项
+
+- `HostsTextView` 的 `updateNSView` 中 `isUpdatingFromSwiftUI` 标记用于防止编辑时光标跳动，此标记不可声明为 `private` 否则会导致 Xcode 构建失败。
+- 编辑器行号栏与标题栏的视觉层级已统一，后续样式调整需保持两者一致性。
 
 ## 模块边界
 
@@ -59,6 +64,7 @@
 - 用户可见的运行、测试、模块说明更新到 `README.md`。
 - 已完成的重要变更更新到 `CHANGELOG.md`。
 - 待办任务和进度更新到 `TODO.md`。
+- 已移除的文档（如 `ihosts-research.md`）需同步清理所有引用。
 - agent 协作规则更新到本文件。
 
 ## 代码提交规则

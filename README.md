@@ -2,7 +2,7 @@
 
 HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。目标是提供菜单栏驱动的 hosts 配置切换、分组、节点和跨组组合能力。
 
-当前仓库已完成阶段 2（真实写入版）：通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、XPC 通信、备份恢复、外部修改检测、DNS 刷新和完整的菜单栏交互，支持签名导出和 DMG 打包。
+当前仓库已完成阶段 2（真实写入版）：通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、XPC 通信、备份恢复、外部修改检测、DNS 刷新、hosts 编辑器语法高亮与行号、多行错误实时收集和完整的菜单栏交互，支持签名导出和 DMG 打包。
 
 ## 当前能力
 
@@ -38,7 +38,7 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 备份管理窗口（`BackupRestoreView`）：列出历史备份、预览内容、手动创建备份和事务式恢复。
   - 外部修改弹窗（`ExternalModificationAlert`）：检测到外部修改时提供「取消」或「确认覆盖」决策。
   - 设置页面：开机自启动 Toggle、Helper 状态显示、注册/刷新操作。
-  - 程序员专享的 hosts 编辑体验：等宽字体、全量语法高亮渲染（IP、hostname、注释、管理标记）、当前行高亮、滚动同步行号栏、语法错误行整行红色背景及行号栏红点标识、以及多行错误实时收集。
+  - 程序员专享的 hosts 编辑体验：等宽字体、全量语法高亮渲染（IP、hostname、注释、管理标记）、当前行高亮、滚动同步行号栏、语法错误行整行红色背景及行号栏红点标识、多行错误实时收集与底部状态栏展示。
 - `HostCatPrivilegedHelper`：
   - 基于 `SMAppService` 注册的 LaunchDaemon，以 root 身份运行。
   - 通过 XPC 接收主应用写入请求，调用 `HostsFileWriter` 执行安全写入。
@@ -169,8 +169,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 │       ├── ModelsTests.swift
 │       └── TestDoubles.swift
 └── docs/
-    ├── hostcat-design.md
-    └── ihosts-research.md
+    └── hostcat-design.md
 ```
 
 模块职责：
@@ -186,6 +185,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 - [开发方案设计](docs/hostcat-design.md)
 - [变更日志](CHANGELOG.md)
 - [Agent 协作说明](AGENTS.md)
+- [待办任务](TODO.md)
 
 ## 开发原则
 
@@ -198,8 +198,8 @@ export DEVELOPMENT_TEAM="TEAMID"
 ## 下一步
 
 阶段 2（真实写入版）与 hosts 编辑器高亮等功能已完成。接下来可以考虑：
-- 拖拽排序替代上移/下移按钮（跨分组拖拽完善）
-- 搜索/过滤节点和域名
-- 自动化 CI/CD 流水线（GitHub Actions）
-- UI 动画细节打磨与自动更新 (Sparkle)
-- iCloud 同步支持
+1.跨分组拖拽排序完善
+2.搜索/过滤节点和域名
+3.自动化 CI/CD 流水线（GitHub Actions）
+4.UI 动画细节打磨与自动更新 (Sparkle)
+5.iCloud 同步支持

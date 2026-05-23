@@ -1,8 +1,7 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-22（阶段 2 完成：真实 XPC 写入、Helper 注册、安全文件写入、DNS 刷新、事务式备份恢复、外部修改检测）
-竞品调研：[iHosts 竞品调研](./ihosts-research.md)
+最后更新：2026-05-23（更新文档：删除已移除的 ihosts-research.md 引用，同步编辑器行号与标题栏样式修复）
 
 ## 概述
 
@@ -357,6 +356,7 @@ HostCat.xcodeproj
 - **应用自更新**：计划第二版引入 Sparkle 框架实现自动更新，首版暂不包含。
 - **hosts 编辑器语法高亮与行号组件**：采用 AppKit 的 `NSTextView` 通过 SwiftUI `NSViewRepresentable` 进行桥接，并使用 **TextKit 2**（即 `NSTextLayoutManager`）进行文本行段计算与渲染。高亮引擎 `HostsSyntaxHighlighter` 实现了对 IP（蓝色）、hostname（绿色）、注释（灰色）、管理区块起止符（橙色粗体）的多色渲染，并为所有语法错误行赋予红色半透明背景；自定义行号栏 `LineNumberRulerView`（`NSRulerView` 子类）能基于 TextKit 2 完美执行滚动与缩放计算，高亮显示当前行，并对错误行号标识为红字与红点。同时，语法高亮整个结构体添加了 `@MainActor` 修饰，完美适配 Swift 6 严格并发校验。
 - **全量多行语法错误收集**：在 `HostsParser` 中新增非抛出的 `validate(_:)` 方法，单次运行即可将整个 hosts 文本中所有不合规的行号与具体错误类型抓取至数组。编辑器 `EditorView` 结合该功能，做到了同时渲染出多行红字背景与红点 gutter 的直观报错体验，取代了单次仅暴露单行错误的中断性流程。
+- **编辑器工具栏与撤销功能**：`EditorView` 右侧编辑器顶部包含工具栏，展示当前节点名称、撤销按钮（Cmd+Z）和应用按钮（Cmd+Return），未保存编辑时按钮可用，提供清晰的编辑状态反馈。
 
 ## 初步取舍
 

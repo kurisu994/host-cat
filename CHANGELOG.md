@@ -57,6 +57,9 @@
 
 ### Fixed
 
+- 修复 Xcode scheme 配置中测试 target 关联问题。
+- 修复 `HostsTextView` 的 SwiftUI 更新标记访问权限问题，确保 `updateNSView` 能正确同步外部文本变化。
+- 修复编辑器行号与标题栏样式不一致的问题，统一视觉层级。
 - 修复 Xcode App target 构建失败问题，`HostsTextView` 的 SwiftUI 更新标记不再被错误声明为 `private`。
 - 修复 Privileged Helper/App XPC 签名校验过宽的问题，改为包含 `anchor apple generic`、bundle identifier 和 Team ID 的完整 requirement。
 - 修复 XPC reply 丢失、连接中断或超时时可能永久挂起的问题，现在 pending reply 会在错误、取消、超时或连接失效时收敛。
@@ -96,6 +99,7 @@
 - 更新 README，补充 `HostsImporter` 能力和阶段1当前进度。
 - 更新 TODO.md，标记阶段 1 和阶段 2 全部完成。
 - 更新 AGENTS.md，同步项目状态为阶段 2 完成。
+- 删除已移除的 `docs/ihosts-research.md` 文件引用，清理文档中的死链接。
 
 ### Refactored
 
