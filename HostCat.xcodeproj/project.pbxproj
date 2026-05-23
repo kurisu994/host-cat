@@ -59,6 +59,7 @@
 		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
 		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
+		CCC52FE9DAB79B722541DD0F /* HoverPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56355C12CD58AF07F27CC702 /* HoverPreviewPopover.swift */; };
 		D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */; };
 		DB973E463FB120D41D7416D5 /* HostsMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF2470AD5775FB15B089832 /* HostsMerger.swift */; };
 		E9E24A6E65FF4E7BABB20B8C /* HostsHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */; };
@@ -163,6 +164,7 @@
 		54AE85ADBAF6D01B7D1B3FB0 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NodeReorderDropDelegate.swift; sourceTree = "<group>"; };
 		5584A791D448EB4268A8164B /* HelperDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperDelegate.swift; sourceTree = "<group>"; };
+		56355C12CD58AF07F27CC702 /* HoverPreviewPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverPreviewPopover.swift; sourceTree = "<group>"; };
 		57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalModificationDetectorTests.swift; sourceTree = "<group>"; };
 		5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatCodeSigningRequirements.swift; sourceTree = "<group>"; };
 		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
@@ -171,7 +173,7 @@
 		810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSigningRequirementsTests.swift; sourceTree = "<group>"; };
 		8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
 		8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarComponents.swift; sourceTree = "<group>"; };
-		93A07209DF12BB43C1A2EFAA /* HostCatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HostCatApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		93A07209DF12BB43C1A2EFAA /* HostCat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HostCat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		95A3F4915C7520FA1CE32169 /* LineNumberRulerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineNumberRulerView.swift; sourceTree = "<group>"; };
 		9682678AF698BEFE8887AE91 /* HostCatCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HostCatCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		99078CE3C8382C7B3E4A7CE0 /* HostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostHelperClient.swift; sourceTree = "<group>"; };
@@ -193,7 +195,7 @@
 		E69B5B3946975FB8A31D8755 /* HostsTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsTextView.swift; sourceTree = "<group>"; };
 		EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinatorTests.swift; sourceTree = "<group>"; };
 		F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinator.swift; sourceTree = "<group>"; };
-		F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = HostCatPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+		F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = text; path = HostCatPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HostCatHelperClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF4FD6F87BC790D98BC29F49 /* XPCHostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCHostHelperClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -317,7 +319,7 @@
 		7C8191A389BC6859DF954E61 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				93A07209DF12BB43C1A2EFAA /* HostCatApp.app */,
+				93A07209DF12BB43C1A2EFAA /* HostCat.app */,
 				9682678AF698BEFE8887AE91 /* HostCatCore.framework */,
 				1654DD699B6DEBB0D2336F6B /* HostCatCoreTests.xctest */,
 				FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */,
@@ -347,6 +349,7 @@
 				098317E3D7EC90CA857B8437 /* HostCatApp.swift */,
 				BA45A066C0D26D09E36DD601 /* HostsSyntaxHighlighter.swift */,
 				E69B5B3946975FB8A31D8755 /* HostsTextView.swift */,
+				56355C12CD58AF07F27CC702 /* HoverPreviewPopover.swift */,
 				95A3F4915C7520FA1CE32169 /* LineNumberRulerView.swift */,
 				54AE85ADBAF6D01B7D1B3FB0 /* MenuBarContentView.swift */,
 				177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */,
@@ -393,7 +396,7 @@
 			packageProductDependencies = (
 			);
 			productName = HostCatApp;
-			productReference = 93A07209DF12BB43C1A2EFAA /* HostCatApp.app */;
+			productReference = 93A07209DF12BB43C1A2EFAA /* HostCat.app */;
 			productType = "com.apple.product-type.application";
 		};
 		77CF98B97260F455FA2532B4 /* HostCatCoreTests */ = {
@@ -479,8 +482,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2650;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = 90B937414A770AF906C46EF4 /* Build configuration list for PBXProject "HostCat" */;
 			developmentRegion = en;
@@ -550,6 +551,7 @@
 				B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */,
 				9FB9B27C5B5278F61075F88F /* HostsSyntaxHighlighter.swift in Sources */,
 				8636804EA1B5E8916038D2A8 /* HostsTextView.swift in Sources */,
+				CCC52FE9DAB79B722541DD0F /* HoverPreviewPopover.swift in Sources */,
 				3C3B06D28FE8B62F292038B7 /* LineNumberRulerView.swift in Sources */,
 				FEE940B370415525438FA6AD /* MenuBarContentView.swift in Sources */,
 				51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */,
@@ -679,6 +681,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Sources/HostCatApp/Resources/HostCatApp.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
@@ -723,6 +726,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Sources/HostCatApp/Resources/HostCatApp.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;

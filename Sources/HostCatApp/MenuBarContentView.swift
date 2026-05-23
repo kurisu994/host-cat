@@ -6,6 +6,7 @@ import SwiftUI
 struct MenuBarContentView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @Environment(\.openWindow) private var openWindow
+    @StateObject private var hoverPreviewPanelController = HoverPreviewPanelController()
 
     var body: some View {
         Text("HostCat")
@@ -43,6 +44,17 @@ struct MenuBarContentView: View {
         Button("查看Hosts") {
             viewModel.updateMergedPreview()
             openAppWindow(id: "preview", title: "合成预览")
+        }
+        .onHover { hovering in
+            if hovering {
+                viewModel.updateMergedPreview()
+                hoverPreviewPanelController.show(text: viewModel.lastMergedText ?? "暂无合成内容")
+            } else {
+                hoverPreviewPanelController.hide()
+            }
+        }
+        .onDisappear {
+            hoverPreviewPanelController.hide()
         }
 
         Divider()
