@@ -158,6 +158,33 @@
 "preview.truncated" = "... (共 %d 行，点击按钮查看完整内容)";
 "preview.click_full" = "点击查看完整内容";
 
+/* Settings */
+"settings.title" = "设置";
+"settings.general" = "通用";
+"settings.helper" = "Privileged Helper";
+"settings.config_info" = "配置信息";
+"settings.launch_at_login" = "开机自启动";
+"settings.version" = "版本";
+"settings.refresh" = "刷新";
+
+/* MenuBarViewModel */
+"external.modification.detected" = "检测到 hosts 文件被外部修改";
+"external.modification.confirm" = "hosts 文件已被外部修改，确认覆盖？";
+"config.recovered" = "配置已恢复为默认设置";
+"config.recovered.prompt" = "检测到配置文件损坏，已恢复为默认设置。";
+"log.draft.persist.success" = "配置草稿持久化成功";
+"log.draft.persist.failed" = "配置草稿持久化失败";
+"log.merge.success" = "合并预览生成成功";
+"log.merge.failed" = "合并预览生成失败";
+
+/* Helper Status */
+"helper.status.not_registered" = "未注册";
+"helper.status.enabled" = "已启用";
+"helper.status.disabled" = "已禁用";
+"helper.status.unknown" = "未知";
+"helper.register.failed" = "Helper 注册失败";
+"launchatlogin.failed" = "开机自启动设置失败";
+
 /* Errors */
 "error.empty_hosts" = "当前 hosts 文件为空";
 "error.read_backup_failed" = "读取备份文件失败";

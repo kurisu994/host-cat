@@ -108,12 +108,12 @@ private struct SettingsView: View {
     var body: some View {
         Form {
             // 通用设置
-            Section(L.sidebarGroups) {
-                Toggle(L.launchAtLogin, isOn: launchAtLoginBinding)
+            Section(L.settingsGeneral) {
+                Toggle(L.settingsLaunchAtLogin, isOn: launchAtLoginBinding)
             }
 
             // Helper 状态
-            Section("Privileged Helper") {
+            Section(L.settingsHelper) {
                 LabeledContent(L.sidebarGroups) {
                     HStack(spacing: 6) {
                         Circle()
@@ -135,7 +135,7 @@ private struct SettingsView: View {
                     }
                 }
 
-                Button(L.editorPreview) {
+                Button(L.settingsRefresh) {
                     registrationManager.refreshHelperStatus()
                 }
 
@@ -147,8 +147,8 @@ private struct SettingsView: View {
             }
 
             // 配置信息
-            Section(L.sidebarGroups) {
-                LabeledContent(L.sidebarGroups, value: "\(config.configVersion)")
+            Section(L.settingsConfigInfo) {
+                LabeledContent(L.settingsVersion, value: "\(config.configVersion)")
                 LabeledContent(L.sidebarDefault, value: config.defaultNode.name)
                 LabeledContent(L.sidebarGroups, value: "\(config.groups.count)")
             }

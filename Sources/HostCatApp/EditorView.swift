@@ -161,7 +161,7 @@ struct EditorView: View {
                         if viewModel.isApplying {
                             ProgressView()
                                 .controlSize(.small)
-                            Text("正在应用...")
+                            Text(L.editorParsing)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

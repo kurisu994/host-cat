@@ -42,11 +42,11 @@ public final class MenuBarViewModel: ObservableObject {
     @Published public var lastDuplicateCount: Int = 0
     @Published public var lastConflicts: [HostConflict] = []
 
-    // 外部修改检测
+    // External modification detection
     @Published public var showExternalModificationAlert = false
     @Published public var externalModificationContent: String?
 
-    // Helper 状态提示
+    // Helper status alert
     @Published public var showHelperRegistrationAlert = false
 
     private let mutationService = ConfigMutationService()
@@ -98,11 +98,11 @@ public final class MenuBarViewModel: ObservableObject {
     public func toggleNode(id: UUID, inGroup groupID: UUID?) {
         if let groupID = groupID {
             guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-                logger.warning("尝试切换不存在的分组: \(groupID.uuidString)")
+                logger.warning("Attempted to toggle non-existent group: \(groupID.uuidString)")
                 return
             }
             guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-                logger.warning("尝试切换不存在的节点: \(id.uuidString)")
+                logger.warning("Attempted to toggle non-existent node: \(id.uuidString)")
                 return
             }
             let currentActive = config.groups[groupIndex].nodes[nodeIndex].isActive
@@ -113,13 +113,13 @@ public final class MenuBarViewModel: ObservableObject {
                 inGroup: groupID,
                 in: &config
             )
-            logger.info("节点 \(nodeName) 状态切换为 \(!currentActive)")
+            logger.info("Node \(nodeName) toggled to \(!currentActive)")
         } else {
-            // 默认节点不可停用
-            logger.debug("尝试切换默认节点，已忽略")
+            // Default node cannot be deactivated
+            logger.debug("Default node toggle ignored")
         }
 
-        // 触发 debounce 写入
+        // Trigger debounced write
         scheduleApply()
     }
 
@@ -142,7 +142,7 @@ public final class MenuBarViewModel: ObservableObject {
                 return
             }
             isApplying = false
-            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "写入失败")
+            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Write failed")
         }
     }
 
@@ -168,12 +168,12 @@ public final class MenuBarViewModel: ObservableObject {
             return result
         }
         isApplying = false
-        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "即时应用失败")
+        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Immediate apply failed")
 
         return result
     }
 
-    /// 从 hosts 备份内容恢复配置；写入成功前不替换当前草稿配置。
+    /// Restore configuration from hosts backup content; current draft config is not replaced until write succeeds.
     public func restoreBackup(content: String) async -> ApplyResult {
         isApplying = true
         applyError = nil
@@ -199,12 +199,12 @@ public final class MenuBarViewModel: ObservableObject {
         if result.success {
             config = restoredConfig
         }
-        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "备份恢复失败")
+        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Backup restore failed")
 
         return result
     }
 
-    /// 强制写入，跳过 hash 校验（用于用户确认覆盖外部修改后）
+    /// Force write, skipping hash validation (used after user confirms overwriting external changes).
     public func forceApply() {
         isApplying = true
         applyError = nil
@@ -222,7 +222,7 @@ public final class MenuBarViewModel: ObservableObject {
                 return
             }
             isApplying = false
-            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "强制写入失败")
+            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Force write failed")
         }
     }
 
@@ -232,7 +232,7 @@ public final class MenuBarViewModel: ObservableObject {
         failureLogPrefix: String
     ) {
         if !result.success, rolledBackConfig != nil {
-            logger.warning("\(failureLogPrefix)，保留当前配置草稿，hosts 未应用")
+            logger.warning("\(failureLogPrefix), keeping current config draft, hosts not applied")
         }
 
         if result.success {

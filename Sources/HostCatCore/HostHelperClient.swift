@@ -34,23 +34,23 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .unavailable(reason):
-            "Privileged Helper 暂不可用：\(reason)"
+            "Privileged Helper temporarily unavailable: \(reason)"
         case .helperNotRegistered:
-            "Privileged Helper 尚未注册，请在设置中完成注册"
+            "Privileged Helper not registered. Please register in Settings."
         case .helperNotApproved:
-            "Privileged Helper 需要在系统设置 > 登录项中批准"
+            "Privileged Helper needs approval in System Settings > Login Items."
         case .connectionInterrupted:
-            "与 Helper 的连接中断，请重试"
+            "Connection to Helper interrupted. Please retry."
         case .connectionInvalidated:
-            "与 Helper 的连接已失效，请检查 Helper 状态"
+            "Connection to Helper invalidated. Please check Helper status."
         case .requestTimedOut:
-            "与 Helper 通信超时，请重试"
+            "Communication with Helper timed out. Please retry."
         case .hashMismatch:
-            "hosts 文件已在 HostCat 之外被修改"
+            "hosts file has been modified outside HostCat."
         case .fileImmutable:
-            "hosts 文件被锁定保护"
+            "hosts file is protected by immutable flags."
         case let .unexpectedReply(detail):
-            "Helper 返回意外响应：\(detail)"
+            "Helper returned unexpected response: \(detail)"
         }
     }
 }

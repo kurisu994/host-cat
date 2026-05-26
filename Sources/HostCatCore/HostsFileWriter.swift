@@ -40,7 +40,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func readFile(at path: String) throws -> Data {
         guard let data = FileManager.default.contents(atPath: path) else {
-            throw HostsWriteError.writeFailed("无法读取文件 \(path)")
+            throw HostsWriteError.writeFailed("Failed to read file \(path)")
         }
         return data
     }
@@ -66,7 +66,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
             while remaining > 0 {
                 let written = Darwin.write(fd, base.advanced(by: offset), remaining)
                 guard written > 0 else {
-                    throw HostsWriteError.writeFailed("write() 失败：\(String(cString: strerror(errno)))")
+                    throw HostsWriteError.writeFailed("write() failed: \(String(cString: strerror(errno)))")
                 }
                 offset += written
                 remaining -= written
@@ -76,7 +76,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func fsyncFD(_ fd: Int32) throws {
         guard Darwin.fsync(fd) == 0 else {
-            throw HostsWriteError.writeFailed("fsync 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed("fsync failed: \(String(cString: strerror(errno)))")
         }
     }
 
@@ -86,19 +86,19 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func setPermissions(at path: String, mode: mode_t) throws {
         guard chmod(path, mode) == 0 else {
-            throw HostsWriteError.permissionSetFailed("chmod \(String(mode, radix: 8)) 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.permissionSetFailed("chmod \(String(mode, radix: 8)) failed: \(String(cString: strerror(errno)))")
         }
     }
 
     public func setOwner(at path: String, uid: uid_t, gid: gid_t) throws {
         guard chown(path, uid, gid) == 0 else {
-            throw HostsWriteError.permissionSetFailed("chown \(uid):\(gid) 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.permissionSetFailed("chown \(uid):\(gid) failed: \(String(cString: strerror(errno)))")
         }
     }
 
     public func rename(from oldPath: String, to newPath: String) throws {
         guard Darwin.rename(oldPath, newPath) == 0 else {
-            throw HostsWriteError.renameFailed("rename 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.renameFailed("rename failed: \(String(cString: strerror(errno)))")
         }
     }
 
@@ -111,21 +111,21 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func removeFile(at path: String) throws {
         guard Darwin.unlink(path) == 0 || errno == ENOENT else {
-            throw HostsWriteError.writeFailed("删除临时文件失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed("Failed to remove temp file: \(String(cString: strerror(errno)))")
         }
     }
 
     public func fileFlags(at path: String) throws -> UInt32 {
         var sb = Darwin.stat()
         guard lstat(path, &sb) == 0 else {
-            throw HostsWriteError.writeFailed("stat 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed("stat failed: \(String(cString: strerror(errno)))")
         }
         return sb.st_flags
     }
 
     public func resolveRealPath(at path: String) throws -> String {
         guard let resolved = Darwin.realpath(path, nil) else {
-            throw HostsWriteError.writeFailed("realpath 失败：\(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed("realpath failed: \(String(cString: strerror(errno)))")
         }
         defer { free(resolved) }
         return String(cString: resolved)
@@ -167,15 +167,15 @@ public struct HostsContentValidator: Sendable {
         // 1. 非空
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw HostsWriteError.contentValidationFailed("内容为空")
+            throw HostsWriteError.contentValidationFailed("Content is empty")
         }
 
         // 2. 包含 HostCat 管理区块标记
         guard content.contains(HostsImporter.beginMarkerPrefix) else {
-            throw HostsWriteError.contentValidationFailed("缺少 HostCat Begin 标记")
+            throw HostsWriteError.contentValidationFailed("Missing HostCat Begin marker")
         }
         guard content.contains(HostsImporter.endMarker) else {
-            throw HostsWriteError.contentValidationFailed("缺少 HostCat End 标记")
+            throw HostsWriteError.contentValidationFailed("Missing HostCat End marker")
         }
 
         let records: [HostRecord]
@@ -193,7 +193,7 @@ public struct HostsContentValidator: Sendable {
             }
             guard containsEntry else {
                 throw HostsWriteError.contentValidationFailed(
-                    "缺少系统默认条目 \(required.ipAddress) \(required.hostname)"
+                    "Missing required system entry \(required.ipAddress) \(required.hostname)"
                 )
             }
         }
@@ -240,7 +240,7 @@ public struct HostsFileWriter: Sendable {
                 do {
                     try fileOps.removeFile(at: temp)
                 } catch {
-                    logger.warning("清理临时文件失败: \(error.localizedDescription)")
+                    logger.warning("Failed to clean up temp file: \(error.localizedDescription)")
                 }
             }
         }
@@ -249,7 +249,7 @@ public struct HostsFileWriter: Sendable {
         let flags = try fileOps.fileFlags(at: targetPath)
         let immutableMask: UInt32 = UInt32(UF_IMMUTABLE) | UInt32(SF_IMMUTABLE)
         if flags & immutableMask != 0 {
-            logger.error("hosts 文件设置了 immutable flags: \(flags)")
+            logger.error("hosts file has immutable flags set: \(flags)")
             throw HostsWriteError.fileImmutable
         }
 
@@ -259,7 +259,7 @@ public struct HostsFileWriter: Sendable {
         let currentHash = HostsHash.sha256Hex(currentContent)
 
         if let expectedHash, !expectedHash.isEmpty, currentHash != expectedHash {
-            logger.warning("hash 不匹配: expected=\(expectedHash.prefix(8))..., current=\(currentHash.prefix(8))...")
+            logger.warning("hash mismatch: expected=\(expectedHash.prefix(8))..., current=\(currentHash.prefix(8))...")
             throw HostsWriteError.hashMismatch
         }
 
@@ -269,7 +269,7 @@ public struct HostsFileWriter: Sendable {
         // 4. mkstemp 创建临时文件
         let (fd, createdTempPath) = try fileOps.createTempFile(in: directory, template: ".hosts.hostcat.XXXXXX")
         tempPath = createdTempPath
-        logger.debug("创建临时文件: \(createdTempPath)")
+        logger.debug("Created temp file: \(createdTempPath)")
 
         // 5. 写入内容 + fsync
         let contentData = Data(content.utf8)
@@ -296,7 +296,7 @@ public struct HostsFileWriter: Sendable {
         // 计算最终 hash
         let finalHash = HostsHash.sha256Hex(content)
 
-        logger.info("写入成功, hash: \(finalHash.prefix(8))...")
+        logger.info("Write successful, hash: \(finalHash.prefix(8))...")
 
         // 9. DNS 缓存刷新
         var dnsSuccess = true
@@ -304,11 +304,11 @@ public struct HostsFileWriter: Sendable {
         if let refresher = dnsRefresher {
             do {
                 try refresher.refreshDNSCache()
-                logger.info("DNS 缓存刷新成功")
+                logger.info("DNS cache refreshed successfully")
             } catch {
                 dnsSuccess = false
                 dnsError = error.localizedDescription
-                logger.warning("DNS 缓存刷新失败: \(error.localizedDescription)")
+                logger.warning("DNS cache refresh failed: \(error.localizedDescription)")
                 // DNS 刷新失败不回滚 hosts，但记录错误
             }
         }

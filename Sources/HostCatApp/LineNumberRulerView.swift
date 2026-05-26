@@ -35,7 +35,7 @@ final class LineNumberRulerView: NSRulerView {
 
     init(textView: NSTextView) {
         guard let scrollView = textView.enclosingScrollView else {
-            fatalError("LineNumberRulerView 要求 textView 必须已添加到 NSScrollView 中")
+            fatalError("LineNumberRulerView requires textView to be added to NSScrollView")
         }
         super.init(
             scrollView: scrollView,
@@ -63,7 +63,7 @@ final class LineNumberRulerView: NSRulerView {
 
     @available(*, unavailable)
     required init(coder _: NSCoder) {
-        fatalError("init(coder:) 未实现")
+        fatalError("init(coder:) has not been implemented")
     }
 
     deinit {

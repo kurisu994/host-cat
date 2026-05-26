@@ -189,6 +189,6 @@ struct AddNodeButton: View {
                 isHovering = hovering
             }
         }
-        .help(L.sidebarAddNodeHint)
+        .help(L.sidebarAddNode)
     }
 }

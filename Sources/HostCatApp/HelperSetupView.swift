@@ -65,7 +65,7 @@ struct HelperSetupView: View {
                         .controlSize(.large)
                         .buttonStyle(.borderedProminent)
 
-                        Button(L.editorRefresh) {
+                        Button(L.settingsRefresh) {
                             registrationManager.refreshHelperStatus()
                         }
                         .controlSize(.small)

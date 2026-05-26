@@ -39,7 +39,7 @@ struct MergedPreviewView: View {
             if !viewModel.lastConflicts.isEmpty {
                 ConflictBanner(conflicts: viewModel.lastConflicts) { conflict in
                     // TODO: 导航到冲突节点需要 EditorView 集成，当前显示提示
-                    viewModel.applyError = "冲突节点 \(conflict.hostname) 位于 \(conflict.incoming.nodeName)"
+                    viewModel.applyError = L.errorExternalModification + " \(conflict.hostname) \(L.previewConflicts) \(conflict.incoming.nodeName)"
                 }
             }
 

@@ -108,6 +108,30 @@ enum L {
     static let helperErrorInstallFailed = localize("helper.error.install_failed")
     static let helperErrorNotRegistered = localize("helper.error.not_registered")
 
+    // MARK: - Helper Setup View
+    static let helperSetupTitle = localize("helper.setup.title")
+    static let helperSetupDescription = localize("helper.setup.description")
+    static let helperCurrentStatus = localize("helper.current_status")
+    static let helperRegister = localize("helper.register")
+    static let helperRegisterHint = localize("helper.register_hint")
+    static let helperPendingApproval = localize("helper.pending_approval")
+    static let helperOpenSettings = localize("helper.open_settings")
+    static let helperEnabled = localize("helper.enabled")
+
+    // MARK: - Backup & Restore View
+    static let backupHistory = localize("backup.history")
+    static let backupCreateManual = localize("backup.create_manual")
+    static let backupSelectPreview = localize("backup.select_preview")
+    static let backupRestoreThis = localize("backup.restore_this")
+
+    // MARK: - Errors (additional)
+    static let errorUnknown = localize("error.unknown")
+    static let errorEmptyHosts = localize("error.empty_hosts")
+    static let errorReadBackupFailed = localize("error.read_backup_failed")
+    static let errorOverwrite = localize("error.overwrite")
+    static let errorExternalModification = localize("error.external_modification")
+    static let errorExternalModificationMessage = localize("error.external_modification.message")
+
     // MARK: - Backup & Restore
     static let backupTitle = localize("backup.title")
     static let backupDescription = localize("backup.description")
@@ -163,6 +187,38 @@ enum L {
     static let configLoadFailed = localize("config.load.failed")
     static let configSaveFailed = localize("config.save.failed")
     static let configRecovered = localize("config.recovered")
+
+    // MARK: - Preview (additional)
+    static func previewTruncated(_ lines: Int) -> String {
+        String(format: localize("preview.truncated"), lines)
+    }
+    static let previewClickFull = localize("preview.click_full")
+
+    // MARK: - MenuBarViewModel
+    static let externalModificationDetected = localize("external.modification.detected")
+    static let externalModificationConfirm = localize("external.modification.confirm")
+    static let configRecoveredPrompt = localize("config.recovered.prompt")
+    static let logDraftPersistSuccess = localize("log.draft.persist.success")
+    static let logDraftPersistFailed = localize("log.draft.persist.failed")
+    static let logMergeSuccess = localize("log.merge.success")
+    static let logMergeFailed = localize("log.merge.failed")
+
+    // MARK: - Helper Status
+    static let helperStatusNotRegistered = localize("helper.status.not_registered")
+    static let helperStatusEnabled = localize("helper.status.enabled")
+    static let helperStatusDisabled = localize("helper.status.disabled")
+    static let helperStatusUnknown = localize("helper.status.unknown")
+    static let helperRegisterFailed = localize("helper.register.failed")
+    static let launchAtLoginFailed = localize("launchatlogin.failed")
+
+    // MARK: - Settings
+    static let settingsTitle = localize("settings.title")
+    static let settingsGeneral = localize("settings.general")
+    static let settingsHelper = localize("settings.helper")
+    static let settingsConfigInfo = localize("settings.config_info")
+    static let settingsLaunchAtLogin = localize("settings.launch_at_login")
+    static let settingsVersion = localize("settings.version")
+    static let settingsRefresh = localize("settings.refresh")
 
     // MARK: - Private
 
