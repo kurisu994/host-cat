@@ -6,7 +6,7 @@ public enum MoveDirection: Sendable {
     case down
 }
 
-/// 配置变更操作结果
+/// Result of a configuration mutation operation.
 public enum MutationResult: Equatable, Sendable {
     case success
     case notFound
@@ -222,12 +222,12 @@ public struct ConfigMutationService: Sendable {
     }
 
     public func removeDefaultNode(from config: inout AppConfig) {
-        // 默认节点不可删除，此操作无效果
+        // Default node cannot be removed; this operation has no effect.
         logger.debug("Attempted to remove default node, ignored")
     }
 
     public func setDefaultNodeActive(_ isActive: Bool, in config: inout AppConfig) {
-        // 默认节点始终激活，不可停用
+        // Default node is always active and cannot be deactivated.
         if !isActive {
             logger.debug("Attempted to deactivate default node, ignored")
         }

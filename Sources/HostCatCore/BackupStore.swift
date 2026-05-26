@@ -1,7 +1,7 @@
 import Foundation
 import os.log
 
-/// 备份操作错误类型
+/// Error type for backup operations.
 public enum BackupStoreError: Error, Equatable, LocalizedError, Sendable {
     case directoryCreationFailed
     case writeFailed
@@ -19,7 +19,7 @@ public enum BackupStoreError: Error, Equatable, LocalizedError, Sendable {
     }
 }
 
-/// 备份存储管理器，负责保存、列出和读取 hosts 备份
+/// Manages backup storage: saving, listing, and reading hosts backups.
 public struct BackupStore: Sendable {
     public static let backupFilePrefix = "hosts_"
     public static let backupFileExtension = "bak"
@@ -44,7 +44,7 @@ public struct BackupStore: Sendable {
             .appendingPathComponent("backups", isDirectory: true)
     }
 
-    /// 创建一份新的备份，返回备份文件 URL
+    /// Creates a new backup and returns the backup file URL.
     public func createBackup(content: String) throws -> URL {
         do {
             try FileManager.default.createDirectory(
@@ -62,7 +62,7 @@ public struct BackupStore: Sendable {
         let now = Date()
         let timestamp = formatter.string(from: now)
 
-        // 使用 gettimeofday 获取微秒级精度，避免 Double 精度损失和 Y2038 后溢出风险
+        // Use gettimeofday for microsecond precision, avoiding Double precision loss and Y2038 overflow risk.
         var tv = timeval()
         gettimeofday(&tv, nil)
         let orderingToken = UInt64(tv.tv_sec) * 1_000_000_000 + UInt64(tv.tv_usec) * 1_000
@@ -79,18 +79,18 @@ public struct BackupStore: Sendable {
             throw BackupStoreError.writeFailed
         }
 
-        // 清理超出保留数量的旧备份
+        // Clean up old backups that exceed the retention limit.
         do {
             try cleanupOldBackups()
         } catch {
             logger.warning("\(LC.logBackupFailed(error.localizedDescription))")
-            // 不抛出 cleanup 错误，备份已创建成功
+            // Do not throw cleanup errors; the backup was created successfully.
         }
 
         return fileURL
     }
 
-    /// 列出所有备份文件，按时间倒序（最新的在前）
+    /// Lists all backup files in reverse chronological order (newest first).
     public func listBackups() -> [URL] {
         guard let files = try? FileManager.default.contentsOfDirectory(
             at: backupDirectory,
@@ -107,7 +107,7 @@ public struct BackupStore: Sendable {
         return backupFiles.sorted { $0.lastPathComponent > $1.lastPathComponent }
     }
 
-    /// 读取指定备份文件的内容
+    /// Reads the content of the specified backup file.
     public func readBackup(at url: URL) -> String? {
         guard let data = try? Data(contentsOf: url) else {
             return nil
@@ -115,7 +115,7 @@ public struct BackupStore: Sendable {
         return HostsImporter().importHostsWithFallback(data: data).decodedContent
     }
 
-    /// 从文件名中提取日期（用于测试和展示）
+    /// Extracts the date from a backup filename (used for testing and display).
     public static func extractDate(from url: URL) -> Date? {
         let filename = url.lastPathComponent
         let prefix = Self.backupFilePrefix

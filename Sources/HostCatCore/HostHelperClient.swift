@@ -10,25 +10,25 @@ public struct HostHelperWriteResult: Equatable, Sendable {
     }
 }
 
-/// Helper client 错误类型
+/// Error type for the Helper client.
 public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
-    /// Helper 暂不可用（通用原因）
+    /// Helper temporarily unavailable (generic reason).
     case unavailable(String)
-    /// Helper 未注册
+    /// Helper is not registered.
     case helperNotRegistered
-    /// Helper 未在系统设置中审批
+    /// Helper has not been approved in System Settings.
     case helperNotApproved
-    /// XPC 连接中断（可能自动恢复）
+    /// XPC connection interrupted (may auto-recover).
     case connectionInterrupted
-    /// XPC 连接永久失效
+    /// XPC connection permanently invalidated.
     case connectionInvalidated
-    /// XPC 请求超时
+    /// XPC request timed out.
     case requestTimedOut
-    /// Helper 返回 hash 不匹配
+    /// Helper reported hash mismatch.
     case hashMismatch
-    /// Helper 返回 hosts 文件被 immutable flags 保护
+    /// Helper reported hosts file is protected by immutable flags.
     case fileImmutable
-    /// Helper 返回的回复格式无法解析
+    /// Helper returned a response that could not be parsed.
     case unexpectedReply(String)
 
     public var errorDescription: String? {
@@ -55,15 +55,15 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
     }
 }
 
-/// Helper client 协议，主应用通过此协议与 Helper 交互
+/// Protocol for the Helper client; the main app communicates with the Helper through this protocol.
 public protocol HostHelperClient: Sendable {
     func writeHosts(_ contents: String, expectedCurrentHostsHash: String?) async throws -> HostHelperWriteResult
 }
 
-// MARK: - XPC 协议
+// MARK: - XPC Protocol
 
-/// XPC 层共享协议定义，Helper（服务端）和 Client（客户端）都需要引用。
-/// 使用 @objc protocol + NSXPCInterface，参数限制为 XPC 稳定支持的桥接类型。
+/// Shared XPC protocol definition used by both the Helper (server) and Client.
+/// Uses @objc protocol + NSXPCInterface; parameters are limited to XPC-stable bridged types.
 @objc public protocol HostCatHelperXPCProtocol {
     func writeHosts(
         _ contents: NSString,

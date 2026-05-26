@@ -12,8 +12,8 @@ struct HostCatApplication: App {
         let config = Self.loadInitialConfig()
 
         #if DEBUG
-        // 开发环境：使用 PreviewHostHelperClient 绕过 Helper 注册，
-        // 避免开发时必须安装 Privileged Helper
+        // Development: use PreviewHostHelperClient to bypass Helper registration,
+        // avoiding the need to install the Privileged Helper during development.
         let helperClient: any HostHelperClient = PreviewHostHelperClient()
         #else
         let helperClient: any HostHelperClient = XPCHostHelperClient()
@@ -98,21 +98,21 @@ struct HostCatApplication: App {
     }
 }
 
-// MARK: - 设置页面
+// MARK: - Settings View
 
-/// 设置页面，包含通用设置、Helper 状态和配置信息
+/// Settings page containing general settings, Helper status, and configuration info.
 private struct SettingsView: View {
     let config: AppConfig
     @ObservedObject var registrationManager: HelperRegistrationManager
 
     var body: some View {
         Form {
-            // 通用设置
+            // General settings
             Section(L.settingsGeneral) {
                 Toggle(L.settingsLaunchAtLogin, isOn: launchAtLoginBinding)
             }
 
-            // Helper 状态
+            // Helper status
             Section(L.settingsHelper) {
                 LabeledContent(L.sidebarGroups) {
                     HStack(spacing: 6) {
@@ -146,7 +146,7 @@ private struct SettingsView: View {
                 }
             }
 
-            // 配置信息
+            // Configuration info
             Section(L.settingsConfigInfo) {
                 LabeledContent(L.settingsVersion, value: "\(config.configVersion)")
                 LabeledContent(L.sidebarDefault, value: config.defaultNode.name)
@@ -160,7 +160,7 @@ private struct SettingsView: View {
         }
     }
 
-    /// 开机自启动 Toggle binding
+    /// Launch at login Toggle binding.
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
             get: { registrationManager.isLaunchAtLoginEnabled },
@@ -168,7 +168,7 @@ private struct SettingsView: View {
         )
     }
 
-    /// Helper 状态指示灯颜色
+    /// Helper status indicator color.
     private var helperStatusColor: Color {
         switch registrationManager.helperStatus {
         case .enabled:

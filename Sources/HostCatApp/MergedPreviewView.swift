@@ -6,7 +6,7 @@ struct MergedPreviewView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 工具栏
+            // Toolbar
             HStack {
                 Text(L.previewMergedHosts)
                     .font(.headline)
@@ -35,15 +35,15 @@ struct MergedPreviewView: View {
 
             Divider()
 
-            // 冲突提示
+            // Conflict banner
             if !viewModel.lastConflicts.isEmpty {
                 ConflictBanner(conflicts: viewModel.lastConflicts) { conflict in
-                    // TODO: 导航到冲突节点需要 EditorView 集成，当前显示提示
+                    // TODO: Navigating to the conflict node requires EditorView integration; currently shows a hint.
                     viewModel.applyError = L.errorExternalModification + " \(conflict.hostname) \(L.previewConflicts) \(conflict.incoming.nodeName)"
                 }
             }
 
-            // 文本预览
+            // Text preview
             if let text = viewModel.lastMergedText {
                 ScrollView {
                     Text(text)
@@ -56,7 +56,7 @@ struct MergedPreviewView: View {
                 ContentUnavailableView(L.previewNoConflicts, systemImage: "doc.text")
             }
 
-            // 状态栏
+            // Status bar
             HStack {
                 if viewModel.isApplying {
                     ProgressView()

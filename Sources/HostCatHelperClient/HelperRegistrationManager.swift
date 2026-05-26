@@ -4,16 +4,16 @@ import HostCatCore
 import ServiceManagement
 import os.log
 
-/// Helper 注册和开机自启动管理
+/// Helper registration and launch-at-login management.
 ///
-/// 负责：
-/// 1. Privileged Helper 的 `SMAppService.daemon` 注册、状态检测和审批引导
-/// 2. 主应用的 `SMAppService.mainApp` 开机自启动管理
+/// Responsibilities:
+/// 1. Privileged Helper `SMAppService.daemon` registration, status detection, and approval guidance.
+/// 2. Main app `SMAppService.mainApp` launch-at-login management.
 @MainActor
 public final class HelperRegistrationManager: ObservableObject {
-    /// Helper daemon 注册状态
+    /// Helper daemon registration status.
     @Published public var helperStatus: SMAppService.Status = .notRegistered
-    /// 最近一次操作的错误信息
+    /// Error message from the most recent operation.
     @Published public var lastError: String?
 
     private let helperService: SMAppService
@@ -24,48 +24,48 @@ public final class HelperRegistrationManager: ObservableObject {
         refreshHelperStatus()
     }
 
-    // MARK: - Helper 注册
+    // MARK: - Helper Registration
 
-    /// 注册 Privileged Helper
+    /// Registers the Privileged Helper.
     ///
-    /// 首次注册时 macOS 会在「系统设置 > 登录项」中创建审批项，
-    /// 用户需手动启用后 Helper 才能正常工作。
+    /// On first registration, macOS creates an approval entry in System Settings > Login Items,
+    /// which the user must enable for the Helper to work.
     public func registerHelper() {
         lastError = nil
         do {
             try helperService.register()
             refreshHelperStatus()
-            logger.info("Helper 注册成功，当前状态: \(String(describing: self.helperStatus))")
+            logger.info("Helper registered successfully, current status: \(String(describing: self.helperStatus))")
         } catch {
             lastError = LC.helperRegisterFailed + "：\(error.localizedDescription)"
-            logger.error("Helper 注册失败: \(error.localizedDescription)")
+            logger.error("Helper registration failed: \(error.localizedDescription)")
             refreshHelperStatus()
         }
     }
 
-    /// 刷新 Helper 注册状态
+    /// Refreshes the Helper registration status.
     public func refreshHelperStatus() {
         helperStatus = helperService.status
-        logger.debug("Helper 状态: \(String(describing: self.helperStatus))")
+        logger.debug("Helper status: \(String(describing: self.helperStatus))")
     }
 
-    /// 打开系统设置引导用户审批
+    /// Opens System Settings to guide the user through approval.
     public func openSystemSettings() {
         SMAppService.openSystemSettingsLoginItems()
-        logger.info("已引导用户打开系统设置 > 登录项")
+        logger.info("Guided user to open System Settings > Login Items")
     }
 
-    /// Helper 是否处于可用状态
+    /// Whether the Helper is in an available state.
     public var isHelperReady: Bool {
         helperStatus == .enabled
     }
 
-    /// Helper 是否需要用户在系统设置中审批
+    /// Whether the Helper requires user approval in System Settings.
     public var isHelperRequiresApproval: Bool {
         helperStatus == .requiresApproval
     }
 
-    /// Helper 状态的中文描述
+    /// Localized description of the Helper status.
     public var helperStatusDescription: String {
         switch helperStatus {
         case .notRegistered:
@@ -81,29 +81,29 @@ public final class HelperRegistrationManager: ObservableObject {
         }
     }
 
-    // MARK: - 开机自启动
+    // MARK: - Launch at Login
 
-    /// 当前是否启用开机自启动
+    /// Whether launch-at-login is currently enabled.
     public var isLaunchAtLoginEnabled: Bool {
         SMAppService.mainApp.status == .enabled
     }
 
-    /// 切换开机自启动状态
+    /// Toggles launch-at-login state.
     ///
-    /// - Parameter enabled: true 启用，false 禁用
+    /// - Parameter enabled: true to enable, false to disable.
     public func setLaunchAtLogin(_ enabled: Bool) {
         lastError = nil
         do {
             if enabled {
                 try SMAppService.mainApp.register()
-                logger.info("开机自启动已启用")
+                logger.info("Launch at login enabled")
             } else {
                 try SMAppService.mainApp.unregister()
-                logger.info("开机自启动已禁用")
+                logger.info("Launch at login disabled")
             }
         } catch {
             lastError = LC.launchAtLoginFailed + "：\(error.localizedDescription)"
-            logger.error("开机自启动设置失败: \(error.localizedDescription)")
+            logger.error("Launch at login setting failed: \(error.localizedDescription)")
         }
     }
 }

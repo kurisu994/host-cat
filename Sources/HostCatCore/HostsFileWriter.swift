@@ -1,40 +1,40 @@
 import Foundation
 import os.log
 
-// MARK: - 文件系统操作协议
+// MARK: - File System Operations Protocol
 
-/// 文件系统操作协议，通过协议注入实现可测试性。
-/// Helper 使用真实实现，测试使用 Fake 实现。
+/// File system operations protocol for dependency injection (testability).
+/// The Helper uses the real implementation; tests use a fake.
 public protocol FileSystemOperations: Sendable {
-    /// 读取文件内容
+    /// Reads file contents.
     func readFile(at path: String) throws -> Data
-    /// 通过 mkstemp 在指定目录创建唯一临时文件
+    /// Creates a unique temporary file via mkstemp in the specified directory.
     func createTempFile(in directory: String, template: String) throws -> (fd: Int32, path: String)
-    /// 向文件描述符写入数据
+    /// Writes data to a file descriptor.
     func writeData(_ data: Data, toFileDescriptor fd: Int32) throws
-    /// 同步文件描述符
+    /// Syncs a file descriptor.
     func fsyncFD(_ fd: Int32) throws
-    /// 关闭文件描述符
+    /// Closes a file descriptor.
     func closeFD(_ fd: Int32)
-    /// 设置文件权限
+    /// Sets file permissions.
     func setPermissions(at path: String, mode: mode_t) throws
-    /// 设置文件属主和属组
+    /// Sets file owner and group.
     func setOwner(at path: String, uid: uid_t, gid: gid_t) throws
-    /// 原子重命名
+    /// Atomically renames a file.
     func rename(from oldPath: String, to newPath: String) throws
-    /// 同步目录（降低断电导致目录项未落盘的风险）
+    /// Syncs the directory (reduces risk of directory entry loss on power failure).
     func fsyncDirectory(at path: String) throws
-    /// 删除文件
+    /// Removes a file.
     func removeFile(at path: String) throws
-    /// 检查文件的 immutable flags（schg / uchg）
+    /// Checks the file's immutable flags (schg / uchg).
     func fileFlags(at path: String) throws -> UInt32
-    /// 解析真实路径（跟踪符号链接）
+    /// Resolves the real path (follows symlinks).
     func resolveRealPath(at path: String) throws -> String
 }
 
-// MARK: - 真实文件系统实现
+// MARK: - Real File System Implementation
 
-/// 基于 POSIX API 的真实文件系统操作
+/// Real file system operations based on POSIX APIs.
 public struct RealFileSystemOperations: FileSystemOperations, Sendable {
     public init() {}
 
@@ -104,7 +104,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func fsyncDirectory(at path: String) throws {
         let fd = Darwin.open(path, O_RDONLY)
-        guard fd >= 0 else { return } // 目录 fsync 失败不阻止后续
+        guard fd >= 0 else { return } // Directory fsync failure is not blocking.
         Darwin.fsync(fd)
         Darwin.close(fd)
     }
@@ -132,15 +132,15 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
     }
 }
 
-// MARK: - 写入结果
+// MARK: - Write Result
 
-/// hosts 写入结果
+/// Result of a hosts file write operation.
 public struct HostsWriteOutcome: Equatable, Sendable {
-    /// 写入后 hosts 文件的 SHA256 hash
+    /// SHA256 hash of the hosts file after writing.
     public var finalHash: String
-    /// DNS 刷新是否成功
+    /// Whether DNS refresh succeeded.
     public var dnsRefreshSuccess: Bool
-    /// DNS 刷新失败的原因（仅当 dnsRefreshSuccess = false 时有值）
+    /// Reason for DNS refresh failure (only set when dnsRefreshSuccess is false).
     public var dnsRefreshError: String?
 
     public init(finalHash: String, dnsRefreshSuccess: Bool, dnsRefreshError: String? = nil) {
@@ -150,9 +150,9 @@ public struct HostsWriteOutcome: Equatable, Sendable {
     }
 }
 
-// MARK: - 内容校验器
+// MARK: - Content Validator
 
-/// hosts 内容写入前校验
+/// Validates hosts content before writing.
 public struct HostsContentValidator: Sendable {
     private static let requiredSystemEntries: [(ipAddress: String, hostname: String)] = [
         ("127.0.0.1", "localhost"),
@@ -162,15 +162,15 @@ public struct HostsContentValidator: Sendable {
 
     public init() {}
 
-    /// 校验即将写入的 hosts 内容是否完整有效
+    /// Validates that the hosts content to be written is complete and valid.
     public func validate(_ content: String) throws {
-        // 1. 非空
+        // 1. Non-empty
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw HostsWriteError.contentValidationFailed("Content is empty")
         }
 
-        // 2. 包含 HostCat 管理区块标记
+        // 2. Contains HostCat management block markers
         guard content.contains(HostsImporter.beginMarkerPrefix) else {
             throw HostsWriteError.contentValidationFailed("Missing HostCat Begin marker")
         }
@@ -202,27 +202,27 @@ public struct HostsContentValidator: Sendable {
 
 // MARK: - HostsFileWriter
 
-/// hosts 文件写入器
+/// Hosts file writer.
 ///
-/// 实现设计文档中的安全写入策略：
-/// 1. 检查 immutable flags
-/// 2. hash 校验防止覆盖外部修改
-/// 3. mkstemp + fsync + chmod/chown + rename 原子替换
-/// 4. 可选 DNS 刷新
+/// Implements the safe write strategy from the design document:
+/// 1. Check immutable flags
+/// 2. Hash validation to prevent overwriting external changes
+/// 3. mkstemp + fsync + chmod/chown + rename for atomic replacement
+/// 4. Optional DNS refresh
 public struct HostsFileWriter: Sendable {
     private let logger = Logger(subsystem: "com.hostcat.helper", category: "HostsFileWriter")
 
     public init() {}
 
-    /// 执行安全写入
+    /// Performs a safe write.
     ///
     /// - Parameters:
-    ///   - content: 要写入的 hosts 文本
-    ///   - targetPath: 目标路径（已通过 realpath 解析）
-    ///   - expectedHash: 预期的当前 hosts hash，nil 表示跳过检查
-    ///   - fileOps: 文件系统操作注入
-    ///   - dnsRefresher: DNS 刷新器注入，nil 表示跳过刷新
-    /// - Returns: 写入结果
+    ///   - content: The hosts text to write.
+    ///   - targetPath: The target path (already resolved via realpath).
+    ///   - expectedHash: The expected current hosts hash; nil skips the check.
+    ///   - fileOps: Injected file system operations.
+    ///   - dnsRefresher: Injected DNS refresher; nil skips refresh.
+    /// - Returns: The write result.
     public func write(
         content: String,
         targetPath: String,
@@ -235,7 +235,7 @@ public struct HostsFileWriter: Sendable {
         var tempPath: String?
 
         defer {
-            // 无论成功或失败，尝试清理临时文件
+            // Clean up the temporary file on success or failure.
             if let temp = tempPath {
                 do {
                     try fileOps.removeFile(at: temp)
@@ -245,7 +245,7 @@ public struct HostsFileWriter: Sendable {
             }
         }
 
-        // 1. 检查 immutable flags（schg / uchg）
+        // 1. Check immutable flags (schg / uchg)
         let flags = try fileOps.fileFlags(at: targetPath)
         let immutableMask: UInt32 = UInt32(UF_IMMUTABLE) | UInt32(SF_IMMUTABLE)
         if flags & immutableMask != 0 {
@@ -253,7 +253,7 @@ public struct HostsFileWriter: Sendable {
             throw HostsWriteError.fileImmutable
         }
 
-        // 2. 读取当前 hosts 并校验 hash
+        // 2. Read current hosts and validate hash
         let currentData = try fileOps.readFile(at: targetPath)
         let currentContent = String(data: currentData, encoding: .utf8) ?? String(data: currentData, encoding: .isoLatin1) ?? ""
         let currentHash = HostsHash.sha256Hex(currentContent)
@@ -263,15 +263,15 @@ public struct HostsFileWriter: Sendable {
             throw HostsWriteError.hashMismatch
         }
 
-        // 3. 校验写入内容
+        // 3. Validate content to be written
         try contentValidator.validate(content)
 
-        // 4. mkstemp 创建临时文件
+        // 4. Create temp file via mkstemp
         let (fd, createdTempPath) = try fileOps.createTempFile(in: directory, template: ".hosts.hostcat.XXXXXX")
         tempPath = createdTempPath
         logger.debug("Created temp file: \(createdTempPath)")
 
-        // 5. 写入内容 + fsync
+        // 5. Write content + fsync
         let contentData = Data(content.utf8)
         do {
             try fileOps.writeData(contentData, toFileDescriptor: fd)
@@ -282,23 +282,23 @@ public struct HostsFileWriter: Sendable {
         }
         fileOps.closeFD(fd)
 
-        // 6. 设置权限：chmod 644 + chown root:wheel
+        // 6. Set permissions: chmod 644 + chown root:wheel
         try fileOps.setPermissions(at: createdTempPath, mode: 0o644)
         try fileOps.setOwner(at: createdTempPath, uid: 0, gid: 0) // root:wheel
 
-        // 7. rename(2) 原子替换
+        // 7. rename(2) atomic replacement
         try fileOps.rename(from: createdTempPath, to: targetPath)
-        tempPath = nil // rename 成功后不需要清理
+        tempPath = nil // No cleanup needed after successful rename.
 
-        // 8. fsync 父目录
+        // 8. fsync parent directory
         try fileOps.fsyncDirectory(at: directory)
 
-        // 计算最终 hash
+        // Compute final hash
         let finalHash = HostsHash.sha256Hex(content)
 
         logger.info("Write successful, hash: \(finalHash.prefix(8))...")
 
-        // 9. DNS 缓存刷新
+        // 9. DNS cache refresh
         var dnsSuccess = true
         var dnsError: String?
         if let refresher = dnsRefresher {
@@ -309,7 +309,7 @@ public struct HostsFileWriter: Sendable {
                 dnsSuccess = false
                 dnsError = error.localizedDescription
                 logger.warning("DNS cache refresh failed: \(error.localizedDescription)")
-                // DNS 刷新失败不回滚 hosts，但记录错误
+                // DNS refresh failure does not roll back hosts, but the error is recorded.
             }
         }
 

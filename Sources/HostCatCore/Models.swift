@@ -81,7 +81,7 @@ public struct AppSettings: Codable, Equatable, Sendable {
 public struct AppStateMetadata: Codable, Equatable, Sendable {
     public var lastAppliedHostsHash: String?
     public var lastAppliedAt: Date?
-    /// 记录上次导入/确认的外部 hosts hash，用于首次写入时携带预期当前 hash。
+    /// Records the hash of the last imported/confirmed external hosts content, used to carry the expected current hash on first write.
     public var lastExternalHostsHash: String?
 
     public init(

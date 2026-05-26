@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// NSViewRepresentable 辅助视图，在窗口出现时自动激活焦点
+/// NSViewRepresentable helper that automatically focuses the window when it appears.
 struct WindowFocusView: NSViewRepresentable {
     let title: String
 
@@ -39,7 +39,7 @@ struct WindowFocusView: NSViewRepresentable {
     }
 }
 
-/// 窗口激活和焦点管理工具
+/// Window activation and focus management utility.
 @MainActor
 enum WindowFocus {
     private static var focusedWindowIDs: Set<ObjectIdentifier> = []

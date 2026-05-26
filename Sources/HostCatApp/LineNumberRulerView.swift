@@ -1,34 +1,34 @@
 import AppKit
 
-/// 行号 gutter，使用 NSLayoutManager 定位每行的 y 坐标
+/// Line number gutter that uses NSLayoutManager to locate each line's y-coordinate.
 ///
-/// 挂载到 NSScrollView 的 verticalRulerView 上，随文本滚动自动刷新。
-/// 支持当前行高亮和错误行标记。
+/// Mounted on the NSScrollView's verticalRulerView, it automatically refreshes as the text scrolls.
+/// Supports current-line highlighting and error-line marking.
 final class LineNumberRulerView: NSRulerView {
 
     // MARK: - Properties
 
-    /// 错误行号集合（1-indexed），用于标记红色行号
+    /// Set of error line numbers (1-indexed) for marking line numbers in red.
     var errorLines: Set<Int> = [] {
         didSet { needsDisplay = true }
     }
 
-    /// gutter 宽度
+    /// Gutter width.
     private let gutterWidth: CGFloat = 48
 
-    /// 行号字体
+    /// Line number font.
     private let lineNumberFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
 
-    /// 行号文字颜色
+    /// Line number text color.
     private let lineNumberColor = NSColor.secondaryLabelColor
 
-    /// 错误行号颜色
+    /// Error line number color.
     private let errorLineNumberColor = NSColor.systemRed
 
-    /// 当前行高亮颜色
+    /// Current line highlight color.
     private let currentLineColor = NSColor.labelColor
 
-    /// 错误行圆点颜色
+    /// Error line dot color.
     private let errorDotColor = NSColor.systemRed
 
     // MARK: - Init
@@ -44,7 +44,7 @@ final class LineNumberRulerView: NSRulerView {
         self.clientView = textView
         self.ruleThickness = gutterWidth
 
-        // 监听文本视图变化，刷新行号
+        // Listen for text changes to refresh line numbers.
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(textDidChange(_:)),
@@ -52,7 +52,7 @@ final class LineNumberRulerView: NSRulerView {
             object: textView
         )
 
-        // 监听选区变化，高亮当前行
+        // Listen for selection changes to highlight the current line.
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(selectionDidChange(_:)),
@@ -80,12 +80,13 @@ final class LineNumberRulerView: NSRulerView {
               let textContainer = textView.textContainer
         else { return }
 
-        // 当前选区所在行（用于高亮当前行号）
+        // Current selection line (for highlighting the current line number).
         let currentLineNumber = currentLineNumberForSelection(textView: textView)
         let visibleRect = textView.visibleRect
         let textContainerOrigin = textView.textContainerOrigin
         let visibleContainerRect = NSRect(
-            // 行号只依赖垂直可见范围；horizontal scroll / ruler offset 不应影响行号定位。
+            // Line numbers only depend on the vertical visible range;
+            // horizontal scroll / ruler offset should not affect line number positioning.
             x: 0,
             y: visibleRect.minY - textContainerOrigin.y,
             width: max(textContainer.containerSize.width, visibleRect.width),
@@ -187,7 +188,7 @@ final class LineNumberRulerView: NSRulerView {
         return lineNumber(atCharacterIndex: characterIndex, in: textView.string)
     }
 
-    /// 获取当前选区所在的行号（1-indexed）
+    /// Returns the line number of the current selection (1-indexed).
     private func currentLineNumberForSelection(textView: NSTextView) -> Int? {
         let selectedRange = textView.selectedRange()
         guard selectedRange.location != NSNotFound else { return nil }

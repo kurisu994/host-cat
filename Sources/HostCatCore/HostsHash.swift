@@ -2,8 +2,8 @@ import CryptoKit
 import Foundation
 
 public enum HostsHash {
-    /// 计算字符串的 SHA256 十六进制哈希值
-    /// 使用预分配缓冲区和十六进制查找表，避免 String(format:) 的临时对象分配
+    /// Computes the SHA256 hex hash of a string.
+    /// Uses a pre-allocated buffer and a hex lookup table to avoid temporary allocations from String(format:).
     public static func sha256Hex(_ content: String) -> String {
         let digest = SHA256.hash(data: Data(content.utf8))
         let hexDigits = Array("0123456789abcdef")

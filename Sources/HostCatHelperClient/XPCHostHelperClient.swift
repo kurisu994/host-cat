@@ -2,10 +2,10 @@ import Foundation
 import HostCatCore
 import os.log
 
-/// 真实 XPC client，通过 NSXPCConnection 与 Privileged Helper 通信
+/// Real XPC client that communicates with the Privileged Helper via NSXPCConnection.
 ///
-/// 将 XPC reply block 模式转换为 Swift Concurrency `async throws` 接口，
-/// UI 和服务层只依赖 `HostHelperClient` 协议。
+/// Converts XPC reply block patterns into Swift Concurrency `async throws` interfaces;
+/// UI and service layers depend only on the `HostHelperClient` protocol.
 public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     private let machServiceName = "com.hostcat.helper"
     private let helperRequirement: String
@@ -45,7 +45,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                 let proxy: HostCatHelperXPCProtocol
                 do {
                     proxy = try getProxy { [weak self, logger] error in
-                        logger.error("XPC 远程对象错误: \(error.localizedDescription)")
+                        logger.error("XPC remote object error: \(error.localizedDescription)")
                         self?.completePendingReply(
                             requestID,
                             with: .failure(HostHelperClientError.unavailable(error.localizedDescription))
@@ -84,56 +84,56 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
 
     // MARK: - Connection Management
 
-    /// 获取或创建 XPC proxy
+    /// Gets or creates an XPC proxy.
     private func getProxy(errorHandler: @escaping (Error) -> Void) throws -> HostCatHelperXPCProtocol {
         lock.lock()
         defer { lock.unlock() }
 
         if let existing = connection {
-            // 尝试复用已有连接
+            // Attempt to reuse an existing connection.
             guard let proxy = existing.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-                throw HostHelperClientError.unavailable("无法获取 XPC proxy")
+                throw HostHelperClientError.unavailable("Unable to obtain XPC proxy")
             }
             return proxy
         }
 
-        // 创建新连接
+        // Create a new connection.
         let newConnection = createConnection()
         connection = newConnection
 
         guard let proxy = newConnection.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-            throw HostHelperClientError.unavailable("无法获取 XPC proxy")
+            throw HostHelperClientError.unavailable("Unable to obtain XPC proxy")
         }
 
         return proxy
     }
 
-    /// 创建 NSXPCConnection
+    /// Creates an NSXPCConnection.
     private func createConnection() -> NSXPCConnection {
         let conn = NSXPCConnection(machServiceName: machServiceName, options: .privileged)
         conn.remoteObjectInterface = NSXPCInterface(with: HostCatHelperXPCProtocol.self)
 
-        // 设置 Helper 端签名校验
+        // Set Helper-side code signing verification.
         conn.setCodeSigningRequirement(helperRequirement)
 
         conn.interruptionHandler = { [weak self, logger] in
-            logger.warning("XPC 连接中断")
+            logger.warning("XPC connection interrupted")
             self?.failAllPendingReplies(with: HostHelperClientError.connectionInterrupted)
             self?.invalidateConnection()
         }
 
         conn.invalidationHandler = { [weak self, logger] in
-            logger.warning("XPC 连接失效")
+            logger.warning("XPC connection invalidated")
             self?.failAllPendingReplies(with: HostHelperClientError.connectionInvalidated)
             self?.invalidateConnection()
         }
 
         conn.resume()
-        logger.info("XPC 连接已建立: \(self.machServiceName)")
+        logger.info("XPC connection established: \(self.machServiceName)")
         return conn
     }
 
-    /// 使已有连接失效
+    /// Invalidates the existing connection.
     private func invalidateConnection() {
         lock.lock()
         defer { lock.unlock() }
@@ -168,24 +168,24 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
 
     // MARK: - Reply Parsing
 
-    /// 解析 Helper 返回的 NSDictionary
+    /// Parses the NSDictionary returned by the Helper.
     private static func parseReply(
         _ dict: NSDictionary,
         logger: Logger
     ) throws -> HostHelperWriteResult {
         guard let success = dict["success"] as? Bool else {
-            throw HostHelperClientError.unexpectedReply("缺少 success 字段")
+            throw HostHelperClientError.unexpectedReply("Missing success field")
         }
 
         if success {
             guard let finalHash = dict["finalHash"] as? String else {
-                throw HostHelperClientError.unexpectedReply("成功响应缺少 finalHash")
+                throw HostHelperClientError.unexpectedReply("Successful response missing finalHash")
             }
             let didRefreshDNS = dict["didRefreshDNS"] as? Bool ?? false
             let dnsError = dict["dnsRefreshError"] as? String
 
             if let dnsError, !dnsError.isEmpty {
-                logger.warning("写入成功但 DNS 刷新失败: \(dnsError)")
+                logger.warning("Write succeeded but DNS refresh failed: \(dnsError)")
             }
 
             return HostHelperWriteResult(
@@ -194,9 +194,9 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             )
         } else {
             let errorCode = dict["errorCode"] as? String ?? "unknown"
-            let errorMessage = dict["errorMessage"] as? String ?? "未知错误"
+            let errorMessage = dict["errorMessage"] as? String ?? "Unknown error"
 
-            logger.error("Helper 返回错误: code=\(errorCode), message=\(errorMessage)")
+            logger.error("Helper returned error: code=\(errorCode), message=\(errorMessage)")
 
             switch errorCode {
             case "hashMismatch":

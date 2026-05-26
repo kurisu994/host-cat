@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// 悬停时显示的合成 Hosts 预览内容
+/// Preview content displayed on hover showing the merged hosts content.
 struct HoverPreviewContent: View {
     let text: String
 
@@ -51,7 +51,7 @@ struct HoverPreviewContent: View {
     }
 }
 
-/// 在原生菜单跟踪期间展示只读预览，避免菜单项内的 SwiftUI popover 无法呈现。
+/// Displays a read-only preview during native menu tracking, avoiding SwiftUI popover issues inside menu items.
 @MainActor
 final class HoverPreviewPanelController: ObservableObject {
     private enum Layout {

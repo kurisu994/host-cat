@@ -1,22 +1,22 @@
 import Foundation
 
-/// hosts 文件写入相关错误
+/// Errors related to hosts file writing.
 public enum HostsWriteError: Error, Equatable, LocalizedError, Sendable {
-    /// hosts 文件设置了 immutable flags（schg / uchg），不允许写入
+    /// The hosts file has immutable flags (schg / uchg) set and cannot be written.
     case fileImmutable
-    /// expectedCurrentHostsHash 与当前文件 hash 不匹配，表示 hosts 在 HostCat 之外被修改
+    /// expectedCurrentHostsHash does not match the current file hash, indicating the hosts file was modified outside HostCat.
     case hashMismatch
-    /// 写入内容校验失败（空内容、缺少系统默认条目或管理区块标记不完整）
+    /// Content validation failed (empty content, missing required system entries, or incomplete management block markers).
     case contentValidationFailed(String)
-    /// mkstemp 创建临时文件失败
+    /// mkstemp failed to create a temporary file.
     case tempFileCreationFailed(String)
-    /// 写入临时文件或 fsync 失败
+    /// Writing to the temporary file or fsync failed.
     case writeFailed(String)
-    /// rename(2) 原子替换失败
+    /// rename(2) atomic replacement failed.
     case renameFailed(String)
-    /// chmod / chown 设置权限或属主失败
+    /// chmod / chown failed to set permissions or owner.
     case permissionSetFailed(String)
-    /// DNS 缓存刷新失败（注意：此时 hosts 已写入成功）
+    /// DNS cache refresh failed (note: hosts has already been written successfully at this point).
     case dnsRefreshFailed(String)
 
     public var errorDescription: String? {

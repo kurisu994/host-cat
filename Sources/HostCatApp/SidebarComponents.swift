@@ -1,17 +1,17 @@
 import SwiftUI
 
-/// 节点行视图
+/// Node row view.
 struct NodeRow: View {
     let name: String
     let isActive: Bool
     let isDefault: Bool
     let isSelected: Bool
-    /// 点击激活图标时的回调，nil 表示不可切换（如默认节点）
+    /// Callback when the active icon is tapped; nil means not toggleable (e.g., default node).
     var onToggleActive: (() -> Void)? = nil
 
     var body: some View {
         HStack {
-            // 激活状态图标，非默认节点可点击切换
+            // Active state icon; non-default nodes can tap to toggle.
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isActive ? .green : .secondary)
                 .contentShape(Rectangle())
@@ -45,7 +45,7 @@ struct NodeRow: View {
     }
 }
 
-/// 分组头视图（折叠箭头、双击重命名、hover 删除按钮）
+/// Group header view (collapse arrow, double-click rename, hover delete button).
 struct GroupHeader: View {
     let name: String
     let isCollapsed: Bool
@@ -60,7 +60,7 @@ struct GroupHeader: View {
 
     var body: some View {
         HStack {
-            // 折叠箭头
+            // Collapse arrow
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -89,7 +89,7 @@ struct GroupHeader: View {
                     .onTapGesture(count: 2) {
                         renameText = name
                         isRenaming = true
-                        // 菜单栏应用需要激活窗口才能接收键盘输入
+                        // Menu bar apps need to activate the window to receive keyboard input.
                         DispatchQueue.main.async {
                             let app = NSApplication.shared
                             if app.activationPolicy() != .regular {
@@ -104,7 +104,7 @@ struct GroupHeader: View {
 
             Spacer()
 
-            // 删除按钮（hover 且非编辑时显示）
+            // Delete button (shown on hover when not editing)
             if isHovering && !isRenaming {
                 Button {
                     onDelete()
@@ -123,7 +123,7 @@ struct GroupHeader: View {
     }
 }
 
-/// 侧边栏底部"新建分组"按钮
+/// "Add Group" button at the bottom of the sidebar.
 struct SidebarAddGroupButton: View {
     let action: () -> Void
 
@@ -155,7 +155,7 @@ struct SidebarAddGroupButton: View {
     }
 }
 
-/// 分组内"添加节点"按钮
+/// "Add Node" button inside a group.
 struct AddNodeButton: View {
     let action: () -> Void
 

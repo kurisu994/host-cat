@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// HostCat 本地化字符串封装
+/// HostCat localization string wrapper.
 ///
-/// 提供类型安全的本地化字符串访问，避免在 UI 代码中直接使用字符串字面量。
-/// 所有 key 需同时在 en.lproj/Localizable.strings 和 zh-Hans.lproj/Localizable.strings 中定义。
+/// Provides type-safe access to localized strings, avoiding raw string literals in UI code.
+/// All keys must be defined in both en.lproj/Localizable.strings and zh-Hans.lproj/Localizable.strings.
 enum L {
     // MARK: - App
     static let appName = localize("app.name")
@@ -227,7 +227,7 @@ enum L {
     }
 }
 
-// MARK: - SwiftUI Text 便捷扩展
+// MARK: - SwiftUI Text Convenience Extension
 
 extension Text {
     init(_ localized: L.Type, keyPath: KeyPath<L.Type, String>) {

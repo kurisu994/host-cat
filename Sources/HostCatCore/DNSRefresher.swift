@@ -1,13 +1,13 @@
 import Foundation
 
-/// DNS 缓存刷新协议，便于测试注入
+/// Protocol for DNS cache refresh, allowing test injection.
 public protocol DNSRefreshing: Sendable {
     func refreshDNSCache() throws
 }
 
-/// 真实 DNS 刷新器，执行 macOS 标准刷新命令
+/// Real DNS refresher that executes standard macOS flush commands.
 ///
-/// 只允许两个固定命令：
+/// Only two fixed commands are allowed:
 /// - `dscacheutil -flushcache`
 /// - `killall -HUP mDNSResponder`
 public struct SystemDNSRefresher: DNSRefreshing, Sendable {

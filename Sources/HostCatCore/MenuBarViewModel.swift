@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import os.log
 
-/// 菜单栏展示用的节点信息
+/// Node information for menu bar display.
 public struct MenuBarNodeItem: Equatable, Identifiable, Sendable {
     public var id: UUID
     public var name: String
@@ -17,7 +17,7 @@ public struct MenuBarNodeItem: Equatable, Identifiable, Sendable {
     }
 }
 
-/// 菜单栏展示用的分组信息
+/// Group information for menu bar display.
 public struct MenuBarGroupItem: Equatable, Identifiable, Sendable {
     public var id: UUID
     public var name: String
@@ -32,7 +32,7 @@ public struct MenuBarGroupItem: Equatable, Identifiable, Sendable {
     }
 }
 
-/// 菜单栏视图模型，负责维护内存配置状态、与 HostWriteCoordinator 交互
+/// Menu bar view model that maintains in-memory config state and interacts with HostWriteCoordinator.
 @MainActor
 public final class MenuBarViewModel: ObservableObject {
     @Published public var config: AppConfig
@@ -255,7 +255,7 @@ public final class MenuBarViewModel: ObservableObject {
             applyError = LC.conflictsDetected(conflicts.count)
             logger.warning(LC.logConflicts(conflicts.count))
         } else if let errorMessage = result.errorMessage {
-            // 区分外部修改和其他写入错误
+            // Distinguish external modifications from other write errors.
             if case .writeFailed(let msg) = result.status,
                msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true

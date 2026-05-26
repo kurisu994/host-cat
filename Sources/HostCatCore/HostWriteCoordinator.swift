@@ -4,10 +4,10 @@ import os.log
 private typealias ApplyOutcome = (result: ApplyResult, rolledBackConfig: AppConfig?)
 private typealias WritePlan = (merged: MergedHosts, expectedHash: String?)
 
-/// 应用结果状态码，区分不同结果类型
+/// Apply result status codes, distinguishing different result types.
 public enum ApplyStatus: Equatable, Sendable {
     case success
-    case cancelled          // debounce 取消，非用户主动取消
+    case cancelled          // debounce cancelled, not user-initiated
     case conflicts([HostConflict])
     case writeFailed(String)
     case mergeFailed(String)
@@ -74,18 +74,18 @@ public actor HostWriteCoordinator {
         self.debounceInterval = debounceInterval
     }
 
-    /// 调度一次 apply 操作。如果当前已有待执行的 debounce，会取消旧任务并重新开始计时。
-    /// 返回的 ApplyResult 表示本次 schedule 最终是否成功完成写入。
+    /// Schedules an apply operation. If a pending debounce exists, the old task is cancelled and restarted.
+    /// The returned ApplyResult indicates whether the scheduled write completed successfully.
     public func scheduleApply(
         config: AppConfig,
         force: Bool = false
     ) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
-        // 取消之前的 debounce 任务
+        // Cancel the previous debounce task.
         pendingTask?.cancel()
         pendingGeneration += 1
         let generation = pendingGeneration
 
-        // 如果当前正在写入，创建一个新的 debounce 任务等待当前写入完成
+        // If a write is currently in progress, create a new debounce task that waits for it to finish.
         let task = Task<ApplyOutcome, Never> { [debounceInterval] in
             do {
                 try await Task.sleep(for: debounceInterval)
@@ -114,11 +114,11 @@ public actor HostWriteCoordinator {
 
         pendingTask = task
 
-        // 等待 debounce 任务完成并返回结果
+        // Wait for the debounce task to complete and return the result.
         return await task.value
     }
 
-    /// 立即执行写入，不经过 debounce。用于编辑窗口的 Apply 按钮等需要即时反馈的场景。
+    /// Executes the write immediately without debouncing. Used for scenarios requiring instant feedback, such as the Apply button in the editor window.
     public func applyImmediately(
         config: AppConfig,
         force: Bool = false
@@ -166,7 +166,7 @@ public actor HostWriteCoordinator {
         isWriting = true
         defer { isWriting = false }
 
-        // 1. 合并配置并执行 parser 校验
+        // 1. Merge config and perform parser validation
         let writePlan: WritePlan
         do {
             let merged = try merger.merge(config)
@@ -198,7 +198,7 @@ public actor HostWriteCoordinator {
             )
         }
 
-        // 2. 写入前备份当前 /etc/hosts
+        // 2. Backup current /etc/hosts before writing
         if let backupStore {
             do {
                 let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
@@ -219,14 +219,14 @@ public actor HostWriteCoordinator {
             }
         }
 
-        // 3. 调用 helper client 写入
+        // 3. Call helper client to write
         do {
             let result = try await helperClient.writeHosts(
                 writePlan.merged.text,
                 expectedCurrentHostsHash: writePlan.expectedHash
             )
 
-            // 4. 写入成功：更新状态
+            // 4. Write succeeded: update state
             let appliedAt = Date()
             var appliedConfig = config
             appliedConfig.state.lastAppliedHostsHash = result.finalHostsHash
@@ -248,7 +248,7 @@ public actor HostWriteCoordinator {
                 nil
             )
         } catch {
-            // 5. 写入失败：回滚到上次成功的配置快照
+            // 5. Write failed: roll back to the last successful config snapshot
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error(LC.logWriteFailed(message))
             let rolledBack = lastSuccessfulConfigSnapshot

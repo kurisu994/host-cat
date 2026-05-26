@@ -2,14 +2,14 @@ import HostCatCore
 import HostCatHelperClient
 import SwiftUI
 
-/// Helper 注册和审批引导视图
+/// Helper registration and approval guidance view.
 struct HelperSetupView: View {
     @ObservedObject var registrationManager: HelperRegistrationManager
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 24) {
-            // 标题
+            // Title
             VStack(spacing: 8) {
                 Image(systemName: "shield.checkered")
                     .font(.system(size: 48))
@@ -22,7 +22,7 @@ struct HelperSetupView: View {
                     .multilineTextAlignment(.center)
             }
 
-            // 状态
+            // Status
             GroupBox {
                 HStack {
                     Text(L.helperCurrentStatus)
@@ -38,7 +38,7 @@ struct HelperSetupView: View {
                 .padding(.vertical, 4)
             }
 
-            // 操作按钮
+            // Action buttons
             VStack(spacing: 12) {
                 switch registrationManager.helperStatus {
                 case .notRegistered, .notFound:
@@ -88,7 +88,7 @@ struct HelperSetupView: View {
                 }
             }
 
-            // 错误信息
+            // Error message
             if let error = registrationManager.lastError {
                 GroupBox {
                     Label(error, systemImage: "exclamationmark.triangle")

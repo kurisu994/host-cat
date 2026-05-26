@@ -1,25 +1,25 @@
 import Foundation
 
-/// 外部修改检测结果
+/// Detects external modifications to /etc/hosts outside of HostCat.
 public enum ExternalModificationResult: Equatable, Sendable {
-    /// 没有变化，hash 匹配
+    /// No changes detected; hash matches.
     case noChange
-    /// 文件已被外部修改（hash 不匹配）
+    /// File was modified externally (hash mismatch).
     case modified
-    /// 首次运行，没有预期 hash
+    /// First run; no expected hash available.
     case firstRun
 }
 
-/// 检测 /etc/hosts 是否在 HostCat 之外被修改
+/// Detects whether /etc/hosts was modified outside of HostCat.
 public struct ExternalModificationDetector: Sendable {
     public init() {}
 
-    /// 检测当前 hosts 内容与预期 hash 是否一致
+    /// Checks whether the current hosts content matches the expected hash.
     ///
     /// - Parameters:
-    ///   - expectedHash: 上次 HostCat 成功写入后记录的 hash，nil 表示首次运行
-    ///   - currentHostsContent: 当前 /etc/hosts 的文本内容
-    /// - Returns: 检测结果
+    ///   - expectedHash: The hash recorded after the last successful HostCat write; nil indicates first run.
+    ///   - currentHostsContent: The current text content of /etc/hosts.
+    /// - Returns: The detection result.
     public func detect(
         expectedHash: String?,
         currentHostsContent: String

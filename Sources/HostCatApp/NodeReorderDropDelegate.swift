@@ -2,7 +2,7 @@ import HostCatCore
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// 节点拖拽排序代理，支持分组内节点实时重排动画
+/// Node drag-and-drop reorder delegate, supporting real-time reordering animation within groups.
 struct NodeReorderDropDelegate: DropDelegate {
     let targetNodeID: UUID
     let groupID: UUID
@@ -36,7 +36,7 @@ struct NodeReorderDropDelegate: DropDelegate {
     }
 
     func dropExited(info: DropInfo) {
-        // 拖出范围时不清除，等 performDrop 处理
+        // Do not clear when exiting the drop area; let performDrop handle it.
     }
 
     func validateDrop(info: DropInfo) -> Bool {

@@ -1,14 +1,14 @@
 import AppKit
 import SwiftUI
 
-/// 桥接 NSTextView 到 SwiftUI 的 hosts 文本编辑器
+/// Bridges NSTextView to SwiftUI as a hosts text editor.
 ///
-/// 替换 SwiftUI TextEditor，提供语法高亮、行号 gutter 和错误行标记。
-/// 使用 TextKit 2 和 NSScrollView + NSTextView 架构。
+/// Replaces SwiftUI TextEditor, providing syntax highlighting, a line-number gutter, and error-line marking.
+/// Uses TextKit 2 and the NSScrollView + NSTextView architecture.
 struct HostsTextView: NSViewRepresentable {
     @Binding var text: String
 
-    /// 错误行号集合（1-indexed）
+    /// Set of error line numbers (1-indexed).
     var errorLines: Set<Int>
 
     func makeNSView(context: Context) -> NSScrollView {
@@ -17,7 +17,7 @@ struct HostsTextView: NSViewRepresentable {
             return scrollView
         }
 
-        // 文本视图配置
+        // Text view configuration
         textView.font = HostsSyntaxHighlighter.defaultFont
         textView.textColor = .labelColor
         textView.backgroundColor = .textBackgroundColor
@@ -27,17 +27,17 @@ struct HostsTextView: NSViewRepresentable {
         textView.isRichText = false
         textView.usesFindBar = true
 
-        // 禁用自动替换，保持纯文本编辑体验
+        // Disable automatic substitutions to preserve plain-text editing experience.
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.isAutomaticLinkDetectionEnabled = false
 
-        // 内容边距
+        // Content inset
         textView.textContainerInset = NSSize(width: 4, height: 8)
 
-        // 关闭自动换行，允许水平滚动，保留 hosts 文件的一行一行编辑语义。
+        // Disable word wrapping to allow horizontal scrolling, preserving line-by-line editing semantics for hosts files.
         scrollView.hasHorizontalScroller = true
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = true
@@ -45,21 +45,21 @@ struct HostsTextView: NSViewRepresentable {
         textView.textContainer?.heightTracksTextView = false
         textView.textContainer?.widthTracksTextView = false
 
-        // 设置 delegate
+        // Set delegate
         textView.delegate = context.coordinator
 
-        // 初始文本和高亮
+        // Initial text and highlighting
         textView.string = text
         HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: errorLines)
 
-        // 配置行号 gutter
+        // Configure line-number gutter
         let rulerView = LineNumberRulerView(textView: textView)
         rulerView.errorLines = errorLines
         scrollView.verticalRulerView = rulerView
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = true
 
-        // 监听内容视图滚动，同步刷新行号
+        // Listen for content view scroll events to refresh line numbers
         scrollView.contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(
             context.coordinator,
@@ -68,7 +68,7 @@ struct HostsTextView: NSViewRepresentable {
             object: scrollView.contentView
         )
 
-        // 保存引用
+        // Save references
         context.coordinator.scrollView = scrollView
         context.coordinator.textView = textView
         context.coordinator.rulerView = rulerView
@@ -80,7 +80,7 @@ struct HostsTextView: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
 
-        // 仅在外部 text 变化时更新（避免编辑时光标跳动）
+        // Only update when text changes externally (avoids cursor jumping during editing).
         var didReplaceText = false
         if textView.string != text {
             context.coordinator.isUpdatingFromSwiftUI = true
@@ -91,7 +91,7 @@ struct HostsTextView: NSViewRepresentable {
             didReplaceText = true
         }
 
-        // 更新高亮和错误行
+        // Update highlighting and error lines
         HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: errorLines)
         Self.syncNonWrappingLayout(
             textView: textView,
@@ -99,7 +99,7 @@ struct HostsTextView: NSViewRepresentable {
             resetHorizontalOffset: didReplaceText
         )
 
-        // 更新行号 gutter 错误行
+        // Update line-number gutter error lines
         if let rulerView = scrollView.verticalRulerView as? LineNumberRulerView {
             rulerView.errorLines = errorLines
             rulerView.needsDisplay = true
@@ -110,7 +110,7 @@ struct HostsTextView: NSViewRepresentable {
         Coordinator(parent: self)
     }
 
-    /// 同步非自动换行模式下的文档宽度，避免无限 container 让文本绘制到不可见区域。
+    /// Syncs document width in non-wrapping mode to prevent infinite container from drawing text into invisible areas.
     private static func syncNonWrappingLayout(
         textView: NSTextView,
         in scrollView: NSScrollView,
@@ -184,14 +184,14 @@ struct HostsTextView: NSViewRepresentable {
 
     // MARK: - Coordinator
 
-    /// 协调器：处理 NSTextViewDelegate 和滚动通知
+    /// Coordinator: handles NSTextViewDelegate and scroll notifications.
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: HostsTextView
         weak var scrollView: NSScrollView?
         weak var textView: NSTextView?
         weak var rulerView: LineNumberRulerView?
 
-        /// 防止 updateNSView 和 textDidChange 循环触发
+        /// Prevents circular triggering between updateNSView and textDidChange.
         var isUpdatingFromSwiftUI = false
 
         init(parent: HostsTextView) {
@@ -202,10 +202,10 @@ struct HostsTextView: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             guard !isUpdatingFromSwiftUI else { return }
 
-            // 回写 text 到 SwiftUI binding
+            // Write text back to SwiftUI binding
             parent.text = textView.string
 
-            // 实时高亮
+            // Real-time highlighting
             HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: parent.errorLines)
             if let scrollView {
                 HostsTextView.syncNonWrappingLayout(
@@ -215,7 +215,7 @@ struct HostsTextView: NSViewRepresentable {
                 )
             }
 
-            // 刷新行号
+            // Refresh line numbers
             rulerView?.needsDisplay = true
         }
 

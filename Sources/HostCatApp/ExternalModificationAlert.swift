@@ -1,7 +1,7 @@
 import HostCatCore
 import SwiftUI
 
-/// 外部修改检测决策弹窗
+/// Alert for external modification detection decisions.
 struct ExternalModificationAlert: ViewModifier {
     @ObservedObject var viewModel: MenuBarViewModel
 

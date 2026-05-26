@@ -1,7 +1,7 @@
 import HostCatCore
 import SwiftUI
 
-/// UI 层展示用的备份条目
+/// UI-layer backup entry for display.
 struct BackupEntry: Hashable, Identifiable {
     let id = UUID()
     let url: URL
@@ -23,7 +23,7 @@ struct BackupEntry: Hashable, Identifiable {
     }
 }
 
-/// 备份管理和恢复视图
+/// Backup management and restore view.
 struct BackupRestoreView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @State private var backups: [BackupEntry] = []
@@ -36,7 +36,7 @@ struct BackupRestoreView: View {
 
     var body: some View {
         HSplitView {
-            // 左侧：备份列表
+            // Left: backup list
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Text(L.backupHistory)
@@ -79,7 +79,7 @@ struct BackupRestoreView: View {
             }
             .frame(minWidth: 200, idealWidth: 250)
 
-            // 右侧：预览和操作
+            // Right: preview and actions
             VStack(spacing: 0) {
                 if let content = previewContent {
                     ScrollView {

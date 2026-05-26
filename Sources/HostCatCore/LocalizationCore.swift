@@ -1,10 +1,10 @@
 import Foundation
 
-/// HostCat Core 模块本地化字符串封装
+/// Localization string wrapper for the HostCat Core module.
 ///
-/// Core 模块不依赖 SwiftUI，使用 Foundation 的 NSLocalizedString 进行本地化。
-/// 字符串资源通过 Bundle.module 访问（SPM 自动生成的资源 bundle）。
-/// 当 Bundle.module 不可用时（如未启用 SPM 资源），回退到主 bundle。
+/// The Core module does not depend on SwiftUI; it uses Foundation's NSLocalizedString for localization.
+/// String resources are accessed via Bundle.module (the SPM auto-generated resource bundle).
+/// When Bundle.module is unavailable (e.g., SPM resources not enabled), falls back to the main bundle.
 public enum LC {
     // MARK: - Parser Errors
     public static func parserInvalidIPAddress(lineNumber: Int, value: String) -> String {
@@ -150,8 +150,8 @@ public enum LC {
 
 private extension Bundle {
     static var module: Bundle? {
-        // SPM 自动生成的 Bundle.module，如果资源已正确配置则可用
-        // 在 Xcode 构建中，如果未启用 SPM 资源，则返回 nil
+        // SPM auto-generated Bundle.module; available if resources are correctly configured.
+        // In Xcode builds, returns nil if SPM resources are not enabled.
         #if SWIFT_PACKAGE
         return Bundle(identifier: "HostCatCore")
         #else

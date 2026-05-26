@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// 名称输入弹窗（用于新建分组、新建节点、重命名节点）
+/// Name input dialog (used for creating groups, creating nodes, and renaming nodes).
 struct NameInputDialog: View {
     let title: String
     let placeholder: String
@@ -58,7 +58,7 @@ struct NameInputDialog: View {
     }
 }
 
-/// NSTextField 封装，处理菜单栏应用的焦点获取和输入法兼容
+/// NSTextField wrapper that handles focus acquisition and IME compatibility for menu bar apps.
 struct FocusedNameTextField: NSViewRepresentable {
     let placeholder: String
     @Binding var text: String
@@ -91,7 +91,7 @@ struct FocusedNameTextField: NSViewRepresentable {
             textField.placeholderString = placeholder
         }
 
-        // 输入法正在组合（如拼音输入中），不要强制同步 stringValue，否则会打断 IME
+        // While the input method is composing (e.g., during pinyin input), do not force-sync stringValue to avoid interrupting the IME.
         let hasMarkedText = (textField.currentEditor() as? NSTextView)?.hasMarkedText() ?? false
         if !hasMarkedText, textField.stringValue != text {
             textField.stringValue = text
@@ -113,8 +113,8 @@ struct FocusedNameTextField: NSViewRepresentable {
 
         func controlTextDidChange(_ notification: Notification) {
             guard let textField = notification.object as? NSTextField else { return }
-            // 输入法正在组合字符时（如中文拼音），跳过更新 binding，
-            // 避免触发 SwiftUI 重建导致 updateNSView 打断 IME 状态
+            // While the input method is composing characters (e.g., Chinese pinyin), skip updating the binding
+            // to avoid triggering SwiftUI rebuilds that would interrupt the IME state via updateNSView.
             if let editor = textField.currentEditor() as? NSTextView, editor.hasMarkedText() {
                 return
             }
@@ -131,7 +131,7 @@ struct FocusedNameTextField: NSViewRepresentable {
             didRequestFocus = true
 
             Task { @MainActor in
-                // 菜单栏应用延迟稍长，多试几次
+                // Menu bar apps need a slightly longer delay; retry multiple times.
                 for delay in [0, 10, 50, 100, 200, 400] {
                     if delay > 0 {
                         try? await Task.sleep(for: .milliseconds(delay))
@@ -147,8 +147,8 @@ struct FocusedNameTextField: NSViewRepresentable {
             guard let window = textField.window else { return false }
             guard textField.currentEditor() == nil else { return true }
 
-            // 菜单栏应用默认 activation policy 是 .accessory，
-            // 必须临时切到 .regular 才能可靠获取键盘焦点
+            // Menu bar apps default to .accessory activation policy;
+            // temporarily switch to .regular to reliably acquire keyboard focus.
             let app = NSApplication.shared
             if app.activationPolicy() != .regular {
                 app.setActivationPolicy(.regular)

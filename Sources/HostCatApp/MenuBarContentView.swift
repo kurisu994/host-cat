@@ -2,7 +2,7 @@ import AppKit
 import HostCatCore
 import SwiftUI
 
-/// 菜单栏下拉内容视图
+/// Menu bar dropdown content view.
 struct MenuBarContentView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @Environment(\.openWindow) private var openWindow
@@ -14,13 +14,13 @@ struct MenuBarContentView: View {
 
         Divider()
 
-        // 默认节点（始终激活，不可切换）
+        // Default node (always active, cannot be toggled)
         Toggle(viewModel.defaultNodeItem.name, isOn: .constant(true))
             .disabled(true)
 
         Divider()
 
-        // 分组和节点，使用 Toggle 映射到 NSMenuItem 原生 checkmark
+        // Groups and nodes, using Toggle mapped to native NSMenuItem checkmark.
         ForEach(viewModel.groupItems) { group in
             Text(group.name)
                 .font(.caption)
@@ -36,7 +36,7 @@ struct MenuBarContentView: View {
             Divider()
         }
 
-        // 操作菜单
+        // Actions menu
          Button(L.editorTitle) {
             openAppWindow(id: "editor", title: L.editorTitle)
         }
@@ -91,7 +91,7 @@ struct MenuBarContentView: View {
         WindowFocus.focusSoon(title: title)
     }
 
-    /// 为指定节点创建 isActive 的双向绑定，Toggle 切换时自动同步 config 并触发应用
+    /// Creates a two-way binding for a node's isActive state; Toggle changes automatically sync config and trigger apply.
     private func nodeActiveBinding(nodeID: UUID, groupID: UUID?) -> Binding<Bool> {
         Binding(
             get: {

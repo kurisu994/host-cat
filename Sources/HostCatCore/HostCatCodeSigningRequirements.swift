@@ -1,6 +1,6 @@
 import Foundation
 
-/// HostCat App 与 Privileged Helper 之间使用的 code signing requirement。
+/// Code signing requirements used between HostCat App and the Privileged Helper.
 public enum HostCatCodeSigningRequirements {
     public static let appBundleIdentifier = "com.hostcat.app"
     public static let helperBundleIdentifier = "com.hostcat.helper"

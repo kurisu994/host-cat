@@ -28,9 +28,9 @@ struct EditorView: View {
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
-                // 左侧：分组和节点树
+                // Left: groups and node tree
                 List {
-                    // 默认节点
+                    // Default node
                     Section(L.sidebarDefault) {
                         NodeRow(
                             name: viewModel.config.defaultNode.name,
@@ -44,7 +44,7 @@ struct EditorView: View {
                         }
                     }
 
-                    // 分组（支持拖拽排序）
+                    // Groups (supports drag-and-drop reordering)
                     ForEach(viewModel.config.groups) { group in
                         Section(header: GroupHeader(
                             name: group.name,
@@ -136,7 +136,7 @@ struct EditorView: View {
             }
             .frame(minWidth: 200)
         } detail: {
-            // 右侧：hosts 文本编辑
+            // Right: hosts text editor
             if let nodeID = selectedNodeID {
                 VStack(alignment: .leading, spacing: 0) {
                     EditorToolbar(
@@ -149,14 +149,14 @@ struct EditorView: View {
                     )
                     Divider()
 
-                    // 文本编辑器（NSTextView 桥接，带语法高亮和行号）
+                    // Text editor (bridged NSTextView with syntax highlighting and line numbers)
                     HostsTextView(text: $editingContent, errorLines: errorLines)
                         .frame(minWidth: 400, minHeight: 300)
                         .onChange(of: editingContent) { _, newValue in
                             validateContent(newValue)
                         }
 
-                    // 状态栏
+                    // Status bar
                     HStack {
                         if viewModel.isApplying {
                             ProgressView()
@@ -336,7 +336,7 @@ struct EditorView: View {
         return nil
     }
 
-    /// 撤销时只重置编辑内容，不影响节点名称
+    /// Revert only resets the edited content without affecting the node name.
     private func reloadContent(id: UUID) {
         if id == viewModel.config.defaultNode.id {
             editingContent = viewModel.config.defaultNode.content
@@ -369,7 +369,7 @@ struct EditorView: View {
         viewModel.scheduleApply()
     }
 
-    /// 校验编辑内容，提取所有错误行号
+    /// Validates edited content and extracts all error line numbers.
     private func validateContent(_ content: String) {
         let parser = HostsParser()
         let errors = parser.validate(content)
