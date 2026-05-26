@@ -8,22 +8,22 @@ struct MergedPreviewView: View {
         VStack(spacing: 0) {
             // 工具栏
             HStack {
-                Text("合成 Hosts 预览")
+                Text(L.previewMergedHosts)
                     .font(.headline)
 
                 Spacer()
 
                 if viewModel.lastDuplicateCount > 0 {
-                    Label("\(viewModel.lastDuplicateCount) 条重复已合并", systemImage: "arrow.triangle.merge")
+                    Label(L.editorDuplicatesCount(viewModel.lastDuplicateCount), systemImage: "arrow.triangle.merge")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Button("刷新") {
+                Button(L.editorPreview) {
                     viewModel.updateMergedPreview()
                 }
 
-                Button("立即应用") {
+                Button(L.editorApply) {
                     Task {
                         _ = await viewModel.applyImmediately()
                     }
@@ -53,7 +53,7 @@ struct MergedPreviewView: View {
                 }
                 .background(Color(NSColor.textBackgroundColor))
             } else {
-                ContentUnavailableView("暂无合成内容", systemImage: "doc.text")
+                ContentUnavailableView(L.previewNoConflicts, systemImage: "doc.text")
             }
 
             // 状态栏
@@ -61,7 +61,7 @@ struct MergedPreviewView: View {
                 if viewModel.isApplying {
                     ProgressView()
                         .controlSize(.small)
-                    Text("正在应用...")
+                    Text(L.editorParsing)
                         .font(.caption)
                 }
 
@@ -76,7 +76,7 @@ struct MergedPreviewView: View {
                 Spacer()
 
                 if let text = viewModel.lastMergedText {
-                    Text("\(text.count) 字符")
+                    Text("\(text.count) " + L.editorLine)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -103,13 +103,13 @@ struct ConflictBanner: View {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
-                Text("检测到 \(conflicts.count) 个冲突")
+                Text(L.previewConflicts + " (\(conflicts.count))")
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
                 Spacer()
 
-                Text("请修改节点内容或停用冲突节点后重新应用")
+                Text(L.errorConflicts)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -141,7 +141,7 @@ struct ConflictRow: View {
 
                 HStack(spacing: 16) {
                     ConflictEndpointLabel(
-                        label: "已有",
+                        label: L.statusDefault,
                         ip: conflict.existing.ipAddress,
                         source: conflict.existing.nodeName
                     )
@@ -151,7 +151,7 @@ struct ConflictRow: View {
                         .foregroundStyle(.secondary)
 
                     ConflictEndpointLabel(
-                        label: "冲突",
+                        label: L.previewConflicts,
                         ip: conflict.incoming.ipAddress,
                         source: conflict.incoming.nodeName
                     )
@@ -160,7 +160,7 @@ struct ConflictRow: View {
 
             Spacer()
 
-            Button("定位") {
+            Button(L.sidebarGroupOptions) {
                 onNavigate()
             }
             .buttonStyle(.borderless)

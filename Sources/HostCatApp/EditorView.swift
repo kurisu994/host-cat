@@ -31,7 +31,7 @@ struct EditorView: View {
                 // 左侧：分组和节点树
                 List {
                     // 默认节点
-                    Section("默认") {
+                    Section(L.sidebarDefault) {
                         NodeRow(
                             name: viewModel.config.defaultNode.name,
                             isActive: viewModel.config.defaultNode.isActive,
@@ -89,7 +89,7 @@ struct EditorView: View {
                                         showRenameNodeDialog = true
                                     }
                                     .contextMenu {
-                                        Button("删除") {
+                                        Button(L.sidebarDeleteNode) {
                                             nodeToDelete = (group.id, node.id)
                                             showDeleteConfirmation = true
                                         }
@@ -177,12 +177,12 @@ struct EditorView: View {
                         Spacer()
 
                         if !errorLines.isEmpty {
-                            Label("\(errorLines.count) 个语法错误", systemImage: "exclamationmark.triangle")
+                            Label(L.errorGeneric + " (\(errorLines.count))", systemImage: "exclamationmark.triangle")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                         }
 
-                        Text("\(editingContent.count) 字符")
+                        Text("\(editingContent.count) " + L.editorLine)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -191,11 +191,11 @@ struct EditorView: View {
                     .background(Color(NSColor.controlBackgroundColor))
                 }
             } else {
-                ContentUnavailableView("选择一个节点", systemImage: "doc.text")
+                ContentUnavailableView(L.sidebarGroups, systemImage: "doc.text")
             }
         }
-        .alert("确认删除节点", isPresented: $showDeleteConfirmation) {
-            Button("删除", role: .destructive) {
+        .alert(L.dialogConfirmDelete, isPresented: $showDeleteConfirmation) {
+            Button(L.dialogDelete, role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
                     let service = mutationService
                     service.removeNode(id: nodeID, fromGroup: groupID, in: &viewModel.config)
@@ -203,14 +203,14 @@ struct EditorView: View {
                 }
                 nodeToDelete = nil
             }
-            Button("取消", role: .cancel) {
+            Button(L.dialogCancel, role: .cancel) {
                 nodeToDelete = nil
             }
         } message: {
-            Text("删除后无法恢复，是否继续？")
+            Text(L.dialogConfirmDelete)
         }
-        .alert("确认删除分组", isPresented: $showDeleteGroupConfirmation) {
-            Button("删除", role: .destructive) {
+        .alert(L.dialogConfirmDelete, isPresented: $showDeleteGroupConfirmation) {
+            Button(L.dialogDelete, role: .destructive) {
                 if let groupID = groupToDelete {
                     let service = mutationService
                     service.removeGroup(id: groupID, from: &viewModel.config)
@@ -218,19 +218,19 @@ struct EditorView: View {
                 }
                 groupToDelete = nil
             }
-            Button("取消", role: .cancel) {
+            Button(L.dialogCancel, role: .cancel) {
                 groupToDelete = nil
             }
         } message: {
-            Text("删除分组将同时删除其下所有节点，是否继续？")
+            Text(L.dialogConfirmDelete)
         }
         .frame(minWidth: 700, minHeight: 500)
         .overlay {
             if showAddGroupDialog {
                 NameInputDialog(
-                    title: "新建分组",
-                    placeholder: "分组名称",
-                    confirmTitle: "添加",
+                    title: L.sidebarAddGroup,
+                    placeholder: L.dialogNamePlaceholder,
+                    confirmTitle: L.dialogAdd,
                     name: $newGroupName,
                     onCancel: {
                         newGroupName = ""
@@ -247,9 +247,9 @@ struct EditorView: View {
                 )
             } else if showAddNodeDialog {
                 NameInputDialog(
-                    title: "新建节点",
-                    placeholder: "节点名称",
-                    confirmTitle: "添加",
+                    title: L.sidebarAddNode,
+                    placeholder: L.dialogNamePlaceholder,
+                    confirmTitle: L.dialogAdd,
                     name: $newNodeName,
                     onCancel: {
                         newNodeName = ""
@@ -268,9 +268,9 @@ struct EditorView: View {
                 )
             } else if showRenameNodeDialog {
                 NameInputDialog(
-                    title: "重命名节点",
-                    placeholder: "新名称",
-                    confirmTitle: "确认",
+                    title: L.sidebarRenameNode,
+                    placeholder: L.dialogNamePlaceholder,
+                    confirmTitle: L.dialogRename,
                     name: $renameNodeNewName,
                     onCancel: {
                         renameNodeNewName = ""
@@ -403,7 +403,7 @@ private struct EditorToolbar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(title.isEmpty ? "未命名节点" : title)
+            Text(title.isEmpty ? L.dialogNamePlaceholder : title)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
@@ -414,23 +414,23 @@ private struct EditorToolbar: View {
             Button {
                 onRevert()
             } label: {
-                Label("撤销", systemImage: "arrow.uturn.backward")
+                Label(L.editorDiscard, systemImage: "arrow.uturn.backward")
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
             .keyboardShortcut("z", modifiers: .command)
-            .help("撤销当前编辑")
+            .help(L.editorDiscardTooltip)
             .disabled(!hasUnsavedEdits)
 
             Button {
                 onApply()
             } label: {
-                Label("应用", systemImage: "checkmark")
+                Label(L.editorApply, systemImage: "checkmark")
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.regular)
             .keyboardShortcut(.return, modifiers: .command)
-            .help("应用当前节点内容")
+            .help(L.editorApplyTooltip)
             .disabled(!hasUnsavedEdits)
         }
         .padding(.leading, Self.titleLeadingInset)

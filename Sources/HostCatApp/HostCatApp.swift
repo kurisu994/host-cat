@@ -30,26 +30,26 @@ struct HostCatApplication: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("编辑器", id: "editor") {
+        Window(L.editorTitle, id: "editor") {
             EditorView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
-                .background(WindowFocusView(title: "编辑器"))
+                .background(WindowFocusView(title: L.editorTitle))
         }
         .defaultSize(width: 900, height: 600)
 
-        Window("合成预览", id: "preview") {
+        Window(L.previewMergedHosts, id: "preview") {
             MergedPreviewView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
-                .background(WindowFocusView(title: "合成预览"))
+                .background(WindowFocusView(title: L.previewMergedHosts))
         }
         .defaultSize(width: 700, height: 500)
 
-        Window("Helper 设置", id: "helper-setup") {
+        Window(L.helperTitle, id: "helper-setup") {
             HelperSetupView(registrationManager: registrationManager)
         }
         .defaultSize(width: 400, height: 350)
 
-        Window("备份管理", id: "backup") {
+        Window(L.backupTitle, id: "backup") {
             BackupRestoreView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
         }
@@ -108,13 +108,13 @@ private struct SettingsView: View {
     var body: some View {
         Form {
             // 通用设置
-            Section("通用") {
-                Toggle("开机自启动", isOn: launchAtLoginBinding)
+            Section(L.sidebarGroups) {
+                Toggle(L.launchAtLogin, isOn: launchAtLoginBinding)
             }
 
             // Helper 状态
             Section("Privileged Helper") {
-                LabeledContent("状态") {
+                LabeledContent(L.sidebarGroups) {
                     HStack(spacing: 6) {
                         Circle()
                             .fill(helperStatusColor)
@@ -125,17 +125,17 @@ private struct SettingsView: View {
 
                 if !registrationManager.isHelperReady {
                     if registrationManager.isHelperRequiresApproval {
-                        Button("打开系统设置审批") {
+                        Button(L.helperReinstall) {
                             registrationManager.openSystemSettings()
                         }
                     } else {
-                        Button("注册 Helper") {
+                        Button(L.helperInstall) {
                             registrationManager.registerHelper()
                         }
                     }
                 }
 
-                Button("刷新状态") {
+                Button(L.editorPreview) {
                     registrationManager.refreshHelperStatus()
                 }
 
@@ -147,10 +147,10 @@ private struct SettingsView: View {
             }
 
             // 配置信息
-            Section("信息") {
-                LabeledContent("配置版本", value: "\(config.configVersion)")
-                LabeledContent("默认节点", value: config.defaultNode.name)
-                LabeledContent("分组数量", value: "\(config.groups.count)")
+            Section(L.sidebarGroups) {
+                LabeledContent(L.sidebarGroups, value: "\(config.configVersion)")
+                LabeledContent(L.sidebarDefault, value: config.defaultNode.name)
+                LabeledContent(L.sidebarGroups, value: "\(config.groups.count)")
             }
         }
         .padding(24)

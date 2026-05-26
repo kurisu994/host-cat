@@ -10,11 +10,11 @@ public enum BackupStoreError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .directoryCreationFailed:
-            "备份目录创建失败"
+            LC.backupErrorDirectoryCreationFailed
         case .writeFailed:
-            "备份文件写入失败"
+            LC.backupErrorWriteFailed
         case .cleanupFailed:
-            "旧备份清理失败"
+            LC.backupErrorCleanupFailed
         }
     }
 }
@@ -52,7 +52,7 @@ public struct BackupStore: Sendable {
                 withIntermediateDirectories: true
             )
         } catch {
-            logger.error("备份目录创建失败: \(error.localizedDescription)")
+            logger.error(LC.logBackupFailed(error.localizedDescription))
             throw BackupStoreError.directoryCreationFailed
         }
 
@@ -73,9 +73,9 @@ public struct BackupStore: Sendable {
 
         do {
             try content.write(to: fileURL, atomically: true, encoding: .utf8)
-            logger.info("备份创建成功: \(filename)")
+            logger.info(LC.logBackupCreated(filename))
         } catch {
-            logger.error("备份写入失败: \(error.localizedDescription)")
+            logger.error(LC.logBackupFailed(error.localizedDescription))
             throw BackupStoreError.writeFailed
         }
 
@@ -83,7 +83,7 @@ public struct BackupStore: Sendable {
         do {
             try cleanupOldBackups()
         } catch {
-            logger.warning("旧备份清理失败: \(error.localizedDescription)")
+            logger.warning("\(LC.logBackupFailed(error.localizedDescription))")
             // 不抛出 cleanup 错误，备份已创建成功
         }
 
@@ -142,9 +142,9 @@ public struct BackupStore: Sendable {
         for url in toRemove {
             do {
                 try FileManager.default.removeItem(at: url)
-                logger.debug("清理旧备份: \(url.lastPathComponent)")
+                logger.debug(LC.logBackupCleaned(url.lastPathComponent))
             } catch {
-                logger.error("删除旧备份失败 \(url.lastPathComponent): \(error.localizedDescription)")
+                logger.error(LC.logBackupCleanFailed(url.lastPathComponent) + ": \(error.localizedDescription)")
                 throw BackupStoreError.cleanupFailed
             }
         }

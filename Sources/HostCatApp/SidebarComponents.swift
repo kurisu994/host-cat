@@ -25,7 +25,7 @@ struct NodeRow: View {
             Spacer()
 
             if isDefault {
-                Text("默认")
+                Text(L.statusDefault)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 5)
@@ -71,7 +71,7 @@ struct GroupHeader: View {
                 }
 
             if isRenaming {
-                TextField("分组名称", text: $renameText)
+                TextField(L.dialogNamePlaceholder, text: $renameText)
                     .textFieldStyle(.roundedBorder)
                     .focused($isTextFieldFocused)
                     .onSubmit {
@@ -114,7 +114,7 @@ struct GroupHeader: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("删除分组")
+                .help(L.sidebarDeleteGroup)
             }
         }
         .onHover { hovering in
@@ -135,7 +135,7 @@ struct SidebarAddGroupButton: View {
                 Image(systemName: "plus")
                     .font(.system(size: 13, weight: .medium))
 
-                Text("新建分组")
+                Text(L.sidebarAddGroup)
                     .font(.system(size: 13))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -151,7 +151,7 @@ struct SidebarAddGroupButton: View {
                 isHovering = hovering
             }
         }
-        .help("新建分组")
+        .help(L.sidebarAddGroup)
     }
 }
 
@@ -166,7 +166,7 @@ struct AddNodeButton: View {
             HStack(spacing: 6) {
                 Image(systemName: "plus")
                     .font(.system(size: 10, weight: .semibold))
-                Text("添加节点")
+                Text(L.sidebarAddNode)
                     .font(.system(size: 12))
             }
             .foregroundStyle(.secondary)
@@ -189,6 +189,6 @@ struct AddNodeButton: View {
                 isHovering = hovering
             }
         }
-        .help("在此分组中添加新节点")
+        .help(L.sidebarAddNodeHint)
     }
 }

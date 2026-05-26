@@ -1,0 +1,167 @@
+/* App */
+"app.name" = "HostCat";
+"app.menu.about" = "关于 HostCat";
+"app.menu.quit" = "退出 HostCat";
+
+/* Menu Bar */
+"menubar.title" = "HostCat";
+"menubar.open" = "打开 HostCat";
+"menubar.quit" = "退出";
+"menubar.status.active" = "已激活";
+"menubar.status.inactive" = "未激活";
+"menubar.status.default" = "默认";
+"menubar.status.groups" = "分组";
+"menubar.status.no_groups" = "暂无分组";
+"menubar.status.nodes" = "节点";
+"menubar.status.no_active_nodes" = "无激活节点";
+"menubar.status.last_applied" = "上次应用";
+"menubar.status.never" = "从未";
+"menubar.status.just_now" = "刚刚";
+"menubar.status.minutes_ago" = "%d 分钟前";
+"menubar.status.hours_ago" = "%d 小时前";
+"menubar.status.days_ago" = "%d 天前";
+"menubar.status.nodes_count" = "%d 个节点";
+"menubar.status.active_nodes_count" = "%d 个已激活";
+
+/* Sidebar */
+"sidebar.default" = "默认";
+"sidebar.groups" = "分组";
+"sidebar.add_group" = "添加分组";
+"sidebar.group_options" = "分组选项";
+"sidebar.rename_group" = "重命名分组";
+"sidebar.delete_group" = "删除分组";
+"sidebar.move_up" = "上移";
+"sidebar.move_down" = "下移";
+"sidebar.add_node" = "添加节点";
+"sidebar.node_options" = "节点选项";
+"sidebar.rename_node" = "重命名节点";
+"sidebar.delete_node" = "删除节点";
+"sidebar.activate" = "激活";
+"sidebar.deactivate" = "停用";
+"sidebar.single_select" = "单选";
+"sidebar.multi_select" = "多选";
+"sidebar.empty_state" = "暂无分组\n点击 + 添加分组";
+"sidebar.drag_hint" = "拖拽以排序";
+
+/* Editor */
+"editor.title" = "编辑器";
+"editor.default_node" = "默认节点";
+"editor.node_editor" = "节点编辑器";
+"editor.placeholder" = "输入 hosts 内容...";
+"editor.apply" = "应用";
+"editor.apply_tooltip" = "将更改应用到 /etc/hosts";
+"editor.discard" = "放弃";
+"editor.discard_tooltip" = "放弃更改";
+"editor.preview" = "预览";
+"editor.preview_tooltip" = "预览合并后的 hosts";
+"editor.errors" = "错误";
+"editor.line" = "行";
+"editor.error.ip_invalid" = "IP 地址无效";
+"editor.error.hostname_missing" = "缺少 hostname";
+"editor.error.hostname_invalid" = "hostname 无效";
+"editor.saved" = "已保存";
+"editor.unsaved" = "未保存";
+"editor.parsing" = "解析中...";
+"editor.no_errors" = "无错误";
+"editor.records_count" = "%d 条记录";
+"editor.duplicates_count" = "%d 条重复";
+
+/* Preview */
+"preview.title" = "预览";
+"preview.merged_hosts" = "合并后的 Hosts";
+"preview.records" = "记录";
+"preview.duplicates" = "重复";
+"preview.conflicts" = "冲突";
+"preview.no_conflicts" = "无冲突";
+"preview.copy" = "复制";
+"preview.copied" = "已复制!";
+"preview.close" = "关闭";
+
+/* Helper Setup */
+"helper.title" = "助手安装";
+"helper.description" = "HostCat 需要安装特权助手才能修改 /etc/hosts 文件。";
+"helper.install" = "安装助手";
+"helper.reinstall" = "重新安装助手";
+"helper.status.installed" = "助手已安装";
+"helper.status.not_installed" = "助手未安装";
+"helper.status.checking" = "检查中...";
+"helper.error.install_failed" = "安装失败";
+"helper.error.not_registered" = "助手未注册";
+
+/* Backup & Restore */
+"backup.title" = "备份与恢复";
+"backup.description" = "管理 hosts 文件备份。";
+"backup.create" = "创建备份";
+"backup.restore" = "恢复";
+"backup.delete" = "删除";
+"backup.no_backups" = "暂无备份。";
+"backup.confirm_restore" = "恢复此备份?";
+"backup.confirm_delete" = "删除此备份?";
+"backup.restored" = "备份已恢复";
+"backup.created" = "备份已创建";
+"backup.deleted" = "备份已删除";
+
+/* External Modification Alert */
+"alert.external_modification.title" = "检测到外部修改";
+"alert.external_modification.message" = "hosts 文件在 HostCat 外部被修改。";
+"alert.external_modification.reload" = "重新加载";
+"alert.external_modification.ignore" = "忽略";
+
+/* Dialogs */
+"dialog.ok" = "确定";
+"dialog.cancel" = "取消";
+"dialog.save" = "保存";
+"dialog.delete" = "删除";
+"dialog.rename" = "重命名";
+"dialog.add" = "添加";
+"dialog.create" = "创建";
+"dialog.name_placeholder" = "名称";
+"dialog.confirm_delete" = "确定要删除吗?";
+"dialog.confirm_discard" = "放弃未保存的更改?";
+
+/* Errors */
+"error.generic" = "发生错误";
+"error.write_failed" = "写入失败";
+"error.merge_failed" = "合并失败";
+"error.conflicts" = "检测到冲突";
+"error.parser.empty_content" = "内容为空";
+"error.parser.invalid_ip" = "第 %d 行 IP 地址无效: %@";
+"error.parser.missing_hostname" = "第 %d 行缺少 hostname";
+"error.parser.invalid_hostname" = "第 %d 行 hostname 无效: %@";
+
+/* DNS Refresher */
+"dns.refresh.success" = "DNS 缓存已刷新";
+"dns.refresh.failed" = "DNS 缓存刷新失败";
+
+/* Config */
+"config.load.failed" = "加载配置失败";
+"config.save.failed" = "保存配置失败";
+"config.recovered" = "配置已恢复为默认设置";
+
+/* Helper Setup View */
+"helper.setup.title" = "Privileged Helper 设置";
+"helper.setup.description" = "HostCat 需要安装一个 Helper 来安全地修改 /etc/hosts 文件。";
+"helper.current_status" = "当前状态";
+"helper.register" = "注册 Helper";
+"helper.register_hint" = "注册后需要在「系统设置 > 通用 > 登录项」中启用。";
+"helper.pending_approval" = "Helper 已注册，等待系统审批";
+"helper.open_settings" = "打开系统设置";
+"helper.enabled" = "Helper 已启用，可以正常使用";
+
+/* Backup & Restore View */
+"backup.history" = "备份历史";
+"backup.create_manual" = "手动创建备份";
+"backup.select_preview" = "选择一个备份来预览";
+"backup.restore_this" = "恢复此备份";
+
+/* Preview */
+"preview.truncated" = "... (共 %d 行，点击按钮查看完整内容)";
+"preview.click_full" = "点击查看完整内容";
+
+/* Errors */
+"error.empty_hosts" = "当前 hosts 文件为空";
+"error.read_backup_failed" = "读取备份文件失败";
+"error.unknown" = "未知错误";
+"error.overwrite" = "确认覆盖";
+"error.external_modification" = "hosts 文件已被外部修改";
+"error.external_modification.message" = "hosts 文件在 HostCat 之外发生了变化。你可以取消本次写入，或确认覆盖外部修改。";

@@ -39,17 +39,17 @@ struct BackupRestoreView: View {
             // 左侧：备份列表
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text("备份历史")
+                    Text(L.backupHistory)
                         .font(.headline)
                     Spacer()
                     Button(action: createManualBackup) {
                         Image(systemName: "plus")
                     }
-                    .help("手动创建备份")
+                    .help(L.backupCreateManual)
                     Button(action: refreshBackups) {
                         Image(systemName: "arrow.clockwise")
                     }
-                    .help("刷新列表")
+                    .help(L.editorRefresh)
                 }
                 .padding(12)
 
@@ -58,7 +58,7 @@ struct BackupRestoreView: View {
                 if backups.isEmpty {
                     VStack {
                         Spacer()
-                        Text("暂无备份")
+                        Text(L.backupNoBackups)
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
@@ -99,7 +99,7 @@ struct BackupRestoreView: View {
                                 .font(.caption)
                         }
                         Spacer()
-                        Button("恢复此备份") {
+                        Button(L.backupRestoreThis) {
                             restoreBackup()
                         }
                         .buttonStyle(.borderedProminent)
@@ -112,7 +112,7 @@ struct BackupRestoreView: View {
                         Image(systemName: "doc.text.magnifyingglass")
                             .font(.system(size: 36))
                             .foregroundStyle(.secondary)
-                        Text("选择一个备份来预览")
+                        Text(L.backupSelectPreview)
                             .foregroundStyle(.secondary)
                         Spacer()
                     }
@@ -144,7 +144,7 @@ struct BackupRestoreView: View {
             errorMessage = nil
         } else {
             previewContent = nil
-            errorMessage = "读取备份文件失败"
+            errorMessage = L.errorReadBackupFailed
         }
     }
 
@@ -153,13 +153,13 @@ struct BackupRestoreView: View {
             let hostsData = try Data(contentsOf: URL(fileURLWithPath: "/etc/hosts"))
             let hostsText = HostsImporter().importHostsWithFallback(data: hostsData).decodedContent
             guard !hostsText.isEmpty else {
-                errorMessage = "当前 hosts 文件为空"
+                errorMessage = L.errorEmptyHosts
                 return
             }
             _ = try backupStore.createBackup(content: hostsText)
             refreshBackups()
         } catch {
-            errorMessage = "创建备份失败: \(error.localizedDescription)"
+            errorMessage = L.backupCreateFailed + ": \(error.localizedDescription)"
         }
     }
 
@@ -176,7 +176,7 @@ struct BackupRestoreView: View {
                     errorMessage = nil
                     refreshBackups()
                 } else {
-                    errorMessage = "恢复失败: \(result.errorMessage ?? "未知错误")"
+                    errorMessage = L.backupRestoreFailed + ": \(result.errorMessage ?? L.errorUnknown)"
                 }
             }
         }
@@ -188,7 +188,7 @@ private extension BackupEntry {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "zh-Hans")
+        formatter.locale = Locale.current
         return formatter.string(from: createdAt)
     }
 

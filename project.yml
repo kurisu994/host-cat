@@ -28,6 +28,8 @@ targets:
     platform: macOS
     sources:
       - path: Sources/HostCatCore
+    resources:
+      - path: Sources/HostCatCore/Resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.core
@@ -61,6 +63,11 @@ targets:
         excludes:
           - Resources/Info.plist
           - Resources/HostCatApp.entitlements
+    resources:
+      - path: Sources/HostCatApp/Resources
+        excludes:
+          - Info.plist
+          - HostCatApp.entitlements
     dependencies:
       - target: HostCatCore
         embed: true

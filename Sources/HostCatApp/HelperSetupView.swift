@@ -14,9 +14,9 @@ struct HelperSetupView: View {
                 Image(systemName: "shield.checkered")
                     .font(.system(size: 48))
                     .foregroundStyle(.tint)
-                Text("Privileged Helper 设置")
+                Text(L.helperSetupTitle)
                     .font(.title2.bold())
-                Text("HostCat 需要安装一个 Helper 来安全地修改 /etc/hosts 文件")
+                Text(L.helperSetupDescription)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -25,7 +25,7 @@ struct HelperSetupView: View {
             // 状态
             GroupBox {
                 HStack {
-                    Text("当前状态")
+                    Text(L.helperCurrentStatus)
                     Spacer()
                     HStack(spacing: 6) {
                         Circle()
@@ -43,47 +43,47 @@ struct HelperSetupView: View {
                 switch registrationManager.helperStatus {
                 case .notRegistered, .notFound:
                     Button(action: { registrationManager.registerHelper() }) {
-                        Label("注册 Helper", systemImage: "plus.circle")
+                        Label(L.helperRegister, systemImage: "plus.circle")
                             .frame(maxWidth: .infinity)
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
 
-                    Text("注册后需要在「系统设置 > 通用 > 登录项」中启用")
+                    Text(L.helperRegisterHint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
                 case .requiresApproval:
                     VStack(spacing: 8) {
-                        Label("Helper 已注册，等待系统审批", systemImage: "clock.badge.checkmark")
+                        Label(L.helperPendingApproval, systemImage: "clock.badge.checkmark")
                             .foregroundStyle(.orange)
 
                         Button(action: { registrationManager.openSystemSettings() }) {
-                            Label("打开系统设置", systemImage: "gear")
+                            Label(L.helperOpenSettings, systemImage: "gear")
                                 .frame(maxWidth: .infinity)
                         }
                         .controlSize(.large)
                         .buttonStyle(.borderedProminent)
 
-                        Button("刷新状态") {
+                        Button(L.editorRefresh) {
                             registrationManager.refreshHelperStatus()
                         }
                         .controlSize(.small)
                     }
 
                 case .enabled:
-                    Label("Helper 已启用，可以正常使用", systemImage: "checkmark.circle.fill")
+                    Label(L.helperEnabled, systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                         .font(.callout.bold())
 
-                    Button("完成") {
+                    Button(L.dialogDone) {
                         dismiss()
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
 
                 @unknown default:
-                    Text("未知状态")
+                    Text(L.errorUnknown)
                         .foregroundStyle(.secondary)
                 }
             }

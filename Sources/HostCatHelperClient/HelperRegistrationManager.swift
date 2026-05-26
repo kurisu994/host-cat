@@ -37,7 +37,7 @@ public final class HelperRegistrationManager: ObservableObject {
             refreshHelperStatus()
             logger.info("Helper 注册成功，当前状态: \(String(describing: self.helperStatus))")
         } catch {
-            lastError = "Helper 注册失败：\(error.localizedDescription)"
+            lastError = LC.helperRegisterFailed + "：\(error.localizedDescription)"
             logger.error("Helper 注册失败: \(error.localizedDescription)")
             refreshHelperStatus()
         }
@@ -69,15 +69,15 @@ public final class HelperRegistrationManager: ObservableObject {
     public var helperStatusDescription: String {
         switch helperStatus {
         case .notRegistered:
-            "未注册"
+            LC.helperStatusNotRegistered
         case .enabled:
-            "已启用"
+            LC.helperStatusEnabled
         case .requiresApproval:
-            "需要审批"
+            LC.helperStatusRequiresApproval
         case .notFound:
-            "未找到"
+            LC.helperStatusNotFound
         @unknown default:
-            "未知状态"
+            LC.errorUnknown
         }
     }
 
@@ -102,7 +102,7 @@ public final class HelperRegistrationManager: ObservableObject {
                 logger.info("开机自启动已禁用")
             }
         } catch {
-            lastError = "开机自启动设置失败：\(error.localizedDescription)"
+            lastError = LC.launchAtLoginFailed + "：\(error.localizedDescription)"
             logger.error("开机自启动设置失败: \(error.localizedDescription)")
         }
     }

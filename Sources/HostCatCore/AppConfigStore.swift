@@ -24,9 +24,9 @@ public enum AppConfigRecoveryReason: Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .invalidJSON:
-            "配置文件已损坏，已恢复为默认设置。"
+            LC.configErrorInvalidJSON
         case let .unsupportedVersion(version):
-            "配置文件版本 \(version) 暂不支持，已恢复为默认设置。"
+            LC.configErrorUnsupportedVersion(version)
         }
     }
 }
@@ -38,9 +38,9 @@ public enum AppConfigStoreError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .unsupportedConfigVersion(version):
-            "配置文件版本 \(version) 暂不支持。"
+            LC.configErrorUnsupportedVersion(version)
         case let .atomicReplaceFailed(errno):
-            "配置文件原子替换失败，系统错误码：\(errno)。"
+            LC.configErrorAtomicReplaceFailed(errno: errno)
         }
     }
 }

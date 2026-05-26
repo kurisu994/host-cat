@@ -154,7 +154,7 @@ public final class MenuBarViewModel: ObservableObject {
 
         guard persistDraftConfig() else {
             finishApplyIfCurrent(generation)
-            let message = applyError ?? "配置保存失败"
+            let message = applyError ?? LC.configSaveFailed
             return ApplyResult(
                 success: false,
                 errorMessage: message,
@@ -244,26 +244,26 @@ public final class MenuBarViewModel: ObservableObject {
             }
             do {
                 try configStore.save(config)
-                logger.info("应用配置持久化成功")
+                logger.info(LC.logConfigPersistSuccess)
             } catch {
-                logger.error("应用配置持久化失败: \(error.localizedDescription)")
-                applyError = "配置保存失败: \(error.localizedDescription)"
+                logger.error(LC.logConfigPersistFailed(error.localizedDescription))
+                applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             }
             updateMergedPreview()
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
-            applyError = "检测到 \(conflicts.count) 个冲突，请解决后再应用"
-            logger.warning("应用冲突: \(conflicts.count) 个")
+            applyError = LC.conflictsDetected(conflicts.count)
+            logger.warning(LC.logConflicts(conflicts.count))
         } else if let errorMessage = result.errorMessage {
             // 区分外部修改和其他写入错误
             if case .writeFailed(let msg) = result.status,
                msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true
-                applyError = "hosts 文件已在 HostCat 之外被修改"
-                logger.warning("检测到外部修改")
+                applyError = LC.externalModificationDetected
+                logger.warning(LC.logExternalModification)
             } else {
-                applyError = "hosts 未应用: \(errorMessage)"
-                logger.error("\(failureLogPrefix)，hosts 未应用: \(errorMessage)")
+                applyError = LC.hostsNotApplied(errorMessage)
+                logger.error(LC.logApplyFailed(failureLogPrefix, errorMessage))
             }
         }
     }
@@ -271,11 +271,11 @@ public final class MenuBarViewModel: ObservableObject {
     private func persistDraftConfig() -> Bool {
         do {
             try configStore.save(config)
-            logger.info("配置草稿持久化成功")
+            logger.info(LC.logDraftPersistSuccess)
             return true
         } catch {
-            logger.error("配置草稿持久化失败: \(error.localizedDescription)")
-            applyError = "配置保存失败: \(error.localizedDescription)"
+            logger.error(LC.logDraftPersistFailed(error.localizedDescription))
+            applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             return false
         }
     }
@@ -301,14 +301,14 @@ public final class MenuBarViewModel: ObservableObject {
             let merged = try HostsMerger().merge(config)
             lastMergedText = merged.text
             lastDuplicateCount = merged.duplicateCount
-            logger.debug("合并预览更新: \(merged.records.count) 条记录, \(merged.duplicateCount) 条重复")
+            logger.debug(LC.logMergePreview(merged.records.count, merged.duplicateCount))
         } catch let HostMergeError.conflicts(conflicts) {
             lastConflicts = conflicts
-            applyError = "检测到 \(conflicts.count) 个冲突"
-            logger.warning("预览冲突: \(conflicts.count) 个")
+            applyError = LC.conflictsDetected(conflicts.count)
+            logger.warning(LC.logPreviewConflicts(conflicts.count))
         } catch {
             applyError = error.localizedDescription
-            logger.error("预览合并失败: \(error.localizedDescription)")
+            logger.error(LC.logPreviewMergeFailed(error.localizedDescription))
         }
     }
 

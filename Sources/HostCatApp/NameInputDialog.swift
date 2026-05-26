@@ -27,7 +27,7 @@ struct NameInputDialog: View {
                 .frame(height: 24)
 
                 HStack {
-                    Button("取消", role: .cancel) {
+                    Button(L.dialogCancel, role: .cancel) {
                         onCancel()
                     }
                     .keyboardShortcut(.cancelAction)

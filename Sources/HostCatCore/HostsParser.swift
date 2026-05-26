@@ -10,13 +10,13 @@ public enum HostsParseError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .invalidIPAddress(lineNumber, value):
-            "第 \(lineNumber) 行 IP 地址无效：\(value)"
+            LC.parserInvalidIPAddress(lineNumber: lineNumber, value: value)
         case let .missingHostname(lineNumber):
-            "第 \(lineNumber) 行缺少 hostname"
+            LC.parserMissingHostname(lineNumber: lineNumber)
         case let .invalidHostname(lineNumber, value):
-            "第 \(lineNumber) 行 hostname 无效：\(value)"
+            LC.parserInvalidHostname(lineNumber: lineNumber, value: value)
         case .emptyContent:
-            "hosts 内容为空"
+            LC.parserEmptyContent
         }
     }
 }

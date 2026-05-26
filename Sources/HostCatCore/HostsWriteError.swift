@@ -22,21 +22,21 @@ public enum HostsWriteError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .fileImmutable:
-            "hosts 文件当前被锁定保护（immutable flags），HostCat 不会自动移除保护标志"
+            LC.writeErrorFileImmutable
         case .hashMismatch:
-            "hosts 文件已在 HostCat 之外被修改"
+            LC.writeErrorHashMismatch
         case let .contentValidationFailed(detail):
-            "写入内容校验失败：\(detail)"
+            LC.writeErrorContentValidationFailed(detail)
         case let .tempFileCreationFailed(detail):
-            "创建临时文件失败：\(detail)"
+            LC.writeErrorTempFileCreationFailed(detail)
         case let .writeFailed(detail):
-            "写入失败：\(detail)"
+            LC.writeErrorWriteFailed(detail)
         case let .renameFailed(detail):
-            "原子替换失败：\(detail)"
+            LC.writeErrorRenameFailed(detail)
         case let .permissionSetFailed(detail):
-            "权限设置失败：\(detail)"
+            LC.writeErrorPermissionSetFailed(detail)
         case let .dnsRefreshFailed(detail):
-            "DNS 缓存刷新失败：\(detail)"
+            LC.writeErrorDNSRefreshFailed(detail)
         }
     }
 }

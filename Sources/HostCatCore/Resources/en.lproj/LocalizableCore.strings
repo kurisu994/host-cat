@@ -1,0 +1,72 @@
+/* Parser Errors */
+"error.parser.invalid_ip" = "Line %d: Invalid IP address: %@";
+"error.parser.missing_hostname" = "Line %d: Missing hostname";
+"error.parser.invalid_hostname" = "Line %d: Invalid hostname: %@";
+"error.parser.empty_content" = "Content is empty";
+
+/* Write Errors */
+"write.error.file_immutable" = "The hosts file is currently locked (immutable flags). HostCat will not automatically remove protection flags.";
+"write.error.hash_mismatch" = "The hosts file has been modified outside of HostCat.";
+"write.error.content_validation_failed" = "Content validation failed: %@";
+"write.error.temp_file_creation_failed" = "Failed to create temporary file: %@";
+"write.error.write_failed" = "Write failed: %@";
+"write.error.rename_failed" = "Atomic replacement failed: %@";
+"write.error.permission_set_failed" = "Permission setting failed: %@";
+"write.error.dns_refresh_failed" = "DNS cache refresh failed: %@";
+
+/* Backup Errors */
+"backup.error.directory_creation_failed" = "Failed to create backup directory.";
+"backup.error.write_failed" = "Failed to write backup file.";
+"backup.error.cleanup_failed" = "Failed to clean up old backups.";
+
+/* Config Errors */
+"config.error.unsupported_version" = "Config version %d is not supported.";
+"config.error.atomic_replace_failed" = "Config file atomic replacement failed, system error code: %d.";
+"config.error.invalid_json" = "Config file is corrupted, restored to default settings.";
+
+/* Recovery Reasons */
+"recovery.invalid_json" = "Config file is corrupted, restored to default settings.";
+"recovery.unsupported_version" = "Config version %d is not supported, restored to default settings.";
+
+/* Logger Messages */
+"log.merge_success" = "Merge successful: %d records, %d duplicates.";
+"log.merge_conflicts" = "Merge conflicts: %d conflicts.";
+"log.merge_failed" = "Merge failed: %@";
+"log.write_success" = "Write successful, hash: %@...";
+"log.write_failed" = "Write failed: %@";
+"log.backup_created" = "Backup created: %@";
+"log.backup_failed" = "Backup failed: %@";
+"log.backup_cleaned" = "Cleaned old backup: %@";
+"log.backup_clean_failed" = "Failed to delete old backup %@";
+
+/* Helper Messages */
+"helper.not_installed" = "Helper is not installed.";
+"helper.connection_failed" = "Failed to connect to helper.";
+"helper.registration_failed" = "Helper registration failed.";
+"helper.authentication_failed" = "Helper authentication failed.";
+
+/* MenuBarViewModel Messages */
+"menubar.config_save_failed" = "Failed to save configuration";
+"menubar.external_modification" = "The hosts file has been modified outside of HostCat";
+"menubar.conflicts_detected" = "Detected %d conflicts, please resolve before applying";
+"menubar.hosts_not_applied" = "Hosts not applied: %@";
+
+/* Logger Messages (MenuBarViewModel) */
+"log.config_persist_success" = "Configuration persisted successfully";
+"log.config_persist_failed" = "Configuration persist failed: %@";
+"log.draft_persist_success" = "Draft configuration persisted successfully";
+"log.draft_persist_failed" = "Draft configuration persist failed: %@";
+"log.merge_preview" = "Merge preview updated: %d records, %d duplicates";
+"log.preview_conflicts" = "Preview conflicts: %d conflicts";
+"log.preview_merge_failed" = "Preview merge failed: %@";
+"log.external_modification" = "External modification detected";
+"log.apply_failed" = "%@, hosts not applied: %@";
+
+/* HelperRegistrationManager Messages */
+"helper.status.not_registered" = "Not Registered";
+"helper.status.enabled" = "Enabled";
+"helper.status.requires_approval" = "Requires Approval";
+"helper.status.not_found" = "Not Found";
+"helper.register_failed" = "Helper registration failed";
+"helper.launch_at_login_failed" = "Launch at login setting failed";
+"error.unknown" = "Unknown error";

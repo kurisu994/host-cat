@@ -1,0 +1,167 @@
+/* App */
+"app.name" = "HostCat";
+"app.menu.about" = "About HostCat";
+"app.menu.quit" = "Quit HostCat";
+
+/* Menu Bar */
+"menubar.title" = "HostCat";
+"menubar.open" = "Open HostCat";
+"menubar.quit" = "Quit";
+"menubar.status.active" = "Active";
+"menubar.status.inactive" = "Inactive";
+"menubar.status.default" = "Default";
+"menubar.status.groups" = "Groups";
+"menubar.status.no_groups" = "No Groups";
+"menubar.status.nodes" = "Nodes";
+"menubar.status.no_active_nodes" = "No Active Nodes";
+"menubar.status.last_applied" = "Last Applied";
+"menubar.status.never" = "Never";
+"menubar.status.just_now" = "Just now";
+"menubar.status.minutes_ago" = "%d minutes ago";
+"menubar.status.hours_ago" = "%d hours ago";
+"menubar.status.days_ago" = "%d days ago";
+"menubar.status.nodes_count" = "%d nodes";
+"menubar.status.active_nodes_count" = "%d active";
+
+/* Sidebar */
+"sidebar.default" = "Default";
+"sidebar.groups" = "Groups";
+"sidebar.add_group" = "Add Group";
+"sidebar.group_options" = "Group Options";
+"sidebar.rename_group" = "Rename Group";
+"sidebar.delete_group" = "Delete Group";
+"sidebar.move_up" = "Move Up";
+"sidebar.move_down" = "Move Down";
+"sidebar.add_node" = "Add Node";
+"sidebar.node_options" = "Node Options";
+"sidebar.rename_node" = "Rename Node";
+"sidebar.delete_node" = "Delete Node";
+"sidebar.activate" = "Activate";
+"sidebar.deactivate" = "Deactivate";
+"sidebar.single_select" = "Single Select";
+"sidebar.multi_select" = "Multi Select";
+"sidebar.empty_state" = "No groups yet.\nClick + to add a group.";
+"sidebar.drag_hint" = "Drag to reorder";
+
+/* Editor */
+"editor.title" = "Editor";
+"editor.default_node" = "Default Node";
+"editor.node_editor" = "Node Editor";
+"editor.placeholder" = "Enter hosts content...";
+"editor.apply" = "Apply";
+"editor.apply_tooltip" = "Apply changes to /etc/hosts";
+"editor.discard" = "Discard";
+"editor.discard_tooltip" = "Discard changes";
+"editor.preview" = "Preview";
+"editor.preview_tooltip" = "Preview merged hosts";
+"editor.errors" = "Errors";
+"editor.line" = "Line";
+"editor.error.ip_invalid" = "Invalid IP address";
+"editor.error.hostname_missing" = "Missing hostname";
+"editor.error.hostname_invalid" = "Invalid hostname";
+"editor.saved" = "Saved";
+"editor.unsaved" = "Unsaved";
+"editor.parsing" = "Parsing...";
+"editor.no_errors" = "No errors";
+"editor.records_count" = "%d records";
+"editor.duplicates_count" = "%d duplicates";
+
+/* Preview */
+"preview.title" = "Preview";
+"preview.merged_hosts" = "Merged Hosts";
+"preview.records" = "Records";
+"preview.duplicates" = "Duplicates";
+"preview.conflicts" = "Conflicts";
+"preview.no_conflicts" = "No conflicts";
+"preview.copy" = "Copy";
+"preview.copied" = "Copied!";
+"preview.close" = "Close";
+
+/* Helper Setup */
+"helper.title" = "Helper Setup";
+"helper.description" = "HostCat needs a privileged helper to modify /etc/hosts.";
+"helper.install" = "Install Helper";
+"helper.reinstall" = "Reinstall Helper";
+"helper.status.installed" = "Helper Installed";
+"helper.status.not_installed" = "Helper Not Installed";
+"helper.status.checking" = "Checking...";
+"helper.error.install_failed" = "Installation failed";
+"helper.error.not_registered" = "Helper not registered";
+
+/* Backup & Restore */
+"backup.title" = "Backup & Restore";
+"backup.description" = "Manage hosts file backups.";
+"backup.create" = "Create Backup";
+"backup.restore" = "Restore";
+"backup.delete" = "Delete";
+"backup.no_backups" = "No backups yet.";
+"backup.confirm_restore" = "Restore this backup?";
+"backup.confirm_delete" = "Delete this backup?";
+"backup.restored" = "Backup restored";
+"backup.created" = "Backup created";
+"backup.deleted" = "Backup deleted";
+
+/* External Modification Alert */
+"alert.external_modification.title" = "External Modification Detected";
+"alert.external_modification.message" = "The hosts file has been modified outside of HostCat.";
+"alert.external_modification.reload" = "Reload";
+"alert.external_modification.ignore" = "Ignore";
+
+/* Dialogs */
+"dialog.ok" = "OK";
+"dialog.cancel" = "Cancel";
+"dialog.save" = "Save";
+"dialog.delete" = "Delete";
+"dialog.rename" = "Rename";
+"dialog.add" = "Add";
+"dialog.create" = "Create";
+"dialog.name_placeholder" = "Name";
+"dialog.confirm_delete" = "Are you sure you want to delete this?";
+"dialog.confirm_discard" = "Discard unsaved changes?";
+
+/* Errors */
+"error.generic" = "An error occurred";
+"error.write_failed" = "Write failed";
+"error.merge_failed" = "Merge failed";
+"error.conflicts" = "Conflicts detected";
+"error.parser.empty_content" = "Content is empty";
+"error.parser.invalid_ip" = "Invalid IP address at line %d: %@";
+"error.parser.missing_hostname" = "Missing hostname at line %d";
+"error.parser.invalid_hostname" = "Invalid hostname at line %d: %@";
+
+/* DNS Refresher */
+"dns.refresh.success" = "DNS cache refreshed";
+"dns.refresh.failed" = "DNS cache refresh failed";
+
+/* Config */
+"config.load.failed" = "Failed to load configuration";
+"config.save.failed" = "Failed to save configuration";
+"config.recovered" = "Configuration recovered to defaults";
+
+/* Helper Setup View */
+"helper.setup.title" = "Privileged Helper Setup";
+"helper.setup.description" = "HostCat needs a Helper to safely modify /etc/hosts file.";
+"helper.current_status" = "Current Status";
+"helper.register" = "Register Helper";
+"helper.register_hint" = "After registration, enable it in System Settings > General > Login Items.";
+"helper.pending_approval" = "Helper registered, waiting for system approval";
+"helper.open_settings" = "Open System Settings";
+"helper.enabled" = "Helper enabled, ready to use";
+
+/* Backup & Restore View */
+"backup.history" = "Backup History";
+"backup.create_manual" = "Create manual backup";
+"backup.select_preview" = "Select a backup to preview";
+"backup.restore_this" = "Restore this backup";
+
+/* Preview */
+"preview.truncated" = "... (%d lines total, click to view full content)";
+"preview.click_full" = "Click to view full content";
+
+/* Errors */
+"error.empty_hosts" = "Current hosts file is empty";
+"error.read_backup_failed" = "Failed to read backup file";
+"error.unknown" = "Unknown error";
+"error.overwrite" = "Confirm Overwrite";
+"error.external_modification" = "hosts file has been modified externally";
+"error.external_modification.message" = "The hosts file changed outside HostCat. You can cancel this write or confirm to overwrite external changes.";

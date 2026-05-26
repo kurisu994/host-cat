@@ -8,7 +8,7 @@ struct HoverPreviewContent: View {
     private var displayText: String {
         let lines = text.components(separatedBy: .newlines)
         if lines.count > 50 {
-            return lines.prefix(50).joined(separator: "\n") + "\n\n... (共 \(lines.count) 行，点击按钮查看完整内容)"
+            return lines.prefix(50).joined(separator: "\n") + "\n\n" + L.previewTruncated(lines.count)
         }
         return text
     }
@@ -16,7 +16,7 @@ struct HoverPreviewContent: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("合成 Hosts 预览")
+                Text(L.previewMergedHosts)
                     .font(.headline)
                 Spacer()
             }
@@ -36,11 +36,11 @@ struct HoverPreviewContent: View {
             Divider()
 
             HStack {
-                Text("\(text.count) 字符")
+                Text("\(text.count) " + L.editorLine)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("点击查看完整内容")
+                Text(L.previewClickFull)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }

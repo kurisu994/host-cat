@@ -24,7 +24,7 @@ public struct AppConfig: Codable, Equatable, Sendable {
     public static func initial(defaultHosts: String, currentHostsHash: String? = nil) -> AppConfig {
         AppConfig(
             configVersion: 1,
-            defaultNode: HostNode(name: "默认", content: defaultHosts, isActive: true),
+            defaultNode: HostNode(name: L.sidebarDefault, content: defaultHosts, isActive: true),
             groups: [],
             settings: AppSettings(launchAtLogin: false),
             state: AppStateMetadata(lastExternalHostsHash: currentHostsHash)

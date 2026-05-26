@@ -22,7 +22,7 @@ public struct ConfigMutationService: Sendable {
     public func addGroup(named name: String, to config: inout AppConfig) {
         let group = HostGroup(name: name, isSingleSelect: false, nodes: [])
         config.groups.append(group)
-        logger.info("添加分组: \(name)")
+        logger.info("Added group: \(name)")
     }
 
     @discardableResult
@@ -30,62 +30,62 @@ public struct ConfigMutationService: Sendable {
         let originalCount = config.groups.count
         config.groups.removeAll { $0.id == id }
         guard config.groups.count < originalCount else {
-            logger.warning("删除分组失败，ID 不存在: \(id.uuidString)")
+            logger.warning("Failed to remove group, ID not found: \(id.uuidString)")
             return .notFound
         }
-        logger.info("删除分组: \(id.uuidString)")
+        logger.info("Removed group: \(id.uuidString)")
         return .success
     }
 
     @discardableResult
     public func renameGroup(id: UUID, to name: String, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == id }) else {
-            logger.warning("重命名分组失败，ID 不存在: \(id.uuidString)")
+            logger.warning("Failed to rename group, ID not found: \(id.uuidString)")
             return .notFound
         }
         let oldName = config.groups[index].name
         config.groups[index].name = name
-        logger.info("分组重命名: \(oldName) -> \(name)")
+        logger.info("Group renamed: \(oldName) -> \(name)")
         return .success
     }
 
     @discardableResult
     public func moveGroup(id: UUID, direction: MoveDirection, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == id }) else {
-            logger.warning("移动分组失败，ID 不存在: \(id.uuidString)")
+            logger.warning("Failed to move group, ID not found: \(id.uuidString)")
             return .notFound
         }
         let targetIndex: Int
         switch direction {
         case .up:
             guard index > 0 else {
-                logger.debug("分组已在最顶部，无法上移")
+                logger.debug("Group already at top, cannot move up")
                 return .success
             }
             targetIndex = index - 1
         case .down:
             guard index < config.groups.count - 1 else {
-                logger.debug("分组已在最底部，无法下移")
+                logger.debug("Group already at bottom, cannot move down")
                 return .success
             }
             targetIndex = index + 1
         }
         config.groups.swapAt(index, targetIndex)
         let movedGroupName = config.groups[targetIndex].name
-        logger.info("分组移动: \(movedGroupName)")
+        logger.info("Group moved: \(movedGroupName)")
         return .success
     }
 
     @discardableResult
     public func setGroupSingleSelect(_ isSingleSelect: Bool, forGroup groupID: UUID, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("设置单选/多选失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to set single/multi select, group not found: \(groupID.uuidString)")
             return .notFound
         }
         config.groups[index].isSingleSelect = isSingleSelect
         let groupName = config.groups[index].name
-        let modeName = isSingleSelect ? "单选" : "多选"
-        logger.info("分组 \(groupName) 切换为 \(modeName)")
+        let modeName = isSingleSelect ? "single" : "multi"
+        logger.info("Group \(groupName) switched to \(modeName) select")
         return .success
     }
 
@@ -99,13 +99,13 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("添加节点失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to add node, group not found: \(groupID.uuidString)")
             return .notFound
         }
         let node = HostNode(name: name, content: content, isActive: false)
         config.groups[index].nodes.append(node)
         let groupName = config.groups[index].name
-        logger.info("添加节点 \(name) 到分组 \(groupName)")
+        logger.info("Added node \(name) to group \(groupName)")
         return .success
     }
 
@@ -116,16 +116,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("删除节点失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to remove node, group not found: \(groupID.uuidString)")
             return .notFound
         }
         let originalCount = config.groups[groupIndex].nodes.count
         config.groups[groupIndex].nodes.removeAll { $0.id == id }
         guard config.groups[groupIndex].nodes.count < originalCount else {
-            logger.warning("删除节点失败，节点不存在: \(id.uuidString)")
+            logger.warning("Failed to remove node, node not found: \(id.uuidString)")
             return .notFound
         }
-        logger.info("删除节点: \(id.uuidString)")
+        logger.info("Removed node: \(id.uuidString)")
         return .success
     }
 
@@ -137,16 +137,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("重命名节点失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to rename node, group not found: \(groupID.uuidString)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("重命名节点失败，节点不存在: \(id.uuidString)")
+            logger.warning("Failed to rename node, node not found: \(id.uuidString)")
             return .notFound
         }
         let oldName = config.groups[groupIndex].nodes[nodeIndex].name
         config.groups[groupIndex].nodes[nodeIndex].name = name
-        logger.info("节点重命名: \(oldName) -> \(name)")
+        logger.info("Node renamed: \(oldName) -> \(name)")
         return .success
     }
 
@@ -158,11 +158,11 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("移动节点失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to move node, group not found: \(groupID.uuidString)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("移动节点失败，节点不存在: \(id.uuidString)")
+            logger.warning("Failed to move node, node not found: \(id.uuidString)")
             return .notFound
         }
 
@@ -170,20 +170,20 @@ public struct ConfigMutationService: Sendable {
         switch direction {
         case .up:
             guard nodeIndex > 0 else {
-                logger.debug("节点已在最顶部，无法上移")
+                logger.debug("Node already at top, cannot move up")
                 return .success
             }
             targetIndex = nodeIndex - 1
         case .down:
             guard nodeIndex < config.groups[groupIndex].nodes.count - 1 else {
-                logger.debug("节点已在最底部，无法下移")
+                logger.debug("Node already at bottom, cannot move down")
                 return .success
             }
             targetIndex = nodeIndex + 1
         }
         config.groups[groupIndex].nodes.swapAt(nodeIndex, targetIndex)
         let movedNodeName = config.groups[groupIndex].nodes[targetIndex].name
-        logger.info("节点移动: \(movedNodeName)")
+        logger.info("Node moved: \(movedNodeName)")
         return .success
     }
 
@@ -195,16 +195,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("更新节点内容失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to update node content, group not found: \(groupID.uuidString)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("更新节点内容失败，节点不存在: \(id.uuidString)")
+            logger.warning("Failed to update node content, node not found: \(id.uuidString)")
             return .notFound
         }
         config.groups[groupIndex].nodes[nodeIndex].content = content
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
-        logger.info("更新节点 \(nodeName) 内容")
+        logger.info("Updated node \(nodeName) content")
         return .success
     }
 
@@ -213,23 +213,23 @@ public struct ConfigMutationService: Sendable {
     public func renameDefaultNode(to name: String, in config: inout AppConfig) {
         let oldName = config.defaultNode.name
         config.defaultNode.name = name
-        logger.info("默认节点重命名: \(oldName) -> \(name)")
+        logger.info("Default node renamed: \(oldName) -> \(name)")
     }
 
     public func updateDefaultNodeContent(_ content: String, in config: inout AppConfig) {
         config.defaultNode.content = content
-        logger.info("更新默认节点内容")
+        logger.info("Updated default node content")
     }
 
     public func removeDefaultNode(from config: inout AppConfig) {
         // 默认节点不可删除，此操作无效果
-        logger.debug("尝试删除默认节点，已忽略")
+        logger.debug("Attempted to remove default node, ignored")
     }
 
     public func setDefaultNodeActive(_ isActive: Bool, in config: inout AppConfig) {
         // 默认节点始终激活，不可停用
         if !isActive {
-            logger.debug("尝试停用默认节点，已忽略")
+            logger.debug("Attempted to deactivate default node, ignored")
         }
         config.defaultNode.isActive = true
     }
@@ -244,17 +244,17 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("激活节点失败，分组不存在: \(groupID.uuidString)")
+            logger.warning("Failed to activate node, group not found: \(groupID.uuidString)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("激活节点失败，节点不存在: \(id.uuidString)")
+            logger.warning("Failed to activate node, node not found: \(id.uuidString)")
             return .notFound
         }
 
         config.groups[groupIndex].nodes[nodeIndex].isActive = active
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
-        logger.info("节点 \(nodeName) 状态设为 \(active)")
+        logger.info("Node \(nodeName) status set to \(active)")
         return .success
     }
 }

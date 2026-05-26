@@ -37,18 +37,18 @@ struct MenuBarContentView: View {
         }
 
         // 操作菜单
-         Button("编辑Hosts") {
-            openAppWindow(id: "editor", title: "编辑器")
+         Button(L.editorTitle) {
+            openAppWindow(id: "editor", title: L.editorTitle)
         }
         
-        Button("查看Hosts") {
+        Button(L.previewTitle) {
             viewModel.updateMergedPreview()
-            openAppWindow(id: "preview", title: "合成预览")
+            openAppWindow(id: "preview", title: L.previewMergedHosts)
         }
         .onHover { hovering in
             if hovering {
                 viewModel.updateMergedPreview()
-                hoverPreviewPanelController.show(text: viewModel.lastMergedText ?? "暂无合成内容")
+                hoverPreviewPanelController.show(text: viewModel.lastMergedText ?? L.previewNoConflicts)
             } else {
                 hoverPreviewPanelController.hide()
             }
@@ -59,16 +59,16 @@ struct MenuBarContentView: View {
 
         Divider()
 
-        Button("备份管理") {
-            openAppWindow(id: "backup", title: "备份管理")
+        Button(L.backupTitle) {
+            openAppWindow(id: "backup", title: L.backupTitle)
         }
 
-        Button("Helper 设置") {
-            openAppWindow(id: "helper-setup", title: "Helper 设置")
+        Button(L.helperTitle) {
+            openAppWindow(id: "helper-setup", title: L.helperTitle)
         }
 
         if viewModel.isApplying {
-            Label("正在应用...", systemImage: "arrow.triangle.2.circlepath")
+            Label(L.editorParsing, systemImage: "arrow.triangle.2.circlepath")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -81,7 +81,7 @@ struct MenuBarContentView: View {
 
         Divider()
 
-        Button("退出") {
+        Button(L.quit) {
             NSApplication.shared.terminate(nil)
         }
     }
