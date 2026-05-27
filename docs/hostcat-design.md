@@ -78,7 +78,7 @@ Privileged Helper (root, fixed /private/etc/hosts only)
 - **SwiftUI 为主**。菜单栏使用 `MenuBarExtra`（macOS 13+）替代 `NSStatusItem`，窗口使用 SwiftUI `Window` / `Settings` scene，弹窗使用 `.alert()` 修饰符。仅在 SwiftUI 无法覆盖的场景（如 hosts 纯文本编辑器的语法高亮）通过 `NSViewRepresentable` 桥接 AppKit。
 - 本地配置使用 JSON，存储在 `~/Library/Application Support/com.hostcat.app/config.json`。配置文件包含 `configVersion` 字段（首版为 `1`），便于后续格式变更时做迁移。数据量小够用，不考虑迁移 SQLite。
 - 配置文件写入采用原子写入（先写临时文件再 rename），防止写入中断导致文件损坏。JSON 解析失败时使用默认配置并弹窗提示用户「配置文件已损坏，已恢复为默认设置」。
-- 本地化资源由 App 与 Core 分别维护中英字符串表；主应用语言偏好使用独立的 `UserDefaults` 值（`HostCat.appLanguage`），提供跟随系统、简体中文和 English，App 与主应用内的 Core 均在读取文本时动态选择资源以支持无需重启切换。Privileged Helper 属于独立进程，写入请求携带已解析的 `en` / `zh-Hans` 标识并仅用于格式化错误响应。SwiftPM 通过 `Bundle.module` 读取 Core 资源，Xcode framework 构建通过 framework bundle 读取，避免 UI 层依赖泄漏到 Core。
+- 本地化资源由 App 与 Core 分别维护中英字符串表；主应用语言偏好使用独立的 `UserDefaults` 值（`HostCat.appLanguage`），提供跟随系统、简体中文和 English，App 与主应用内的 Core 均在读取文本时动态选择资源以支持无需重启切换。`MenuBarExtra(.menu)` 生成的原生菜单项会被系统复用，因此菜单内容直接观察同一偏好值，并在语言变化时更换 identity 以重建菜单项，避免标题延迟到鼠标悬停后才刷新。Privileged Helper 属于独立进程，写入请求携带已解析的 `en` / `zh-Hans` 标识并仅用于格式化错误响应。SwiftPM 通过 `Bundle.module` 读取 Core 资源，Xcode framework 构建通过 framework bundle 读取，避免 UI 层依赖泄漏到 Core。
 - hosts 写入逻辑独立成服务层，通过协议抽象与 UI 解耦。
 
 推荐模块边界：

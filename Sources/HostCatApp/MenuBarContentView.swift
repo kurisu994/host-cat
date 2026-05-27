@@ -7,8 +7,16 @@ struct MenuBarContentView: View {
     @ObservedObject var viewModel: MenuBarViewModel
     @Environment(\.openWindow) private var openWindow
     @StateObject private var hoverPreviewPanelController = HoverPreviewPanelController()
+    @AppStorage(AppLanguage.preferenceKey) private var storedLanguage = AppLanguage.system.rawValue
 
     var body: some View {
+        menuItems
+            .id(storedLanguage)
+    }
+
+    /// `.menu` 样式会复用原生菜单项，语言改变时以新 identity 重建文本内容。
+    @ViewBuilder
+    private var menuItems: some View {
         Text("HostCat")
             .font(.headline)
 
