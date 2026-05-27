@@ -48,7 +48,7 @@ struct MenuBarContentView: View {
         .onHover { hovering in
             if hovering {
                 viewModel.updateMergedPreview()
-                hoverPreviewPanelController.show(text: viewModel.lastMergedText ?? L.previewNoConflicts)
+                hoverPreviewPanelController.show(text: viewModel.lastMergedText ?? L.previewNoContent)
             } else {
                 hoverPreviewPanelController.hide()
             }
@@ -63,12 +63,12 @@ struct MenuBarContentView: View {
             openAppWindow(id: "backup", title: L.backupTitle)
         }
 
-        Button(L.helperTitle) {
-            openAppWindow(id: "helper-setup", title: L.helperTitle)
+        SettingsLink {
+            Text(L.settingsTitle)
         }
 
         if viewModel.isApplying {
-            Label(L.editorParsing, systemImage: "arrow.triangle.2.circlepath")
+            Label(L.editorApplying, systemImage: "arrow.triangle.2.circlepath")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

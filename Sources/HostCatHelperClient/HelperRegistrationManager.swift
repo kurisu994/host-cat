@@ -37,7 +37,7 @@ public final class HelperRegistrationManager: ObservableObject {
             refreshHelperStatus()
             logger.info("Helper registered successfully, current status: \(String(describing: self.helperStatus))")
         } catch {
-            lastError = LC.helperRegisterFailed + "：\(error.localizedDescription)"
+            lastError = LC.helperRegisterFailed(error.localizedDescription)
             logger.error("Helper registration failed: \(error.localizedDescription)")
             refreshHelperStatus()
         }
@@ -102,7 +102,7 @@ public final class HelperRegistrationManager: ObservableObject {
                 logger.info("Launch at login disabled")
             }
         } catch {
-            lastError = LC.launchAtLoginFailed + "：\(error.localizedDescription)"
+            lastError = LC.launchAtLoginFailed(error.localizedDescription)
             logger.error("Launch at login setting failed: \(error.localizedDescription)")
         }
     }

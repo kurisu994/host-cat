@@ -3,9 +3,11 @@ import Foundation
 /// Localization string wrapper for the HostCat Core module.
 ///
 /// The Core module does not depend on SwiftUI; it uses Foundation's NSLocalizedString for localization.
-/// String resources are accessed via Bundle.module (the SPM auto-generated resource bundle).
-/// When Bundle.module is unavailable (e.g., SPM resources not enabled), falls back to the main bundle.
+/// SwiftPM resources live in `Bundle.module`; Xcode framework resources live in the framework bundle.
 public enum LC {
+    // MARK: - Model Defaults
+    public static var defaultNodeName: String { localize("default.node_name") }
+
     // MARK: - Parser Errors
     public static func parserInvalidIPAddress(lineNumber: Int, value: String) -> String {
         String(format: localize("error.parser.invalid_ip"), lineNumber, value)
@@ -19,11 +21,11 @@ public enum LC {
         String(format: localize("error.parser.invalid_hostname"), lineNumber, value)
     }
 
-    public static let parserEmptyContent = localize("error.parser.empty_content")
+    public static var parserEmptyContent: String { localize("error.parser.empty_content") }
 
     // MARK: - Write Errors
-    public static let writeErrorFileImmutable = localize("write.error.file_immutable")
-    public static let writeErrorHashMismatch = localize("write.error.hash_mismatch")
+    public static var writeErrorFileImmutable: String { localize("write.error.file_immutable") }
+    public static var writeErrorHashMismatch: String { localize("write.error.hash_mismatch") }
     public static func writeErrorContentValidationFailed(_ detail: String) -> String {
         String(format: localize("write.error.content_validation_failed"), detail)
     }
@@ -44,9 +46,9 @@ public enum LC {
     }
 
     // MARK: - Backup Errors
-    public static let backupErrorDirectoryCreationFailed = localize("backup.error.directory_creation_failed")
-    public static let backupErrorWriteFailed = localize("backup.error.write_failed")
-    public static let backupErrorCleanupFailed = localize("backup.error.cleanup_failed")
+    public static var backupErrorDirectoryCreationFailed: String { localize("backup.error.directory_creation_failed") }
+    public static var backupErrorWriteFailed: String { localize("backup.error.write_failed") }
+    public static var backupErrorCleanupFailed: String { localize("backup.error.cleanup_failed") }
 
     // MARK: - Config Errors
     public static func configErrorUnsupportedVersion(_ version: Int) -> String {
@@ -55,10 +57,10 @@ public enum LC {
     public static func configErrorAtomicReplaceFailed(errno: Int32) -> String {
         String(format: localize("config.error.atomic_replace_failed"), errno)
     }
-    public static let configErrorInvalidJSON = localize("config.error.invalid_json")
+    public static var configErrorInvalidJSON: String { localize("config.error.invalid_json") }
 
     // MARK: - Recovery Reasons
-    public static let recoveryInvalidJSON = localize("recovery.invalid_json")
+    public static var recoveryInvalidJSON: String { localize("recovery.invalid_json") }
     public static func recoveryUnsupportedVersion(_ version: Int) -> String {
         String(format: localize("recovery.unsupported_version"), version)
     }
@@ -93,14 +95,28 @@ public enum LC {
     }
 
     // MARK: - Helper Messages
-    public static let helperNotInstalled = localize("helper.not_installed")
-    public static let helperConnectionFailed = localize("helper.connection_failed")
-    public static let helperRegistrationFailed = localize("helper.registration_failed")
-    public static let helperAuthenticationFailed = localize("helper.authentication_failed")
+    public static var helperNotInstalled: String { localize("helper.not_installed") }
+    public static var helperConnectionFailed: String { localize("helper.connection_failed") }
+    public static var helperRegistrationFailed: String { localize("helper.registration_failed") }
+    public static var helperAuthenticationFailed: String { localize("helper.authentication_failed") }
+    public static func helperUnavailable(_ reason: String) -> String {
+        String(format: localize("helper.unavailable"), reason)
+    }
+    public static var helperNotRegistered: String { localize("helper.not_registered") }
+    public static var helperRequiresApproval: String { localize("helper.requires_approval") }
+    public static var helperConnectionInterrupted: String { localize("helper.connection_interrupted") }
+    public static var helperConnectionInvalidated: String { localize("helper.connection_invalidated") }
+    public static var helperRequestTimedOut: String { localize("helper.request_timed_out") }
+    public static func helperUnexpectedReply(_ detail: String) -> String {
+        String(format: localize("helper.unexpected_reply"), detail)
+    }
+    public static var helperProxyUnavailable: String { localize("helper.proxy_unavailable") }
+    public static var helperReplyMissingSuccess: String { localize("helper.reply_missing_success") }
+    public static var helperReplyMissingFinalHash: String { localize("helper.reply_missing_final_hash") }
 
     // MARK: - MenuBarViewModel Messages
-    public static let configSaveFailed = localize("menubar.config_save_failed")
-    public static let externalModificationDetected = localize("menubar.external_modification")
+    public static var configSaveFailed: String { localize("menubar.config_save_failed") }
+    public static var externalModificationDetected: String { localize("menubar.external_modification") }
     public static func conflictsDetected(_ count: Int) -> String {
         String(format: localize("menubar.conflicts_detected"), count)
     }
@@ -109,11 +125,11 @@ public enum LC {
     }
 
     // MARK: - Logger Messages (MenuBarViewModel)
-    public static let logConfigPersistSuccess = localize("log.config_persist_success")
+    public static var logConfigPersistSuccess: String { localize("log.config_persist_success") }
     public static func logConfigPersistFailed(_ message: String) -> String {
         String(format: localize("log.config_persist_failed"), message)
     }
-    public static let logDraftPersistSuccess = localize("log.draft_persist_success")
+    public static var logDraftPersistSuccess: String { localize("log.draft_persist_success") }
     public static func logDraftPersistFailed(_ message: String) -> String {
         String(format: localize("log.draft_persist_failed"), message)
     }
@@ -126,36 +142,61 @@ public enum LC {
     public static func logPreviewMergeFailed(_ message: String) -> String {
         String(format: localize("log.preview_merge_failed"), message)
     }
-    public static let logExternalModification = localize("log.external_modification")
+    public static var logExternalModification: String { localize("log.external_modification") }
     public static func logApplyFailed(_ prefix: String, _ message: String) -> String {
         String(format: localize("log.apply_failed"), prefix, message)
     }
 
     // MARK: - HelperRegistrationManager Messages
-    public static let helperStatusNotRegistered = localize("helper.status.not_registered")
-    public static let helperStatusEnabled = localize("helper.status.enabled")
-    public static let helperStatusRequiresApproval = localize("helper.status.requires_approval")
-    public static let helperStatusNotFound = localize("helper.status.not_found")
-    public static let helperRegisterFailed = localize("helper.register_failed")
-    public static let launchAtLoginFailed = localize("helper.launch_at_login_failed")
-    public static let errorUnknown = localize("error.unknown")
-
-    // MARK: - Private
-
-    private static func localize(_ key: String) -> String {
-        let bundle = Bundle.module ?? Bundle.main
-        return NSLocalizedString(key, tableName: "LocalizableCore", bundle: bundle, value: key, comment: "")
+    public static var helperStatusNotRegistered: String { localize("helper.status.not_registered") }
+    public static var helperStatusEnabled: String { localize("helper.status.enabled") }
+    public static var helperStatusRequiresApproval: String { localize("helper.status.requires_approval") }
+    public static var helperStatusNotFound: String { localize("helper.status.not_found") }
+    public static func helperRegisterFailed(_ detail: String) -> String {
+        String(format: localize("helper.register_failed"), detail)
     }
-}
+    public static func launchAtLoginFailed(_ detail: String) -> String {
+        String(format: localize("helper.launch_at_login_failed"), detail)
+    }
+    public static var errorUnknown: String { localize("error.unknown") }
 
-private extension Bundle {
-    static var module: Bundle? {
-        // SPM auto-generated Bundle.module; available if resources are correctly configured.
-        // In Xcode builds, returns nil if SPM resources are not enabled.
+    // MARK: - Resource Resolution
+
+    static func localizedString(
+        _ key: String,
+        userDefaults: UserDefaults = .standard,
+        preferredLanguages: [String] = Locale.preferredLanguages
+    ) -> String {
+        localizedString(
+            key,
+            language: AppLanguage.stored(in: userDefaults),
+            preferredLanguages: preferredLanguages
+        )
+    }
+
+    static func localizedString(
+        _ key: String,
+        language: AppLanguage,
+        preferredLanguages: [String] = Locale.preferredLanguages
+    ) -> String {
+        let bundle = language.localizedBundle(
+            in: resourceBundle,
+            preferredLanguages: preferredLanguages
+        )
+        return bundle.localizedString(forKey: key, value: key, table: "LocalizableCore")
+    }
+
+    private static var resourceBundle: Bundle {
         #if SWIFT_PACKAGE
-        return Bundle(identifier: "HostCatCore")
+        Bundle.module
         #else
-        return nil
+        Bundle(for: HostCatCoreBundleToken.self)
         #endif
     }
+
+    private static func localize(_ key: String) -> String {
+        localizedString(key)
+    }
 }
+
+private final class HostCatCoreBundleToken {}

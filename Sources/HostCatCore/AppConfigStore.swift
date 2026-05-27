@@ -24,9 +24,9 @@ public enum AppConfigRecoveryReason: Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case .invalidJSON:
-            LC.configErrorInvalidJSON
+            LC.recoveryInvalidJSON
         case let .unsupportedVersion(version):
-            LC.configErrorUnsupportedVersion(version)
+            LC.recoveryUnsupportedVersion(version)
         }
     }
 }

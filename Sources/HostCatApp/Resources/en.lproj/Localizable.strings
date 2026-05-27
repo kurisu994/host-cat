@@ -62,9 +62,13 @@
 "editor.saved" = "Saved";
 "editor.unsaved" = "Unsaved";
 "editor.parsing" = "Parsing...";
+"editor.applying" = "Applying...";
 "editor.no_errors" = "No errors";
+"editor.select_node" = "Select a node to edit";
 "editor.records_count" = "%d records";
 "editor.duplicates_count" = "%d duplicates";
+"editor.syntax_errors_count" = "%d syntax errors";
+"editor.characters_count" = "%d characters";
 
 /* Preview */
 "preview.title" = "Preview";
@@ -76,6 +80,16 @@
 "preview.copy" = "Copy";
 "preview.copied" = "Copied!";
 "preview.close" = "Close";
+"preview.refresh" = "Refresh";
+"preview.apply" = "Apply";
+"preview.no_content" = "No merged content";
+"preview.merged_duplicates_count" = "%d merged duplicates";
+"preview.conflicts_count" = "%d conflicts";
+"preview.conflict_hint" = "Resolve conflicts before applying";
+"preview.existing" = "Existing";
+"preview.conflicting" = "Conflicting";
+"preview.show_conflict_details" = "Show Details";
+"preview.conflict_location" = "%@ conflicts with node %@";
 
 /* Helper Setup */
 "helper.title" = "Helper Setup";
@@ -109,6 +123,7 @@
 
 /* Dialogs */
 "dialog.ok" = "OK";
+"dialog.done" = "Done";
 "dialog.cancel" = "Cancel";
 "dialog.save" = "Save";
 "dialog.delete" = "Delete";
@@ -118,6 +133,10 @@
 "dialog.name_placeholder" = "Name";
 "dialog.confirm_delete" = "Are you sure you want to delete this?";
 "dialog.confirm_discard" = "Discard unsaved changes?";
+"dialog.delete_node.title" = "Delete Node";
+"dialog.delete_node.message" = "Are you sure you want to delete this node?";
+"dialog.delete_group.title" = "Delete Group";
+"dialog.delete_group.message" = "Deleting this group also deletes all nodes in it. Continue?";
 
 /* Errors */
 "error.generic" = "An error occurred";
@@ -153,6 +172,8 @@
 "backup.create_manual" = "Create manual backup";
 "backup.select_preview" = "Select a backup to preview";
 "backup.restore_this" = "Restore this backup";
+"backup.create_failed" = "Failed to create backup: %@";
+"backup.restore_failed" = "Failed to restore backup: %@";
 
 /* Preview */
 "preview.truncated" = "... (%d lines total, click to view full content)";
@@ -166,6 +187,14 @@
 "settings.launch_at_login" = "Launch at Login";
 "settings.version" = "Version";
 "settings.refresh" = "Refresh";
+"settings.helper_status" = "Status";
+"settings.config_version" = "Configuration Version";
+"settings.default_node" = "Default Node";
+"settings.group_count" = "Group Count";
+"settings.language" = "Language";
+"settings.language.system" = "Follow System";
+"settings.language.simplified_chinese" = "简体中文";
+"settings.language.english" = "English";
 
 /* MenuBarViewModel */
 "external.modification.detected" = "External modification to hosts file detected";

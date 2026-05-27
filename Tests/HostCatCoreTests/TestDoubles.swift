@@ -70,6 +70,7 @@ struct FakeFileSystemOperations: FileSystemOperations, Sendable {
     private let state = FakeState()
 
     final class FakeState: @unchecked Sendable {
+        var readSequences: [String: [Data]] = [:]
         var writtenData: Data?
         var tempPath: String?
         var renamedFrom: String?
@@ -84,7 +85,16 @@ struct FakeFileSystemOperations: FileSystemOperations, Sendable {
     var permissionsHistory: [(path: String, mode: mode_t)] { state.permissionsSet }
     var ownerHistory: [(path: String, uid: uid_t, gid: gid_t)] { state.ownerSet }
 
+    func setReadSequence(_ contents: [Data], for path: String) {
+        state.readSequences[path] = contents
+    }
+
     func readFile(at path: String) throws -> Data {
+        if var sequence = state.readSequences[path], !sequence.isEmpty {
+            let data = sequence.removeFirst()
+            state.readSequences[path] = sequence
+            return data
+        }
         guard let data = fileContents[path] else {
             throw HostsWriteError.writeFailed("文件不存在: \(path)")
         }

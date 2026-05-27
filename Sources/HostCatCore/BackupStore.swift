@@ -52,7 +52,7 @@ public struct BackupStore: Sendable {
                 withIntermediateDirectories: true
             )
         } catch {
-            logger.error(LC.logBackupFailed(error.localizedDescription))
+            logger.error("\(LC.logBackupFailed(error.localizedDescription))")
             throw BackupStoreError.directoryCreationFailed
         }
 
@@ -73,9 +73,9 @@ public struct BackupStore: Sendable {
 
         do {
             try content.write(to: fileURL, atomically: true, encoding: .utf8)
-            logger.info(LC.logBackupCreated(filename))
+            logger.info("\(LC.logBackupCreated(filename))")
         } catch {
-            logger.error(LC.logBackupFailed(error.localizedDescription))
+            logger.error("\(LC.logBackupFailed(error.localizedDescription))")
             throw BackupStoreError.writeFailed
         }
 
@@ -142,9 +142,9 @@ public struct BackupStore: Sendable {
         for url in toRemove {
             do {
                 try FileManager.default.removeItem(at: url)
-                logger.debug(LC.logBackupCleaned(url.lastPathComponent))
+                logger.debug("\(LC.logBackupCleaned(url.lastPathComponent))")
             } catch {
-                logger.error(LC.logBackupCleanFailed(url.lastPathComponent) + ": \(error.localizedDescription)")
+                logger.error("\(LC.logBackupCleanFailed(url.lastPathComponent)): \(error.localizedDescription)")
                 throw BackupStoreError.cleanupFailed
             }
         }

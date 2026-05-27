@@ -30,6 +30,8 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     ) async throws -> HostHelperWriteResult {
         let contentsNS = contents as NSString
         let hashNS = expectedCurrentHostsHash as NSString?
+        let localizationIdentifierNS = AppLanguage.stored()
+            .effectiveLocalizationIdentifier() as NSString
         let requestID = UUID()
 
         return try await withTaskCancellationHandler {
@@ -68,7 +70,11 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                     self?.invalidateConnection()
                 }
 
-                proxy.writeHosts(contentsNS, expectedCurrentHostsHash: hashNS) { [weak self, logger] resultDict in
+                proxy.writeHosts(
+                    contentsNS,
+                    expectedCurrentHostsHash: hashNS,
+                    localizationIdentifier: localizationIdentifierNS
+                ) { [weak self, logger] resultDict in
                     do {
                         let result = try Self.parseReply(resultDict, logger: logger)
                         self?.completePendingReply(requestID, with: .success(result))
@@ -92,7 +98,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         if let existing = connection {
             // Attempt to reuse an existing connection.
             guard let proxy = existing.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-                throw HostHelperClientError.unavailable("Unable to obtain XPC proxy")
+                throw HostHelperClientError.unavailable(LC.helperProxyUnavailable)
             }
             return proxy
         }
@@ -102,7 +108,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         connection = newConnection
 
         guard let proxy = newConnection.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-            throw HostHelperClientError.unavailable("Unable to obtain XPC proxy")
+            throw HostHelperClientError.unavailable(LC.helperProxyUnavailable)
         }
 
         return proxy
@@ -174,12 +180,12 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         logger: Logger
     ) throws -> HostHelperWriteResult {
         guard let success = dict["success"] as? Bool else {
-            throw HostHelperClientError.unexpectedReply("Missing success field")
+            throw HostHelperClientError.unexpectedReply(LC.helperReplyMissingSuccess)
         }
 
         if success {
             guard let finalHash = dict["finalHash"] as? String else {
-                throw HostHelperClientError.unexpectedReply("Successful response missing finalHash")
+                throw HostHelperClientError.unexpectedReply(LC.helperReplyMissingFinalHash)
             }
             let didRefreshDNS = dict["didRefreshDNS"] as? Bool ?? false
             let dnsError = dict["dnsRefreshError"] as? String
@@ -194,7 +200,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             )
         } else {
             let errorCode = dict["errorCode"] as? String ?? "unknown"
-            let errorMessage = dict["errorMessage"] as? String ?? "Unknown error"
+            let errorMessage = dict["errorMessage"] as? String ?? LC.errorUnknown
 
             logger.error("Helper returned error: code=\(errorCode), message=\(errorMessage)")
 

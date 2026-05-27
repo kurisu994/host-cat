@@ -7,6 +7,7 @@ import SwiftUI
 struct HostCatApplication: App {
     @StateObject private var viewModel: MenuBarViewModel
     @StateObject private var registrationManager = HelperRegistrationManager()
+    @AppStorage(AppLanguage.preferenceKey) private var storedLanguage = AppLanguage.system.rawValue
 
     init() {
         let config = Self.loadInitialConfig()
@@ -27,6 +28,7 @@ struct HostCatApplication: App {
         MenuBarExtra("HostCat", systemImage: "pawprint") {
             MenuBarContentView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .environment(\.locale, appLanguage.locale)
         }
         .menuBarExtraStyle(.menu)
 
@@ -34,6 +36,7 @@ struct HostCatApplication: App {
             EditorView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
                 .background(WindowFocusView(title: L.editorTitle))
+                .environment(\.locale, appLanguage.locale)
         }
         .defaultSize(width: 900, height: 600)
 
@@ -41,26 +44,36 @@ struct HostCatApplication: App {
             MergedPreviewView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
                 .background(WindowFocusView(title: L.previewMergedHosts))
+                .environment(\.locale, appLanguage.locale)
         }
         .defaultSize(width: 700, height: 500)
-
-        Window(L.helperTitle, id: "helper-setup") {
-            HelperSetupView(registrationManager: registrationManager)
-        }
-        .defaultSize(width: 400, height: 350)
 
         Window(L.backupTitle, id: "backup") {
             BackupRestoreView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .environment(\.locale, appLanguage.locale)
         }
         .defaultSize(width: 700, height: 450)
 
         Settings {
             SettingsView(
                 config: viewModel.config,
-                registrationManager: registrationManager
+                registrationManager: registrationManager,
+                preferredLanguage: appLanguageBinding
             )
+            .environment(\.locale, appLanguage.locale)
         }
+    }
+
+    private var appLanguage: AppLanguage {
+        AppLanguage(rawValue: storedLanguage) ?? .system
+    }
+
+    private var appLanguageBinding: Binding<AppLanguage> {
+        Binding(
+            get: { appLanguage },
+            set: { storedLanguage = $0.rawValue }
+        )
     }
 
     private static let defaultHosts = """
@@ -100,67 +113,147 @@ struct HostCatApplication: App {
 
 // MARK: - Settings View
 
-/// Settings page containing general settings, Helper status, and configuration info.
+/// 汇总通用设置、Helper 状态和配置信息的设置页面。
 private struct SettingsView: View {
     let config: AppConfig
     @ObservedObject var registrationManager: HelperRegistrationManager
+    @Binding var preferredLanguage: AppLanguage
 
     var body: some View {
-        Form {
-            // General settings
-            Section(L.settingsGeneral) {
-                Toggle(L.settingsLaunchAtLogin, isOn: launchAtLoginBinding)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                settingsCard(L.settingsGeneral) {
+                    settingsRow {
+                        Text(L.settingsLanguage)
 
-            // Helper status
-            Section(L.settingsHelper) {
-                LabeledContent(L.sidebarGroups) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(helperStatusColor)
-                            .frame(width: 8, height: 8)
-                        Text(registrationManager.helperStatusDescription)
+                        Spacer()
+
+                        Picker(L.settingsLanguage, selection: $preferredLanguage) {
+                            Text(L.languageSystem).tag(AppLanguage.system)
+                            Text(L.languageSimplifiedChinese).tag(AppLanguage.simplifiedChinese)
+                            Text(L.languageEnglish).tag(AppLanguage.english)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.menu)
+                        .frame(minWidth: 124)
+                    }
+
+                    Divider()
+                        .padding(.leading, 14)
+
+                    settingsRow {
+                        Text(L.settingsLaunchAtLogin)
+
+                        Spacer()
+
+                        Toggle(L.settingsLaunchAtLogin, isOn: launchAtLoginBinding)
+                            .labelsHidden()
+                            .toggleStyle(.switch)
                     }
                 }
 
-                if !registrationManager.isHelperReady {
-                    if registrationManager.isHelperRequiresApproval {
-                        Button(L.helperReinstall) {
-                            registrationManager.openSystemSettings()
+                settingsCard(L.settingsHelper) {
+                    settingsRow {
+                        Text(L.settingsHelperStatus)
+
+                        Spacer()
+
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(helperStatusColor)
+                                .frame(width: 10, height: 10)
+                            Text(registrationManager.helperStatusDescription)
                         }
-                    } else {
-                        Button(L.helperInstall) {
-                            registrationManager.registerHelper()
+                    }
+
+                    HStack(spacing: 8) {
+                        Spacer()
+
+                        if !registrationManager.isHelperReady {
+                            if registrationManager.isHelperRequiresApproval {
+                                Button(L.helperOpenSettings) {
+                                    registrationManager.openSystemSettings()
+                                }
+                            } else {
+                                Button(L.helperInstall) {
+                                    registrationManager.registerHelper()
+                                }
+                            }
                         }
+
+                        Button(L.settingsRefresh) {
+                            registrationManager.refreshHelperStatus()
+                        }
+                    }
+                    .padding(.top, 6)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 10)
+
+                    if let error = registrationManager.lastError {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 10)
                     }
                 }
 
-                Button(L.settingsRefresh) {
-                    registrationManager.refreshHelperStatus()
-                }
-
-                if let error = registrationManager.lastError {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.caption)
+                settingsCard(L.settingsConfigInfo) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("\(L.settingsConfigVersion): \(config.configVersion)")
+                        Text("\(L.settingsDefaultNode): \(config.defaultNode.name)")
+                        Text("\(L.settingsGroupCount): \(config.groups.count)")
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-
-            // Configuration info
-            Section(L.settingsConfigInfo) {
-                LabeledContent(L.settingsVersion, value: "\(config.configVersion)")
-                LabeledContent(L.sidebarDefault, value: config.defaultNode.name)
-                LabeledContent(L.sidebarGroups, value: "\(config.groups.count)")
-            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 22)
         }
-        .padding(24)
         .frame(width: 420)
+        .frame(minHeight: 430)
         .onAppear {
             registrationManager.refreshHelperStatus()
         }
     }
 
-    /// Launch at login Toggle binding.
+    /// 使用接近系统设置窗口的圆角面板样式承载各设置分组。
+    private func settingsCard<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+
+            VStack(alignment: .leading, spacing: 0) {
+                content()
+            }
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.55))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 1)
+            }
+        }
+    }
+
+    /// 统一设置项行的水平留白和高度。
+    private func settingsRow<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack(spacing: 10) {
+            content()
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 42)
+    }
+
+    /// 启动项开关绑定。
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
             get: { registrationManager.isLaunchAtLoginEnabled },
@@ -168,7 +261,7 @@ private struct SettingsView: View {
         )
     }
 
-    /// Helper status indicator color.
+    /// Helper 状态指示色。
     private var helperStatusColor: Color {
         switch registrationManager.helperStatus {
         case .enabled:

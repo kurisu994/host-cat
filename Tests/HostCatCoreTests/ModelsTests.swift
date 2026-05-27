@@ -102,7 +102,7 @@ final class ModelsTests: XCTestCase {
 
         XCTAssertEqual(decoded, config)
         XCTAssertEqual(decoded.configVersion, 1)
-        XCTAssertEqual(decoded.defaultNode.name, "默认")
+        XCTAssertEqual(decoded.defaultNode.name, LC.defaultNodeName)
         XCTAssertEqual(decoded.defaultNode.content, "127.0.0.1 localhost\n")
     }
 

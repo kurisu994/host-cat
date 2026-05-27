@@ -207,8 +207,9 @@ public struct HostsContentValidator: Sendable {
 /// Implements the safe write strategy from the design document:
 /// 1. Check immutable flags
 /// 2. Hash validation to prevent overwriting external changes
-/// 3. mkstemp + fsync + chmod/chown + rename for atomic replacement
-/// 4. Optional DNS refresh
+/// 3. Recheck the current hash immediately before atomic replacement
+/// 4. mkstemp + fsync + chmod/chown + rename for atomic replacement
+/// 5. Optional DNS refresh
 public struct HostsFileWriter: Sendable {
     private let logger = Logger(subsystem: "com.hostcat.helper", category: "HostsFileWriter")
 
@@ -286,11 +287,20 @@ public struct HostsFileWriter: Sendable {
         try fileOps.setPermissions(at: createdTempPath, mode: 0o644)
         try fileOps.setOwner(at: createdTempPath, uid: 0, gid: 0) // root:wheel
 
-        // 7. rename(2) atomic replacement
+        // 7. Refuse to replace a file modified while the temporary file was prepared.
+        let latestData = try fileOps.readFile(at: targetPath)
+        let latestContent = String(data: latestData, encoding: .utf8) ?? String(data: latestData, encoding: .isoLatin1) ?? ""
+        let latestHash = HostsHash.sha256Hex(latestContent)
+        if latestHash != currentHash {
+            logger.warning("hash changed during write preparation: initial=\(currentHash.prefix(8))..., latest=\(latestHash.prefix(8))...")
+            throw HostsWriteError.hashMismatch
+        }
+
+        // 8. rename(2) atomic replacement
         try fileOps.rename(from: createdTempPath, to: targetPath)
         tempPath = nil // No cleanup needed after successful rename.
 
-        // 8. fsync parent directory
+        // 9. fsync parent directory
         try fileOps.fsyncDirectory(at: directory)
 
         // Compute final hash
@@ -298,7 +308,7 @@ public struct HostsFileWriter: Sendable {
 
         logger.info("Write successful, hash: \(finalHash.prefix(8))...")
 
-        // 9. DNS cache refresh
+        // 10. DNS cache refresh
         var dnsSuccess = true
         var dnsError: String?
         if let refresher = dnsRefresher {

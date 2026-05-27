@@ -1,3 +1,6 @@
+/* Model Defaults */
+"default.node_name" = "默认";
+
 /* Parser Errors */
 "error.parser.invalid_ip" = "第 %d 行 IP 地址无效: %@";
 "error.parser.missing_hostname" = "第 %d 行缺少 hostname";
@@ -44,6 +47,16 @@
 "helper.connection_failed" = "连接助手失败。";
 "helper.registration_failed" = "助手注册失败。";
 "helper.authentication_failed" = "助手认证失败。";
+"helper.unavailable" = "Privileged Helper 暂时不可用: %@";
+"helper.not_registered" = "Privileged Helper 尚未注册，请在设置中注册。";
+"helper.requires_approval" = "Privileged Helper 需要在「系统设置 > 登录项」中审批。";
+"helper.connection_interrupted" = "与 Helper 的连接已中断，请重试。";
+"helper.connection_invalidated" = "与 Helper 的连接已失效，请检查 Helper 状态。";
+"helper.request_timed_out" = "与 Helper 通信超时，请重试。";
+"helper.unexpected_reply" = "Helper 返回了无法识别的响应: %@";
+"helper.proxy_unavailable" = "无法获取 XPC 代理。";
+"helper.reply_missing_success" = "响应缺少成功状态。";
+"helper.reply_missing_final_hash" = "成功响应缺少最终 hosts hash。";
 
 /* MenuBarViewModel Messages */
 "menubar.config_save_failed" = "配置保存失败";
@@ -67,6 +80,6 @@
 "helper.status.enabled" = "已启用";
 "helper.status.requires_approval" = "需要审批";
 "helper.status.not_found" = "未找到";
-"helper.register_failed" = "Helper 注册失败";
-"helper.launch_at_login_failed" = "开机自启动设置失败";
+"helper.register_failed" = "Helper 注册失败: %@";
+"helper.launch_at_login_failed" = "开机自启动设置失败: %@";
 "error.unknown" = "未知错误";

@@ -1,7 +1,7 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-23（更新文档：删除已移除的 ihosts-research.md 引用，同步编辑器行号与标题栏样式修复）
+最后更新：2026-05-27（补充中英文资源接线与 hosts 替换前 hash 二次校验）
 
 ## 概述
 
@@ -36,7 +36,7 @@ XPC 层只做一件事：把主应用已经合成并校验过的 hosts 文本交
 - 参数只使用 XPC 稳定支持的桥接类型，例如 `String`、`Data`、`Bool`、`NSNumber`、`NSDictionary`、`NSError`。Swift `Codable struct` 只在主应用和 `HostCatCore` 内部使用，不直接暴露为 XPC 参数。
 - 主应用侧提供 `HostHelperClient` 包装层，把 reply block 转成 `async throws`，UI 和服务层只依赖 Swift Concurrency 接口。
 - Helper 不接受路径参数，只写启动时 `realpath` 解析得到的 `/private/etc/hosts`。DNS 刷新只调用固定命令和固定参数，不允许主应用透传 shell 命令。
-- 写入请求携带 `expectedCurrentHostsHash`。Helper 写入前重新读取当前 hosts 并计算 hash；若与预期不一致，拒绝写入并返回「hosts 已被外部修改」。主应用再弹窗让用户选择导入、取消或明确覆盖。
+- 写入请求携带 `expectedCurrentHostsHash`。Helper 写入开始时重新读取当前 hosts 并计算 hash；若与预期不一致，拒绝写入并返回「hosts 已被外部修改」。临时文件准备完成后、原子替换前还会再次读取目标文件；即使用户已明确覆盖，也不覆盖本次操作进行期间产生的新修改。
 - Helper 端重复做最小安全校验：内容非空、包含必要系统默认条目、HostCat 管理区块格式完整、文件 flags 可写。不能只信任主应用已经校验过。
 
 推荐调用边界：
@@ -78,6 +78,7 @@ Privileged Helper (root, fixed /private/etc/hosts only)
 - **SwiftUI 为主**。菜单栏使用 `MenuBarExtra`（macOS 13+）替代 `NSStatusItem`，窗口使用 SwiftUI `Window` / `Settings` scene，弹窗使用 `.alert()` 修饰符。仅在 SwiftUI 无法覆盖的场景（如 hosts 纯文本编辑器的语法高亮）通过 `NSViewRepresentable` 桥接 AppKit。
 - 本地配置使用 JSON，存储在 `~/Library/Application Support/com.hostcat.app/config.json`。配置文件包含 `configVersion` 字段（首版为 `1`），便于后续格式变更时做迁移。数据量小够用，不考虑迁移 SQLite。
 - 配置文件写入采用原子写入（先写临时文件再 rename），防止写入中断导致文件损坏。JSON 解析失败时使用默认配置并弹窗提示用户「配置文件已损坏，已恢复为默认设置」。
+- 本地化资源由 App 与 Core 分别维护中英字符串表；主应用语言偏好使用独立的 `UserDefaults` 值（`HostCat.appLanguage`），提供跟随系统、简体中文和 English，App 与主应用内的 Core 均在读取文本时动态选择资源以支持无需重启切换。Privileged Helper 属于独立进程，写入请求携带已解析的 `en` / `zh-Hans` 标识并仅用于格式化错误响应。SwiftPM 通过 `Bundle.module` 读取 Core 资源，Xcode framework 构建通过 framework bundle 读取，避免 UI 层依赖泄漏到 Core。
 - hosts 写入逻辑独立成服务层，通过协议抽象与 UI 解耦。
 
 推荐模块边界：
@@ -152,6 +153,8 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 - 支持合并输出时静默去重：同一域名 + 同一 IP 在多个激活节点中重复出现时，只保留第一次出现的条目，在预览界面标注「N 条重复条目已合并」。
 - 支持首次启动时导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点（通过 `HostsImporter`）。
 - 支持启用或关闭开机自启动。
+- 支持在设置页即时切换界面语言；该偏好不进入 hosts 配置、备份或恢复数据。
+- 设置页作为 Helper 注册、系统审批引导与状态刷新的唯一入口；菜单栏通过 `SettingsLink` 打开设置，不保留独立 Helper 引导窗口。
 
 ### 阶段 2：真实写入版（已完成）
 
@@ -169,7 +172,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 
 - 鼠标悬停时预览 hosts 内容。
 - 全局快捷键打开菜单栏。
-- 中文/英文完整多语言覆盖。
+- 完整收敛底层诊断文本并评估迁移到 string catalog。
 - 搜索/过滤节点和域名。
 - iCloud 或云同步。
 - 应用自更新（引入 Sparkle 框架）。
@@ -228,10 +231,10 @@ Apple 没有提供公开的 Swift/C API 直接刷新 DNS 缓存，调用命令�
 写入 `/etc/hosts` 采用安全写入策略。注意 `/etc/hosts` 是指向 `/private/etc/hosts` 的符号链接，所有操作统一使用真实路径 `/private/etc/hosts`，避免跨挂载点导致 `rename` 失败（`EXDEV`）。Helper 启动时通过 `realpath` 解析一次真实路径并缓存，后续操作统一使用 resolved path。
 
 1. Helper 检查 `/private/etc/hosts` 是否有 immutable flags（`schg` / `uchg`）。如有，默认拒绝写入，并通过 XPC 回传给主应用弹窗提示用户「hosts 文件当前被锁定保护，HostCat 不会自动移除保护标志」。弹窗提供手动处理说明；首版不执行 `chflags(path, 0)` 这类清空所有 flags 的操作，避免意外移除用户或安全工具设置的保护。
-2. Helper 读取当前 `/private/etc/hosts` 并计算 hash；如果请求里的 `expectedCurrentHostsHash` 非空且不匹配，拒绝写入，避免覆盖外部程序或用户刚刚做的修改。
-3. Helper 使用同目录 `mkstemp` 创建唯一临时文件，例如 `/private/etc/.hosts.hostcat.XXXXXX`。不使用固定临时文件名，避免上次崩溃残留、符号链接攻击或并发写入互相踩踏。
-4. 将新内容写入临时文件后执行 `fsync`，再设置权限和属主：`chmod 644` + `chown root:wheel`，确保与原始 hosts 文件一致。
-5. 校验临时文件内容完整性（文件大小 > 0、包含必要的系统默认条目、HostCat 管理区块起止标记完整）。
+2. Helper 读取当前 `/private/etc/hosts` 并计算 hash；如果请求里的 `expectedCurrentHostsHash` 非空且不匹配，拒绝写入，避免覆盖操作开始前已经存在的外部修改。
+3. Helper 校验待写入内容非空、包含必要系统默认条目且 HostCat 管理区块起止标记完整。
+4. Helper 使用同目录 `mkstemp` 创建唯一临时文件，例如 `/private/etc/.hosts.hostcat.XXXXXX`。不使用固定临时文件名，避免上次崩溃残留、符号链接攻击或并发写入互相踩踏；将内容写入后执行 `fsync`，再设置 `chmod 644` + `chown root:wheel`。
+5. 原子替换前再次读取目标文件并与第 2 步得到的 hash 比较；若临时文件准备期间发生新修改，拒绝替换。该重检显著缩短覆盖窗口，但没有跨外部写入方的文件锁，最终读取与 `rename(2)` 之间仍存在极小竞态窗口。
 6. 使用 `rename(2)` 原子替换 `/private/etc/hosts`（同一文件系统上 rename 是原子操作），随后对父目录执行 `fsync`，降低断电或系统崩溃导致目录项未落盘的风险。
 7. 替换成功后再执行 DNS 缓存刷新。
 8. 无论成功或失败，都尝试清理未使用的临时文件；清理失败只记录日志，不覆盖主错误。
@@ -295,7 +298,7 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 - 管理区块解析：无 HostCat 区块、完整 v1 区块、缺 Begin、缺 End、版本号未知、区块外内容导入。
 - 编码处理：UTF-8 正常读取、Latin-1 回退提示、写出统一 UTF-8。
 - 配置存储：`configVersion`、JSON 损坏恢复、原子写入失败不破坏旧配置、未来迁移入口。
-- 状态批次：debounce 合并、写入成功更新快照、写入失败保留配置草稿、失败期间新操作保留、hash 不匹配不自动覆盖、备份恢复失败不污染当前配置和持久化配置。
+- 状态批次：debounce 合并、写入成功更新快照、写入失败保留配置草稿、失败期间新操作保留、hash 不匹配不自动覆盖、替换前发生外部修改时拒绝覆盖、备份恢复失败不污染当前配置和持久化配置。
 - 测试基础设施：核心测试替身集中放在 `TestDoubles.swift`，覆盖 fake helper client、fake 文件系统操作和 DNS 刷新 stub。
 
 Helper 测试分层处理：
@@ -344,7 +347,7 @@ HostCat.xcodeproj
 - **首版最低 macOS 版本**：macOS 14 (Sonoma)。macOS 13 的 `SMAppService` 存在早期 bug，14+ 更稳定，且截至 2026 年 macOS 13 市场份额已很低。
 - **Helper bundle identifier**：主应用 `com.hostcat.app`，Helper `com.hostcat.helper`。
 - **hosts 区块标记格式**：`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`，标记中包含版本号。
-- **XPC 安全边界**：XPC 只传合成后的 hosts 文本和 `expectedCurrentHostsHash`，Helper 不接受任意路径或任意命令，且重复执行最小安全校验。
+- **XPC 安全边界**：XPC 只传合成后的 hosts 文本、`expectedCurrentHostsHash` 和用于返回文案的有效语言标识；语言标识不参与路径、权限或内容判定。Helper 不接受任意路径或任意命令，且重复执行最小安全校验。
 - **Helper 更新策略**：`SMAppService` 的 Helper 在 app bundle 内，更新 app 即更新 Helper 二进制，注册状态和用户审批保持不变。启动时检查 `service.status`，如果变为 `notRegistered` 则重新 `register()`。
 - **导入已有 hosts**：首次启动时自动导入当前 `/etc/hosts` 中非 HostCat 管理区块内容到「默认」节点；「默认」节点可编辑、不可删除、不可停用，并参与冲突检测。
 - **应用名称**：`HostCat`。"Host" 直接点题，"Cat" 一语双关（Unix `cat` 命令 + 猫咪品牌形象），与 bundle ID（`com.hostcat.*`）和标记格式一致。

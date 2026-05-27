@@ -34,23 +34,23 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
     public var errorDescription: String? {
         switch self {
         case let .unavailable(reason):
-            "Privileged Helper temporarily unavailable: \(reason)"
+            LC.helperUnavailable(reason)
         case .helperNotRegistered:
-            "Privileged Helper not registered. Please register in Settings."
+            LC.helperNotRegistered
         case .helperNotApproved:
-            "Privileged Helper needs approval in System Settings > Login Items."
+            LC.helperRequiresApproval
         case .connectionInterrupted:
-            "Connection to Helper interrupted. Please retry."
+            LC.helperConnectionInterrupted
         case .connectionInvalidated:
-            "Connection to Helper invalidated. Please check Helper status."
+            LC.helperConnectionInvalidated
         case .requestTimedOut:
-            "Communication with Helper timed out. Please retry."
+            LC.helperRequestTimedOut
         case .hashMismatch:
-            "hosts file has been modified outside HostCat."
+            LC.writeErrorHashMismatch
         case .fileImmutable:
-            "hosts file is protected by immutable flags."
+            LC.writeErrorFileImmutable
         case let .unexpectedReply(detail):
-            "Helper returned unexpected response: \(detail)"
+            LC.helperUnexpectedReply(detail)
         }
     }
 }
@@ -68,6 +68,7 @@ public protocol HostHelperClient: Sendable {
     func writeHosts(
         _ contents: NSString,
         expectedCurrentHostsHash: NSString?,
+        localizationIdentifier: NSString,
         withReply reply: @escaping (NSDictionary) -> Void
     )
 }

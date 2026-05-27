@@ -215,7 +215,7 @@ final class AppConfigStoreTests: XCTestCase {
         line: UInt = #line
     ) {
         XCTAssertEqual(config.configVersion, 1, file: file, line: line)
-        XCTAssertEqual(config.defaultNode.name, "默认", file: file, line: line)
+        XCTAssertEqual(config.defaultNode.name, LC.defaultNodeName, file: file, line: line)
         XCTAssertEqual(config.defaultNode.content, defaultHosts, file: file, line: line)
         XCTAssertTrue(config.defaultNode.isActive, file: file, line: line)
         XCTAssertEqual(config.groups, [], file: file, line: line)

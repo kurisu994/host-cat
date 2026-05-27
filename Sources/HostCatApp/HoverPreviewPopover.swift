@@ -36,7 +36,7 @@ struct HoverPreviewContent: View {
             Divider()
 
             HStack {
-                Text("\(text.count) " + L.editorLine)
+                Text(L.editorCharactersCount(text.count))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Spacer()

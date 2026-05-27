@@ -62,9 +62,13 @@
 "editor.saved" = "已保存";
 "editor.unsaved" = "未保存";
 "editor.parsing" = "解析中...";
+"editor.applying" = "正在应用...";
 "editor.no_errors" = "无错误";
+"editor.select_node" = "请选择要编辑的节点";
 "editor.records_count" = "%d 条记录";
 "editor.duplicates_count" = "%d 条重复";
+"editor.syntax_errors_count" = "%d 个语法错误";
+"editor.characters_count" = "%d 个字符";
 
 /* Preview */
 "preview.title" = "预览";
@@ -76,6 +80,16 @@
 "preview.copy" = "复制";
 "preview.copied" = "已复制!";
 "preview.close" = "关闭";
+"preview.refresh" = "刷新";
+"preview.apply" = "应用";
+"preview.no_content" = "暂无合并内容";
+"preview.merged_duplicates_count" = "已合并 %d 条重复记录";
+"preview.conflicts_count" = "%d 个冲突";
+"preview.conflict_hint" = "请先解决冲突再应用";
+"preview.existing" = "现有";
+"preview.conflicting" = "冲突项";
+"preview.show_conflict_details" = "查看详情";
+"preview.conflict_location" = "%@ 与节点 %@ 存在冲突";
 
 /* Helper Setup */
 "helper.title" = "助手安装";
@@ -109,6 +123,7 @@
 
 /* Dialogs */
 "dialog.ok" = "确定";
+"dialog.done" = "完成";
 "dialog.cancel" = "取消";
 "dialog.save" = "保存";
 "dialog.delete" = "删除";
@@ -118,6 +133,10 @@
 "dialog.name_placeholder" = "名称";
 "dialog.confirm_delete" = "确定要删除吗?";
 "dialog.confirm_discard" = "放弃未保存的更改?";
+"dialog.delete_node.title" = "删除节点";
+"dialog.delete_node.message" = "确定要删除此节点吗?";
+"dialog.delete_group.title" = "删除分组";
+"dialog.delete_group.message" = "删除分组将同时删除其下所有节点，是否继续?";
 
 /* Errors */
 "error.generic" = "发生错误";
@@ -153,6 +172,8 @@
 "backup.create_manual" = "手动创建备份";
 "backup.select_preview" = "选择一个备份来预览";
 "backup.restore_this" = "恢复此备份";
+"backup.create_failed" = "创建备份失败: %@";
+"backup.restore_failed" = "恢复备份失败: %@";
 
 /* Preview */
 "preview.truncated" = "... (共 %d 行，点击按钮查看完整内容)";
@@ -166,6 +187,14 @@
 "settings.launch_at_login" = "开机自启动";
 "settings.version" = "版本";
 "settings.refresh" = "刷新";
+"settings.helper_status" = "状态";
+"settings.config_version" = "配置版本";
+"settings.default_node" = "默认节点";
+"settings.group_count" = "分组数量";
+"settings.language" = "语言";
+"settings.language.system" = "跟随系统";
+"settings.language.simplified_chinese" = "简体中文";
+"settings.language.english" = "English";
 
 /* MenuBarViewModel */
 "external.modification.detected" = "检测到 hosts 文件被外部修改";

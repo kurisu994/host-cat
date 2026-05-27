@@ -139,6 +139,48 @@ struct HostsFileWriterTests {
         #expect(outcome.finalHash == HostsHash.sha256Hex(validHostsContent))
     }
 
+    @Test("准备替换期间目标文件被修改时拒绝覆盖")
+    func mutationBeforeRenameBlocksWrite() throws {
+        var ops = FakeFileSystemOperations()
+        let externalContent = existingHostsContent + "10.0.0.1 changed.test\n"
+        ops.fileContents[targetPath] = Data(existingHostsContent.utf8)
+        ops.setReadSequence(
+            [Data(existingHostsContent.utf8), Data(externalContent.utf8)],
+            for: targetPath
+        )
+
+        #expect(throws: HostsWriteError.hashMismatch) {
+            _ = try writer.write(
+                content: validHostsContent,
+                targetPath: targetPath,
+                expectedHash: HostsHash.sha256Hex(existingHostsContent),
+                fileOps: ops
+            )
+        }
+        #expect(ops.renamedTo == nil)
+    }
+
+    @Test("用户确认覆盖后仍不覆盖操作开始后的新修改")
+    func mutationBeforeForcedRenameBlocksWrite() throws {
+        var ops = FakeFileSystemOperations()
+        let externalContent = existingHostsContent + "10.0.0.1 changed.test\n"
+        ops.fileContents[targetPath] = Data(existingHostsContent.utf8)
+        ops.setReadSequence(
+            [Data(existingHostsContent.utf8), Data(externalContent.utf8)],
+            for: targetPath
+        )
+
+        #expect(throws: HostsWriteError.hashMismatch) {
+            _ = try writer.write(
+                content: validHostsContent,
+                targetPath: targetPath,
+                expectedHash: nil,
+                fileOps: ops
+            )
+        }
+        #expect(ops.renamedTo == nil)
+    }
+
     // MARK: - 内容校验
 
     @Test("空内容阻止写入")

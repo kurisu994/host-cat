@@ -244,26 +244,26 @@ public final class MenuBarViewModel: ObservableObject {
             }
             do {
                 try configStore.save(config)
-                logger.info(LC.logConfigPersistSuccess)
+                logger.info("\(LC.logConfigPersistSuccess)")
             } catch {
-                logger.error(LC.logConfigPersistFailed(error.localizedDescription))
+                logger.error("\(LC.logConfigPersistFailed(error.localizedDescription))")
                 applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             }
             updateMergedPreview()
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
-            logger.warning(LC.logConflicts(conflicts.count))
+            logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
         } else if let errorMessage = result.errorMessage {
             // Distinguish external modifications from other write errors.
             if case .writeFailed(let msg) = result.status,
                msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true
                 applyError = LC.externalModificationDetected
-                logger.warning(LC.logExternalModification)
+                logger.warning("\(LC.logExternalModification)")
             } else {
                 applyError = LC.hostsNotApplied(errorMessage)
-                logger.error(LC.logApplyFailed(failureLogPrefix, errorMessage))
+                logger.error("\(LC.logApplyFailed(failureLogPrefix, errorMessage))")
             }
         }
     }
@@ -271,10 +271,10 @@ public final class MenuBarViewModel: ObservableObject {
     private func persistDraftConfig() -> Bool {
         do {
             try configStore.save(config)
-            logger.info(LC.logDraftPersistSuccess)
+            logger.info("\(LC.logDraftPersistSuccess)")
             return true
         } catch {
-            logger.error(LC.logDraftPersistFailed(error.localizedDescription))
+            logger.error("\(LC.logDraftPersistFailed(error.localizedDescription))")
             applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             return false
         }
@@ -301,14 +301,14 @@ public final class MenuBarViewModel: ObservableObject {
             let merged = try HostsMerger().merge(config)
             lastMergedText = merged.text
             lastDuplicateCount = merged.duplicateCount
-            logger.debug(LC.logMergePreview(merged.records.count, merged.duplicateCount))
+            logger.debug("\(LC.logMergePreview(merged.records.count, merged.duplicateCount))")
         } catch let HostMergeError.conflicts(conflicts) {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
-            logger.warning(LC.logPreviewConflicts(conflicts.count))
+            logger.warning("\(LC.logPreviewConflicts(conflicts.count))")
         } catch {
             applyError = error.localizedDescription
-            logger.error(LC.logPreviewMergeFailed(error.localizedDescription))
+            logger.error("\(LC.logPreviewMergeFailed(error.localizedDescription))")
         }
     }
 

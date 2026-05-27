@@ -2,7 +2,7 @@
 
 HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。目标是提供菜单栏驱动的 hosts 配置切换、分组、节点和跨组组合能力。
 
-当前仓库已完成阶段 2（真实写入版）：通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、XPC 通信、备份恢复、外部修改检测、DNS 刷新、hosts 编辑器语法高亮与行号、多行错误实时收集和完整的菜单栏交互，支持签名导出和 DMG 打包。
+当前仓库已完成阶段 2（真实写入版）：通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、XPC 通信、备份恢复、外部修改检测、DNS 刷新、简体中文/英文界面、hosts 编辑器语法高亮与行号、多行错误实时收集和完整的菜单栏交互，支持签名导出和 DMG 打包。
 
 ## 当前能力
 
@@ -23,21 +23,21 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 写入协调器（`HostWriteCoordinator` actor），支持 debounce（500ms）、冲突检测、首次写入 expected hash、成功快照和失败状态隔离。
   - 备份存储（`BackupStore`），支持自动命名（含微秒级时间戳防冲突）、保留策略（默认 3 份）和读取恢复。
   - 外部修改检测（`ExternalModificationDetector`），通过 hash 比对检测 hosts 是否在 HostCat 之外被修改。
-  - 安全文件写入器（`HostsFileWriter`），实现 immutable flags 检查、系统默认条目校验、mkstemp 临时文件、fsync、chmod 644 / chown root:wheel、rename 原子替换、目录 fsync。
+  - 安全文件写入器（`HostsFileWriter`），实现 immutable flags 检查、系统默认条目校验、临时文件准备期间的目标 hash 二次校验、mkstemp 临时文件、fsync、chmod 644 / chown root:wheel、rename 原子替换、目录 fsync。
   - DNS 刷新器（`SystemDNSRefresher`），执行固定命令 `dscacheutil -flushcache` 和 `killall -HUP mDNSResponder`。
 - `HostCatHelperClient`：
   - Helper client 协议（`HostHelperClient`），UI 和服务层只依赖此协议。
   - 真实 XPC client（`XPCHostHelperClient`），通过 `NSXPCConnection` 与 Privileged Helper 通信，将 reply block 转为 `async throws`，并处理连接错误、取消和超时。
   - Helper 注册管理器（`HelperRegistrationManager`），封装 `SMAppService.daemon` 注册、状态检测、审批引导和主应用开机自启动管理。
-  - XPC 协议定义（`HostCatHelperXPCProtocol`），使用 `@objc` protocol + `NSDictionary` 参数，支持 `NSString`、`Bool` 等稳定桥接类型。
+  - XPC 协议定义（`HostCatHelperXPCProtocol`），使用 `@objc` protocol + `NSDictionary` 参数，以稳定桥接类型传递写入数据、hash 与仅用于错误展示的语言标识。
 - `HostCatApp`：
   - 菜单栏预览体验：分组标题 + 节点勾选、即时状态更新、debounce 写入、合成预览和错误提示。
   - 编辑窗口：左侧分组/节点树，支持分组折叠、节点拖拽排序、分组上移/下移、双击重命名、增删操作、右侧 hosts 文本编辑。
   - 合成预览窗口：展示最终 hosts 文本、重复条目合并数量、冲突详情和定位引导。
-  - Helper 设置窗口（`HelperSetupView`）：引导用户完成 Helper 注册和系统设置审批。
   - 备份管理窗口（`BackupRestoreView`）：列出历史备份、预览内容、手动创建备份和事务式恢复。
   - 外部修改弹窗（`ExternalModificationAlert`）：检测到外部修改时提供「取消」或「确认覆盖」决策。
-  - 设置页面：开机自启动 Toggle、Helper 状态显示、注册/刷新操作。
+  - 设置页面：提供跟随系统、简体中文和 English 的即时语言切换，并集中承载开机自启动、Helper 状态、注册、审批与刷新操作。
+  - 简体中文与英文字符串资源：覆盖菜单栏、编辑/预览、Helper、备份、设置及主要错误反馈，切换语言无需重启应用。
   - 程序员专享的 hosts 编辑体验：等宽字体、全量语法高亮渲染（IP、hostname、注释、管理标记）、当前行高亮、滚动同步行号栏、语法错误行整行红色背景及行号栏红点标识、多行错误实时收集与底部状态栏展示。
 - `HostCatPrivilegedHelper`：
   - 基于 `SMAppService` 注册的 LaunchDaemon，以 root 身份运行。
@@ -51,8 +51,9 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
   - 写入协调器（`HostWriteCoordinator`）单元测试。
   - 备份存储（`BackupStore`）单元测试。
   - 外部修改检测（`ExternalModificationDetector`）单元测试。
-  - 文件写入器（`HostsFileWriter`）单元测试（使用协议注入临时目录）。
+  - 文件写入器（`HostsFileWriter`）单元测试（使用协议注入临时目录，覆盖替换前发生外部修改时拒绝覆盖）。
   - 菜单栏视图模型（`MenuBarViewModel`）单元测试（验证写入失败保留草稿配置、备份恢复失败不污染当前配置和持久化配置）。
+  - 界面语言偏好（`AppLanguageTests`）单元测试（验证偏好存取、系统语言回退和运行时资源切换）。
   - 测试替身（`FakeHostHelperClient`、`FakeFileSystemOperations`、`StubDNSRefresher`）。
 
 ## 环境要求
@@ -119,7 +120,6 @@ export DEVELOPMENT_TEAM="TEAMID"
 │   │   ├── LineNumberRulerView.swift     # 基于 TextKit 2 的自定义行号标尺栏
 │   │   ├── HostsSyntaxHighlighter.swift  # 基于 TextKit 2 的 hosts 语法高亮引擎
 │   │   ├── MergedPreviewView.swift       # 合成预览窗口
-│   │   ├── HelperSetupView.swift         # Helper 注册引导
 │   │   ├── BackupRestoreView.swift       # 备份管理和事务式恢复
 │   │   ├── ExternalModificationAlert.swift # 外部修改决策弹窗
 │   │   ├── WindowFocus.swift             # 窗口焦点管理工具
@@ -141,6 +141,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 │   │   ├── HostsFileWriter.swift
 │   │   ├── HostsWriteError.swift
 │   │   ├── DNSRefresher.swift
+│   │   ├── AppLanguage.swift             # 应用语言偏好与资源选择
 │   │   ├── HostHelperClient.swift        # 协议和 XPC 接口定义
 │   │   └── MenuBarViewModel.swift
 │   ├── HostCatHelperClient/     # XPC client 包装层
@@ -166,6 +167,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 │       ├── HostsParserTests.swift
 │       ├── HostWriteCoordinatorTests.swift
 │       ├── MenuBarViewModelTests.swift
+│       ├── AppLanguageTests.swift
 │       ├── ModelsTests.swift
 │       └── TestDoubles.swift
 └── docs/
@@ -174,7 +176,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 
 模块职责：
 
-- `HostCatApp`：SwiftUI app target，负责菜单栏、编辑器窗口、合成预览、Helper 设置、备份管理和用户交互。已拆分为多个子组件文件。
+- `HostCatApp`：SwiftUI app target，负责菜单栏、编辑器窗口、合成预览、集中式设置页（含 Helper 管理和语言切换）、备份管理和用户交互。
 - `HostCatCore`：纯 Swift 业务核心，负责模型、parser、merge、冲突检测、hash、配置存储、备份、外部修改检测、文件写入器和 DNS 刷新。不依赖 SwiftUI、AppKit 或 ServiceManagement。
 - `HostCatHelperClient`：主应用内的 XPC client 边界，封装 `NSXPCConnection`、code signing requirement、错误映射和 `SMAppService` 注册管理。向上暴露 `async throws` API。
 - `HostCatPrivilegedHelper`：以 root Launch Daemon 运行的写入 helper，只负责固定路径 `/private/etc/hosts` 的安全写入和 DNS 刷新。

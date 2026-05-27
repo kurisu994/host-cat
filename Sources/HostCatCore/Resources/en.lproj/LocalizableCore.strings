@@ -1,3 +1,6 @@
+/* Model Defaults */
+"default.node_name" = "Default";
+
 /* Parser Errors */
 "error.parser.invalid_ip" = "Line %d: Invalid IP address: %@";
 "error.parser.missing_hostname" = "Line %d: Missing hostname";
@@ -44,6 +47,16 @@
 "helper.connection_failed" = "Failed to connect to helper.";
 "helper.registration_failed" = "Helper registration failed.";
 "helper.authentication_failed" = "Helper authentication failed.";
+"helper.unavailable" = "Privileged Helper is temporarily unavailable: %@";
+"helper.not_registered" = "Privileged Helper is not registered. Register it in Settings.";
+"helper.requires_approval" = "Privileged Helper needs approval in System Settings > Login Items.";
+"helper.connection_interrupted" = "Connection to Helper was interrupted. Try again.";
+"helper.connection_invalidated" = "Connection to Helper is no longer valid. Check Helper status.";
+"helper.request_timed_out" = "Communication with Helper timed out. Try again.";
+"helper.unexpected_reply" = "Helper returned an unexpected response: %@";
+"helper.proxy_unavailable" = "Unable to obtain an XPC proxy.";
+"helper.reply_missing_success" = "Response is missing the success status.";
+"helper.reply_missing_final_hash" = "Successful response is missing the final hosts hash.";
 
 /* MenuBarViewModel Messages */
 "menubar.config_save_failed" = "Failed to save configuration";
@@ -67,6 +80,6 @@
 "helper.status.enabled" = "Enabled";
 "helper.status.requires_approval" = "Requires Approval";
 "helper.status.not_found" = "Not Found";
-"helper.register_failed" = "Helper registration failed";
-"helper.launch_at_login_failed" = "Launch at login setting failed";
+"helper.register_failed" = "Helper registration failed: %@";
+"helper.launch_at_login_failed" = "Launch at login setting failed: %@";
 "error.unknown" = "Unknown error";

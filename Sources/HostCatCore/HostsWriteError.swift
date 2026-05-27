@@ -20,23 +20,40 @@ public enum HostsWriteError: Error, Equatable, LocalizedError, Sendable {
     case dnsRefreshFailed(String)
 
     public var errorDescription: String? {
+        description(in: .stored())
+    }
+
+    /// 按请求方选择的界面语言生成写入错误说明，供跨进程 Helper 回复使用。
+    public func description(in language: AppLanguage) -> String {
         switch self {
         case .fileImmutable:
-            LC.writeErrorFileImmutable
+            LC.localizedString("write.error.file_immutable", language: language)
         case .hashMismatch:
-            LC.writeErrorHashMismatch
+            LC.localizedString("write.error.hash_mismatch", language: language)
         case let .contentValidationFailed(detail):
-            LC.writeErrorContentValidationFailed(detail)
+            String(
+                format: LC.localizedString("write.error.content_validation_failed", language: language),
+                detail
+            )
         case let .tempFileCreationFailed(detail):
-            LC.writeErrorTempFileCreationFailed(detail)
+            String(
+                format: LC.localizedString("write.error.temp_file_creation_failed", language: language),
+                detail
+            )
         case let .writeFailed(detail):
-            LC.writeErrorWriteFailed(detail)
+            String(format: LC.localizedString("write.error.write_failed", language: language), detail)
         case let .renameFailed(detail):
-            LC.writeErrorRenameFailed(detail)
+            String(format: LC.localizedString("write.error.rename_failed", language: language), detail)
         case let .permissionSetFailed(detail):
-            LC.writeErrorPermissionSetFailed(detail)
+            String(
+                format: LC.localizedString("write.error.permission_set_failed", language: language),
+                detail
+            )
         case let .dnsRefreshFailed(detail):
-            LC.writeErrorDNSRefreshFailed(detail)
+            String(
+                format: LC.localizedString("write.error.dns_refresh_failed", language: language),
+                detail
+            )
         }
     }
 }

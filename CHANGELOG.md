@@ -6,6 +6,8 @@
 
 ### Added
 
+- 添加简体中文与英文字符串资源，覆盖菜单栏、编辑/预览、Helper 设置、备份恢复、设置页及 Core 用户可见错误。
+- 添加设置页语言选择器，支持跟随系统、简体中文与 English 在运行期间即时切换。
 - **【语法高亮与行号】hosts 编辑器语法高亮与多行错误定位标记：使用 TextKit 2 与 NSRulerView 实现极佳的等宽 hosts 编辑与校验体验。**
 - 添加 `HostsSyntaxHighlighter` 语法高亮引擎，基于 TextKit 2 渲染 IP (蓝色)、hostname (绿色)、注释 (灰色)、HostCat 标记 (橙色粗体)，并对语法错误行进行红色半透明背景高亮。
 - 添加 `LineNumberRulerView` 自定义行号组件（`NSRulerView` + TextKit 2 `NSTextLayoutManager`），支持精确的滚动同步、当前行粗体加亮、并在错误行显示红色数字和红点标识。
@@ -20,7 +22,7 @@
 - 添加 `DNSRefresher`（`SystemDNSRefresher`），执行固定 DNS 刷新命令。
 - 添加 `ExternalModificationDetector` 外部修改检测及 UI 决策弹窗（`ExternalModificationAlert`）。
 - 添加写入前自动备份（`HostWriteCoordinator` 在写入前调用 `BackupStore.createBackup`）。
-- 增强 HostCatApp UI：Helper 注册引导 (`HelperSetupView`)、备份管理与事务式恢复 (`BackupRestoreView`)、外部修改弹窗。
+- 增强 HostCatApp UI：设置页集中管理 Helper 注册和系统审批、备份管理与事务式恢复 (`BackupRestoreView`)、外部修改弹窗。
 - 新增 `scripts/build-release.sh` 支持归档、代码签名导出与 DMG 打包；发布构建要求显式提供 Developer ID 证书和 Team ID。
 - 添加应用图标资源（Assets.xcassets，7 个尺寸）。
 - 拆分 `EditorView.swift` 为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。
@@ -58,9 +60,14 @@
 ### Changed
 
 - 放大菜单栏悬停时的合成 Hosts 预览窗口，便于浏览较长的预览内容。
+- 将 Helper 安装入口收敛到设置页，并在菜单栏提供统一的“设置”入口。
 
 ### Fixed
 
+- 修复国际化资源未接入 SwiftPM 和生成的 Xcode 工程导致项目无法构建、本地化 key 无法加载的问题。
+- 修复国际化迁移中错误复用文案导致的状态、字符数、冲突操作与分组删除风险提示失真问题。
+- 修复 Helper/XPC 错误信息未走本地化资源，以及本地化日志直接传入 `Logger` 导致的编译错误。
+- 修复 `HostsFileWriter` 仅在操作开始时校验 hash 的竞态窗口；在原子替换前再次比对目标文件，并补充并发修改回归测试。
 - 修复 Xcode scheme 配置中测试 target 关联问题。
 - 修复 `HostsTextView` 的 SwiftUI 更新标记访问权限问题，确保 `updateNSView` 能正确同步外部文本变化。
 - 修复编辑器行号与标题栏样式不一致的问题，统一视觉层级。

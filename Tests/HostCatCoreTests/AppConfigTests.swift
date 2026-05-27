@@ -15,7 +15,7 @@ final class AppConfigTests: XCTestCase {
         let config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
 
         XCTAssertEqual(config.configVersion, 1)
-        XCTAssertEqual(config.defaultNode.name, "默认")
+        XCTAssertEqual(config.defaultNode.name, LC.defaultNodeName)
         XCTAssertTrue(config.defaultNode.isActive)
         XCTAssertEqual(config.defaultNode.content, "127.0.0.1 localhost\n")
         XCTAssertEqual(config.groups, [])

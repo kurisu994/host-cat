@@ -1,3 +1,4 @@
+import HostCatCore
 import SwiftUI
 
 /// HostCat localization string wrapper.
@@ -6,23 +7,23 @@ import SwiftUI
 /// All keys must be defined in both en.lproj/Localizable.strings and zh-Hans.lproj/Localizable.strings.
 enum L {
     // MARK: - App
-    static let appName = localize("app.name")
-    static let aboutHostCat = localize("app.menu.about")
-    static let quitHostCat = localize("app.menu.quit")
+    static var appName: String { localize("app.name") }
+    static var aboutHostCat: String { localize("app.menu.about") }
+    static var quitHostCat: String { localize("app.menu.quit") }
 
     // MARK: - Menu Bar
-    static let openHostCat = localize("menubar.open")
-    static let quit = localize("menubar.quit")
-    static let statusActive = localize("menubar.status.active")
-    static let statusInactive = localize("menubar.status.inactive")
-    static let statusDefault = localize("menubar.status.default")
-    static let statusGroups = localize("menubar.status.groups")
-    static let statusNoGroups = localize("menubar.status.no_groups")
-    static let statusNodes = localize("menubar.status.nodes")
-    static let statusNoActiveNodes = localize("menubar.status.no_active_nodes")
-    static let statusLastApplied = localize("menubar.status.last_applied")
-    static let statusNever = localize("menubar.status.never")
-    static let statusJustNow = localize("menubar.status.just_now")
+    static var openHostCat: String { localize("menubar.open") }
+    static var quit: String { localize("menubar.quit") }
+    static var statusActive: String { localize("menubar.status.active") }
+    static var statusInactive: String { localize("menubar.status.inactive") }
+    static var statusDefault: String { localize("menubar.status.default") }
+    static var statusGroups: String { localize("menubar.status.groups") }
+    static var statusNoGroups: String { localize("menubar.status.no_groups") }
+    static var statusNodes: String { localize("menubar.status.nodes") }
+    static var statusNoActiveNodes: String { localize("menubar.status.no_active_nodes") }
+    static var statusLastApplied: String { localize("menubar.status.last_applied") }
+    static var statusNever: String { localize("menubar.status.never") }
+    static var statusJustNow: String { localize("menubar.status.just_now") }
     static func statusMinutesAgo(_ count: Int) -> String {
         String(format: localize("menubar.status.minutes_ago"), count)
     }
@@ -40,135 +41,170 @@ enum L {
     }
 
     // MARK: - Sidebar
-    static let sidebarDefault = localize("sidebar.default")
-    static let sidebarGroups = localize("sidebar.groups")
-    static let sidebarAddGroup = localize("sidebar.add_group")
-    static let sidebarGroupOptions = localize("sidebar.group_options")
-    static let sidebarRenameGroup = localize("sidebar.rename_group")
-    static let sidebarDeleteGroup = localize("sidebar.delete_group")
-    static let sidebarMoveUp = localize("sidebar.move_up")
-    static let sidebarMoveDown = localize("sidebar.move_down")
-    static let sidebarAddNode = localize("sidebar.add_node")
-    static let sidebarNodeOptions = localize("sidebar.node_options")
-    static let sidebarRenameNode = localize("sidebar.rename_node")
-    static let sidebarDeleteNode = localize("sidebar.delete_node")
-    static let sidebarActivate = localize("sidebar.activate")
-    static let sidebarDeactivate = localize("sidebar.deactivate")
-    static let sidebarSingleSelect = localize("sidebar.single_select")
-    static let sidebarMultiSelect = localize("sidebar.multi_select")
-    static let sidebarEmptyState = localize("sidebar.empty_state")
-    static let sidebarDragHint = localize("sidebar.drag_hint")
+    static var sidebarDefault: String { localize("sidebar.default") }
+    static var sidebarGroups: String { localize("sidebar.groups") }
+    static var sidebarAddGroup: String { localize("sidebar.add_group") }
+    static var sidebarGroupOptions: String { localize("sidebar.group_options") }
+    static var sidebarRenameGroup: String { localize("sidebar.rename_group") }
+    static var sidebarDeleteGroup: String { localize("sidebar.delete_group") }
+    static var sidebarMoveUp: String { localize("sidebar.move_up") }
+    static var sidebarMoveDown: String { localize("sidebar.move_down") }
+    static var sidebarAddNode: String { localize("sidebar.add_node") }
+    static var sidebarNodeOptions: String { localize("sidebar.node_options") }
+    static var sidebarRenameNode: String { localize("sidebar.rename_node") }
+    static var sidebarDeleteNode: String { localize("sidebar.delete_node") }
+    static var sidebarActivate: String { localize("sidebar.activate") }
+    static var sidebarDeactivate: String { localize("sidebar.deactivate") }
+    static var sidebarSingleSelect: String { localize("sidebar.single_select") }
+    static var sidebarMultiSelect: String { localize("sidebar.multi_select") }
+    static var sidebarEmptyState: String { localize("sidebar.empty_state") }
+    static var sidebarDragHint: String { localize("sidebar.drag_hint") }
 
     // MARK: - Editor
-    static let editorTitle = localize("editor.title")
-    static let editorDefaultNode = localize("editor.default_node")
-    static let editorNodeEditor = localize("editor.node_editor")
-    static let editorPlaceholder = localize("editor.placeholder")
-    static let editorApply = localize("editor.apply")
-    static let editorApplyTooltip = localize("editor.apply_tooltip")
-    static let editorDiscard = localize("editor.discard")
-    static let editorDiscardTooltip = localize("editor.discard_tooltip")
-    static let editorPreview = localize("editor.preview")
-    static let editorPreviewTooltip = localize("editor.preview_tooltip")
-    static let editorErrors = localize("editor.errors")
-    static let editorLine = localize("editor.line")
-    static let editorErrorIPInvalid = localize("editor.error.ip_invalid")
-    static let editorErrorHostnameMissing = localize("editor.error.hostname_missing")
-    static let editorErrorHostnameInvalid = localize("editor.error.hostname_invalid")
-    static let editorSaved = localize("editor.saved")
-    static let editorUnsaved = localize("editor.unsaved")
-    static let editorParsing = localize("editor.parsing")
-    static let editorNoErrors = localize("editor.no_errors")
+    static var editorTitle: String { localize("editor.title") }
+    static var editorDefaultNode: String { localize("editor.default_node") }
+    static var editorNodeEditor: String { localize("editor.node_editor") }
+    static var editorPlaceholder: String { localize("editor.placeholder") }
+    static var editorApply: String { localize("editor.apply") }
+    static var editorApplyTooltip: String { localize("editor.apply_tooltip") }
+    static var editorDiscard: String { localize("editor.discard") }
+    static var editorDiscardTooltip: String { localize("editor.discard_tooltip") }
+    static var editorPreview: String { localize("editor.preview") }
+    static var editorPreviewTooltip: String { localize("editor.preview_tooltip") }
+    static var editorErrors: String { localize("editor.errors") }
+    static var editorLine: String { localize("editor.line") }
+    static var editorErrorIPInvalid: String { localize("editor.error.ip_invalid") }
+    static var editorErrorHostnameMissing: String { localize("editor.error.hostname_missing") }
+    static var editorErrorHostnameInvalid: String { localize("editor.error.hostname_invalid") }
+    static var editorSaved: String { localize("editor.saved") }
+    static var editorUnsaved: String { localize("editor.unsaved") }
+    static var editorParsing: String { localize("editor.parsing") }
+    static var editorApplying: String { localize("editor.applying") }
+    static var editorNoErrors: String { localize("editor.no_errors") }
+    static var editorSelectNode: String { localize("editor.select_node") }
     static func editorRecordsCount(_ count: Int) -> String {
         String(format: localize("editor.records_count"), count)
     }
     static func editorDuplicatesCount(_ count: Int) -> String {
         String(format: localize("editor.duplicates_count"), count)
     }
+    static func editorSyntaxErrorsCount(_ count: Int) -> String {
+        String(format: localize("editor.syntax_errors_count"), count)
+    }
+    static func editorCharactersCount(_ count: Int) -> String {
+        String(format: localize("editor.characters_count"), count)
+    }
 
     // MARK: - Preview
-    static let previewTitle = localize("preview.title")
-    static let previewMergedHosts = localize("preview.merged_hosts")
-    static let previewRecords = localize("preview.records")
-    static let previewDuplicates = localize("preview.duplicates")
-    static let previewConflicts = localize("preview.conflicts")
-    static let previewNoConflicts = localize("preview.no_conflicts")
-    static let previewCopy = localize("preview.copy")
-    static let previewCopied = localize("preview.copied")
-    static let previewClose = localize("preview.close")
+    static var previewTitle: String { localize("preview.title") }
+    static var previewMergedHosts: String { localize("preview.merged_hosts") }
+    static var previewRecords: String { localize("preview.records") }
+    static var previewDuplicates: String { localize("preview.duplicates") }
+    static var previewConflicts: String { localize("preview.conflicts") }
+    static var previewNoConflicts: String { localize("preview.no_conflicts") }
+    static var previewCopy: String { localize("preview.copy") }
+    static var previewCopied: String { localize("preview.copied") }
+    static var previewClose: String { localize("preview.close") }
+    static var previewRefresh: String { localize("preview.refresh") }
+    static var previewApply: String { localize("preview.apply") }
+    static var previewNoContent: String { localize("preview.no_content") }
+    static var previewConflictHint: String { localize("preview.conflict_hint") }
+    static var previewExisting: String { localize("preview.existing") }
+    static var previewConflicting: String { localize("preview.conflicting") }
+    static var previewShowConflictDetails: String { localize("preview.show_conflict_details") }
+    static func previewMergedDuplicatesCount(_ count: Int) -> String {
+        String(format: localize("preview.merged_duplicates_count"), count)
+    }
+    static func previewConflictsCount(_ count: Int) -> String {
+        String(format: localize("preview.conflicts_count"), count)
+    }
+    static func previewConflictLocation(hostname: String, nodeName: String) -> String {
+        String(format: localize("preview.conflict_location"), hostname, nodeName)
+    }
 
     // MARK: - Helper Setup
-    static let helperTitle = localize("helper.title")
-    static let helperDescription = localize("helper.description")
-    static let helperInstall = localize("helper.install")
-    static let helperReinstall = localize("helper.reinstall")
-    static let helperStatusInstalled = localize("helper.status.installed")
-    static let helperStatusNotInstalled = localize("helper.status.not_installed")
-    static let helperStatusChecking = localize("helper.status.checking")
-    static let helperErrorInstallFailed = localize("helper.error.install_failed")
-    static let helperErrorNotRegistered = localize("helper.error.not_registered")
+    static var helperTitle: String { localize("helper.title") }
+    static var helperDescription: String { localize("helper.description") }
+    static var helperInstall: String { localize("helper.install") }
+    static var helperReinstall: String { localize("helper.reinstall") }
+    static var helperStatusInstalled: String { localize("helper.status.installed") }
+    static var helperStatusNotInstalled: String { localize("helper.status.not_installed") }
+    static var helperStatusChecking: String { localize("helper.status.checking") }
+    static var helperErrorInstallFailed: String { localize("helper.error.install_failed") }
+    static var helperErrorNotRegistered: String { localize("helper.error.not_registered") }
 
     // MARK: - Helper Setup View
-    static let helperSetupTitle = localize("helper.setup.title")
-    static let helperSetupDescription = localize("helper.setup.description")
-    static let helperCurrentStatus = localize("helper.current_status")
-    static let helperRegister = localize("helper.register")
-    static let helperRegisterHint = localize("helper.register_hint")
-    static let helperPendingApproval = localize("helper.pending_approval")
-    static let helperOpenSettings = localize("helper.open_settings")
-    static let helperEnabled = localize("helper.enabled")
+    static var helperSetupTitle: String { localize("helper.setup.title") }
+    static var helperSetupDescription: String { localize("helper.setup.description") }
+    static var helperCurrentStatus: String { localize("helper.current_status") }
+    static var helperRegister: String { localize("helper.register") }
+    static var helperRegisterHint: String { localize("helper.register_hint") }
+    static var helperPendingApproval: String { localize("helper.pending_approval") }
+    static var helperOpenSettings: String { localize("helper.open_settings") }
+    static var helperEnabled: String { localize("helper.enabled") }
 
     // MARK: - Backup & Restore View
-    static let backupHistory = localize("backup.history")
-    static let backupCreateManual = localize("backup.create_manual")
-    static let backupSelectPreview = localize("backup.select_preview")
-    static let backupRestoreThis = localize("backup.restore_this")
+    static var backupHistory: String { localize("backup.history") }
+    static var backupCreateManual: String { localize("backup.create_manual") }
+    static var backupSelectPreview: String { localize("backup.select_preview") }
+    static var backupRestoreThis: String { localize("backup.restore_this") }
+    static func backupCreateFailed(_ detail: String) -> String {
+        String(format: localize("backup.create_failed"), detail)
+    }
+    static func backupRestoreFailed(_ detail: String) -> String {
+        String(format: localize("backup.restore_failed"), detail)
+    }
 
     // MARK: - Errors (additional)
-    static let errorUnknown = localize("error.unknown")
-    static let errorEmptyHosts = localize("error.empty_hosts")
-    static let errorReadBackupFailed = localize("error.read_backup_failed")
-    static let errorOverwrite = localize("error.overwrite")
-    static let errorExternalModification = localize("error.external_modification")
-    static let errorExternalModificationMessage = localize("error.external_modification.message")
+    static var errorUnknown: String { localize("error.unknown") }
+    static var errorEmptyHosts: String { localize("error.empty_hosts") }
+    static var errorReadBackupFailed: String { localize("error.read_backup_failed") }
+    static var errorOverwrite: String { localize("error.overwrite") }
+    static var errorExternalModification: String { localize("error.external_modification") }
+    static var errorExternalModificationMessage: String { localize("error.external_modification.message") }
 
     // MARK: - Backup & Restore
-    static let backupTitle = localize("backup.title")
-    static let backupDescription = localize("backup.description")
-    static let backupCreate = localize("backup.create")
-    static let backupRestore = localize("backup.restore")
-    static let backupDelete = localize("backup.delete")
-    static let backupNoBackups = localize("backup.no_backups")
-    static let backupConfirmRestore = localize("backup.confirm_restore")
-    static let backupConfirmDelete = localize("backup.confirm_delete")
-    static let backupRestored = localize("backup.restored")
-    static let backupCreated = localize("backup.created")
-    static let backupDeleted = localize("backup.deleted")
+    static var backupTitle: String { localize("backup.title") }
+    static var backupDescription: String { localize("backup.description") }
+    static var backupCreate: String { localize("backup.create") }
+    static var backupRestore: String { localize("backup.restore") }
+    static var backupDelete: String { localize("backup.delete") }
+    static var backupNoBackups: String { localize("backup.no_backups") }
+    static var backupConfirmRestore: String { localize("backup.confirm_restore") }
+    static var backupConfirmDelete: String { localize("backup.confirm_delete") }
+    static var backupRestored: String { localize("backup.restored") }
+    static var backupCreated: String { localize("backup.created") }
+    static var backupDeleted: String { localize("backup.deleted") }
 
     // MARK: - External Modification Alert
-    static let alertExternalModificationTitle = localize("alert.external_modification.title")
-    static let alertExternalModificationMessage = localize("alert.external_modification.message")
-    static let alertExternalModificationReload = localize("alert.external_modification.reload")
-    static let alertExternalModificationIgnore = localize("alert.external_modification.ignore")
+    static var alertExternalModificationTitle: String { localize("alert.external_modification.title") }
+    static var alertExternalModificationMessage: String { localize("alert.external_modification.message") }
+    static var alertExternalModificationReload: String { localize("alert.external_modification.reload") }
+    static var alertExternalModificationIgnore: String { localize("alert.external_modification.ignore") }
 
     // MARK: - Dialogs
-    static let dialogOK = localize("dialog.ok")
-    static let dialogCancel = localize("dialog.cancel")
-    static let dialogSave = localize("dialog.save")
-    static let dialogDelete = localize("dialog.delete")
-    static let dialogRename = localize("dialog.rename")
-    static let dialogAdd = localize("dialog.add")
-    static let dialogCreate = localize("dialog.create")
-    static let dialogNamePlaceholder = localize("dialog.name_placeholder")
-    static let dialogConfirmDelete = localize("dialog.confirm_delete")
-    static let dialogConfirmDiscard = localize("dialog.confirm_discard")
+    static var dialogOK: String { localize("dialog.ok") }
+    static var dialogDone: String { localize("dialog.done") }
+    static var dialogCancel: String { localize("dialog.cancel") }
+    static var dialogSave: String { localize("dialog.save") }
+    static var dialogDelete: String { localize("dialog.delete") }
+    static var dialogRename: String { localize("dialog.rename") }
+    static var dialogAdd: String { localize("dialog.add") }
+    static var dialogCreate: String { localize("dialog.create") }
+    static var dialogNamePlaceholder: String { localize("dialog.name_placeholder") }
+    static var dialogConfirmDelete: String { localize("dialog.confirm_delete") }
+    static var dialogConfirmDiscard: String { localize("dialog.confirm_discard") }
+    static var dialogDeleteNodeTitle: String { localize("dialog.delete_node.title") }
+    static var dialogDeleteNodeMessage: String { localize("dialog.delete_node.message") }
+    static var dialogDeleteGroupTitle: String { localize("dialog.delete_group.title") }
+    static var dialogDeleteGroupMessage: String { localize("dialog.delete_group.message") }
 
     // MARK: - Errors
-    static let errorGeneric = localize("error.generic")
-    static let errorWriteFailed = localize("error.write_failed")
-    static let errorMergeFailed = localize("error.merge_failed")
-    static let errorConflicts = localize("error.conflicts")
-    static let errorParserEmptyContent = localize("error.parser.empty_content")
+    static var errorGeneric: String { localize("error.generic") }
+    static var errorWriteFailed: String { localize("error.write_failed") }
+    static var errorMergeFailed: String { localize("error.merge_failed") }
+    static var errorConflicts: String { localize("error.conflicts") }
+    static var errorParserEmptyContent: String { localize("error.parser.empty_content") }
     static func errorParserInvalidIP(line: Int, value: String) -> String {
         String(format: localize("error.parser.invalid_ip"), line, value)
     }
@@ -180,50 +216,59 @@ enum L {
     }
 
     // MARK: - DNS
-    static let dnsRefreshSuccess = localize("dns.refresh.success")
-    static let dnsRefreshFailed = localize("dns.refresh.failed")
+    static var dnsRefreshSuccess: String { localize("dns.refresh.success") }
+    static var dnsRefreshFailed: String { localize("dns.refresh.failed") }
 
     // MARK: - Config
-    static let configLoadFailed = localize("config.load.failed")
-    static let configSaveFailed = localize("config.save.failed")
-    static let configRecovered = localize("config.recovered")
+    static var configLoadFailed: String { localize("config.load.failed") }
+    static var configSaveFailed: String { localize("config.save.failed") }
+    static var configRecovered: String { localize("config.recovered") }
 
     // MARK: - Preview (additional)
     static func previewTruncated(_ lines: Int) -> String {
         String(format: localize("preview.truncated"), lines)
     }
-    static let previewClickFull = localize("preview.click_full")
+    static var previewClickFull: String { localize("preview.click_full") }
 
     // MARK: - MenuBarViewModel
-    static let externalModificationDetected = localize("external.modification.detected")
-    static let externalModificationConfirm = localize("external.modification.confirm")
-    static let configRecoveredPrompt = localize("config.recovered.prompt")
-    static let logDraftPersistSuccess = localize("log.draft.persist.success")
-    static let logDraftPersistFailed = localize("log.draft.persist.failed")
-    static let logMergeSuccess = localize("log.merge.success")
-    static let logMergeFailed = localize("log.merge.failed")
+    static var externalModificationDetected: String { localize("external.modification.detected") }
+    static var externalModificationConfirm: String { localize("external.modification.confirm") }
+    static var configRecoveredPrompt: String { localize("config.recovered.prompt") }
+    static var logDraftPersistSuccess: String { localize("log.draft.persist.success") }
+    static var logDraftPersistFailed: String { localize("log.draft.persist.failed") }
+    static var logMergeSuccess: String { localize("log.merge.success") }
+    static var logMergeFailed: String { localize("log.merge.failed") }
 
     // MARK: - Helper Status
-    static let helperStatusNotRegistered = localize("helper.status.not_registered")
-    static let helperStatusEnabled = localize("helper.status.enabled")
-    static let helperStatusDisabled = localize("helper.status.disabled")
-    static let helperStatusUnknown = localize("helper.status.unknown")
-    static let helperRegisterFailed = localize("helper.register.failed")
-    static let launchAtLoginFailed = localize("launchatlogin.failed")
+    static var helperStatusNotRegistered: String { localize("helper.status.not_registered") }
+    static var helperStatusEnabled: String { localize("helper.status.enabled") }
+    static var helperStatusDisabled: String { localize("helper.status.disabled") }
+    static var helperStatusUnknown: String { localize("helper.status.unknown") }
+    static var helperRegisterFailed: String { localize("helper.register.failed") }
+    static var launchAtLoginFailed: String { localize("launchatlogin.failed") }
 
     // MARK: - Settings
-    static let settingsTitle = localize("settings.title")
-    static let settingsGeneral = localize("settings.general")
-    static let settingsHelper = localize("settings.helper")
-    static let settingsConfigInfo = localize("settings.config_info")
-    static let settingsLaunchAtLogin = localize("settings.launch_at_login")
-    static let settingsVersion = localize("settings.version")
-    static let settingsRefresh = localize("settings.refresh")
+    static var settingsTitle: String { localize("settings.title") }
+    static var settingsGeneral: String { localize("settings.general") }
+    static var settingsHelper: String { localize("settings.helper") }
+    static var settingsConfigInfo: String { localize("settings.config_info") }
+    static var settingsLaunchAtLogin: String { localize("settings.launch_at_login") }
+    static var settingsVersion: String { localize("settings.version") }
+    static var settingsRefresh: String { localize("settings.refresh") }
+    static var settingsHelperStatus: String { localize("settings.helper_status") }
+    static var settingsConfigVersion: String { localize("settings.config_version") }
+    static var settingsDefaultNode: String { localize("settings.default_node") }
+    static var settingsGroupCount: String { localize("settings.group_count") }
+    static var settingsLanguage: String { localize("settings.language") }
+    static var languageSystem: String { localize("settings.language.system") }
+    static var languageSimplifiedChinese: String { localize("settings.language.simplified_chinese") }
+    static var languageEnglish: String { localize("settings.language.english") }
 
     // MARK: - Private
 
     private static func localize(_ key: String) -> String {
-        NSLocalizedString(key, tableName: "Localizable", bundle: .main, value: key, comment: "")
+        let bundle = AppLanguage.stored().localizedBundle(in: .main)
+        return bundle.localizedString(forKey: key, value: key, table: "Localizable")
     }
 }
 

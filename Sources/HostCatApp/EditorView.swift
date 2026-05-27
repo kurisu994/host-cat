@@ -161,7 +161,7 @@ struct EditorView: View {
                         if viewModel.isApplying {
                             ProgressView()
                                 .controlSize(.small)
-                            Text(L.editorParsing)
+                            Text(L.editorApplying)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -177,12 +177,12 @@ struct EditorView: View {
                         Spacer()
 
                         if !errorLines.isEmpty {
-                            Label(L.errorGeneric + " (\(errorLines.count))", systemImage: "exclamationmark.triangle")
+                            Label(L.editorSyntaxErrorsCount(errorLines.count), systemImage: "exclamationmark.triangle")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
                         }
 
-                        Text("\(editingContent.count) " + L.editorLine)
+                        Text(L.editorCharactersCount(editingContent.count))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -191,10 +191,10 @@ struct EditorView: View {
                     .background(Color(NSColor.controlBackgroundColor))
                 }
             } else {
-                ContentUnavailableView(L.sidebarGroups, systemImage: "doc.text")
+                ContentUnavailableView(L.editorSelectNode, systemImage: "doc.text")
             }
         }
-        .alert(L.dialogConfirmDelete, isPresented: $showDeleteConfirmation) {
+        .alert(L.dialogDeleteNodeTitle, isPresented: $showDeleteConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
                     let service = mutationService
@@ -207,9 +207,9 @@ struct EditorView: View {
                 nodeToDelete = nil
             }
         } message: {
-            Text(L.dialogConfirmDelete)
+            Text(L.dialogDeleteNodeMessage)
         }
-        .alert(L.dialogConfirmDelete, isPresented: $showDeleteGroupConfirmation) {
+        .alert(L.dialogDeleteGroupTitle, isPresented: $showDeleteGroupConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let groupID = groupToDelete {
                     let service = mutationService
@@ -222,7 +222,7 @@ struct EditorView: View {
                 groupToDelete = nil
             }
         } message: {
-            Text(L.dialogConfirmDelete)
+            Text(L.dialogDeleteGroupMessage)
         }
         .frame(minWidth: 700, minHeight: 500)
         .overlay {

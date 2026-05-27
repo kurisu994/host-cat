@@ -10,6 +10,7 @@ let strictConcurrency: [SwiftSetting] = [
 // Package.swift 保留 Core 库和测试 target，用于 `swift test` 快速验证核心逻辑。
 let package = Package(
     name: "HostCat",
+    defaultLocalization: "zh-Hans",
     platforms: [
         .macOS(.v14)
     ],
@@ -20,6 +21,9 @@ let package = Package(
     targets: [
         .target(
             name: "HostCatCore",
+            resources: [
+                .process("Resources")
+            ],
             swiftSettings: strictConcurrency
         ),
         .target(

@@ -28,10 +28,12 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
     func writeHosts(
         _ contents: NSString,
         expectedCurrentHostsHash: NSString?,
+        localizationIdentifier: NSString,
         withReply reply: @escaping (NSDictionary) -> Void
     ) {
         let content = contents as String
         let expectedHash = expectedCurrentHostsHash as? String
+        let language = AppLanguage(rawValue: localizationIdentifier as String) ?? .simplifiedChinese
 
         logger.info("收到写入请求, 内容长度=\(content.count), expectedHash=\(expectedHash?.prefix(8) ?? "nil")")
 
@@ -54,6 +56,8 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
             logger.info("写入成功, hash=\(outcome.finalHash.prefix(8))..., dns=\(outcome.dnsRefreshSuccess)")
             reply(result)
         } catch {
+            let errorMessage = (error as? HostsWriteError)?.description(in: language)
+                ?? error.localizedDescription
             let errorCode: String
             switch error {
             case HostsWriteError.fileImmutable:
@@ -67,10 +71,10 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
             let result: NSDictionary = [
                 "success": false,
                 "errorCode": errorCode,
-                "errorMessage": error.localizedDescription
+                "errorMessage": errorMessage
             ]
 
-            logger.error("写入失败: \(error.localizedDescription)")
+            logger.error("写入失败: \(errorMessage)")
             reply(result)
         }
     }

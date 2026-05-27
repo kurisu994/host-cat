@@ -72,13 +72,13 @@ enum AppLanguage: String, CaseIterable {
 
 App 层现有 `L` API 保持调用形式尽量稳定，但解析改为依据当前语言偏好的动态查找，而不是依赖启动期固定值。对于 `system`，选择与当前系统偏好匹配的资源 bundle；对于显式语言，直接使用对应 `.lproj` 资源。
 
-Core 层不能依赖 SwiftUI。`LC` 在新生成错误和状态文本时从 Foundation 可读取的共享语言偏好解析相应资源。运行前已经实例化为普通 `String` 的历史错误消息不做反向重译；用户再次触发操作或状态刷新时，新的文本使用当前语言。
+Core 层不能依赖 SwiftUI。主应用进程中的 `LC` 在新生成错误和状态文本时从 Foundation 可读取的共享语言偏好解析相应资源。Privileged Helper 是独立进程，不能读取主应用的 `UserDefaults` domain；真实写入请求因此额外携带已解析的 `en` / `zh-Hans` 字符串，Helper 只用它格式化错误响应，不用于路径、权限或写入判定。运行前已经实例化为普通 `String` 的历史错误消息不做反向重译；用户再次触发操作或状态刷新时，新的文本使用当前语言。
 
 ### Helper 管理
 
 `HelperRegistrationManager` 保持为 UI 到 Helper 注册状态的唯一管理对象。设置页继续调用其现有注册、打开审批设置和刷新接口，不调整：
 
-- XPC 协议。
+- XPC 的权限/写入语义；仅允许新增稳定的语言标识字符串用于错误展示。
 - code signing requirement。
 - `/private/etc/hosts` 写入边界。
 - DNS 刷新命令白名单。

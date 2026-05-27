@@ -14,16 +14,16 @@ struct MergedPreviewView: View {
                 Spacer()
 
                 if viewModel.lastDuplicateCount > 0 {
-                    Label(L.editorDuplicatesCount(viewModel.lastDuplicateCount), systemImage: "arrow.triangle.merge")
+                    Label(L.previewMergedDuplicatesCount(viewModel.lastDuplicateCount), systemImage: "arrow.triangle.merge")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Button(L.editorPreview) {
+                Button(L.previewRefresh) {
                     viewModel.updateMergedPreview()
                 }
 
-                Button(L.editorApply) {
+                Button(L.previewApply) {
                     Task {
                         _ = await viewModel.applyImmediately()
                     }
@@ -39,7 +39,10 @@ struct MergedPreviewView: View {
             if !viewModel.lastConflicts.isEmpty {
                 ConflictBanner(conflicts: viewModel.lastConflicts) { conflict in
                     // TODO: Navigating to the conflict node requires EditorView integration; currently shows a hint.
-                    viewModel.applyError = L.errorExternalModification + " \(conflict.hostname) \(L.previewConflicts) \(conflict.incoming.nodeName)"
+                    viewModel.applyError = L.previewConflictLocation(
+                        hostname: conflict.hostname,
+                        nodeName: conflict.incoming.nodeName
+                    )
                 }
             }
 
@@ -53,7 +56,7 @@ struct MergedPreviewView: View {
                 }
                 .background(Color(NSColor.textBackgroundColor))
             } else {
-                ContentUnavailableView(L.previewNoConflicts, systemImage: "doc.text")
+                ContentUnavailableView(L.previewNoContent, systemImage: "doc.text")
             }
 
             // Status bar
@@ -61,7 +64,7 @@ struct MergedPreviewView: View {
                 if viewModel.isApplying {
                     ProgressView()
                         .controlSize(.small)
-                    Text(L.editorParsing)
+                    Text(L.editorApplying)
                         .font(.caption)
                 }
 
@@ -76,7 +79,7 @@ struct MergedPreviewView: View {
                 Spacer()
 
                 if let text = viewModel.lastMergedText {
-                    Text("\(text.count) " + L.editorLine)
+                    Text(L.editorCharactersCount(text.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -103,13 +106,13 @@ struct ConflictBanner: View {
             HStack {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
-                Text(L.previewConflicts + " (\(conflicts.count))")
+                Text(L.previewConflictsCount(conflicts.count))
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
                 Spacer()
 
-                Text(L.errorConflicts)
+                Text(L.previewConflictHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -141,7 +144,7 @@ struct ConflictRow: View {
 
                 HStack(spacing: 16) {
                     ConflictEndpointLabel(
-                        label: L.statusDefault,
+                        label: L.previewExisting,
                         ip: conflict.existing.ipAddress,
                         source: conflict.existing.nodeName
                     )
@@ -151,7 +154,7 @@ struct ConflictRow: View {
                         .foregroundStyle(.secondary)
 
                     ConflictEndpointLabel(
-                        label: L.previewConflicts,
+                        label: L.previewConflicting,
                         ip: conflict.incoming.ipAddress,
                         source: conflict.incoming.nodeName
                     )
@@ -160,7 +163,7 @@ struct ConflictRow: View {
 
             Spacer()
 
-            Button(L.sidebarGroupOptions) {
+            Button(L.previewShowConflictDetails) {
                 onNavigate()
             }
             .buttonStyle(.borderless)

@@ -159,7 +159,7 @@ struct BackupRestoreView: View {
             _ = try backupStore.createBackup(content: hostsText)
             refreshBackups()
         } catch {
-            errorMessage = L.backupCreateFailed + ": \(error.localizedDescription)"
+            errorMessage = L.backupCreateFailed(error.localizedDescription)
         }
     }
 
@@ -176,7 +176,7 @@ struct BackupRestoreView: View {
                     errorMessage = nil
                     refreshBackups()
                 } else {
-                    errorMessage = L.backupRestoreFailed + ": \(result.errorMessage ?? L.errorUnknown)"
+                    errorMessage = L.backupRestoreFailed(result.errorMessage ?? L.errorUnknown)
                 }
             }
         }

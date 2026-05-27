@@ -174,9 +174,9 @@ public actor HostWriteCoordinator {
                 ? nil
                 : config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
             writePlan = (merged, expectedHash)
-            logger.info(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount))
+            logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount))")
         } catch let HostMergeError.conflicts(conflicts) {
-            logger.warning(LC.logMergeConflicts(count: conflicts.count))
+            logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
             return (
                 ApplyResult(
                     success: false,
@@ -187,7 +187,7 @@ public actor HostWriteCoordinator {
             )
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error(LC.logMergeFailed(message))
+            logger.error("\(LC.logMergeFailed(message))")
             return (
                 ApplyResult(
                     success: false,
@@ -204,7 +204,7 @@ public actor HostWriteCoordinator {
                 let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
                 let currentHostsText = HostsImporter().importHostsWithFallback(data: currentHostsData).decodedContent
                 _ = try backupStore.createBackup(content: currentHostsText)
-                logger.info(LC.logBackupCreated("pre-write"))
+                logger.info("\(LC.logBackupCreated("pre-write"))")
             } catch {
                 let message = "\(LC.logBackupFailed(error.localizedDescription))"
                 logger.error("\(message)")
@@ -236,7 +236,7 @@ public actor HostWriteCoordinator {
             lastAppliedAt = appliedAt
             lastSuccessfulConfigSnapshot = appliedConfig
 
-            logger.info(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))))
+            logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))))")
 
             return (
                 ApplyResult(
@@ -250,7 +250,7 @@ public actor HostWriteCoordinator {
         } catch {
             // 5. Write failed: roll back to the last successful config snapshot
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error(LC.logWriteFailed(message))
+            logger.error("\(LC.logWriteFailed(message))")
             let rolledBack = lastSuccessfulConfigSnapshot
             return (
                 ApplyResult(
