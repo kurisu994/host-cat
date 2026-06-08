@@ -1,7 +1,7 @@
 # HostCat 开发方案设计
 
 日期：2026-05-19
-最后更新：2026-05-27（补充中英文资源接线与 hosts 替换前 hash 二次校验）
+最后更新：2026-06-08（撤销快捷键改为 ⇧⌘Z、HostWriteCoordinator 接口清理、Helper 语言标识校验）
 
 ## 概述
 
@@ -359,7 +359,9 @@ HostCat.xcodeproj
 - **应用自更新**：计划第二版引入 Sparkle 框架实现自动更新，首版暂不包含。
 - **hosts 编辑器语法高亮与行号组件**：采用 AppKit 的 `NSTextView` 通过 SwiftUI `NSViewRepresentable` 进行桥接，并使用 **TextKit 2**（即 `NSTextLayoutManager`）进行文本行段计算与渲染。高亮引擎 `HostsSyntaxHighlighter` 实现了对 IP（蓝色）、hostname（绿色）、注释（灰色）、管理区块起止符（橙色粗体）的多色渲染，并为所有语法错误行赋予红色半透明背景；自定义行号栏 `LineNumberRulerView`（`NSRulerView` 子类）能基于 TextKit 2 完美执行滚动与缩放计算，高亮显示当前行，并对错误行号标识为红字与红点。同时，语法高亮整个结构体添加了 `@MainActor` 修饰，完美适配 Swift 6 严格并发校验。
 - **全量多行语法错误收集**：在 `HostsParser` 中新增非抛出的 `validate(_:)` 方法，单次运行即可将整个 hosts 文本中所有不合规的行号与具体错误类型抓取至数组。编辑器 `EditorView` 结合该功能，做到了同时渲染出多行红字背景与红点 gutter 的直观报错体验，取代了单次仅暴露单行错误的中断性流程。
-- **编辑器工具栏与撤销功能**：`EditorView` 右侧编辑器顶部包含工具栏，展示当前节点名称、撤销按钮（Cmd+Z）和应用按钮（Cmd+Return），未保存编辑时按钮可用，提供清晰的编辑状态反馈。
+- **编辑器工具栏与撤销功能**：`EditorView` 右侧编辑器顶部包含工具栏，展示当前节点名称、放弃按钮（⇧⌘Z，丢弃当前节点所有未保存修改）和应用按钮（⌘Return）。撤销按钮使用 ⇧⌘Z 而非 ⌘Z，避免与 macOS 标准的逐步撤销快捷键冲突导致用户长时间编辑后误触整体丢弃。未保存编辑时按钮可用，提供清晰的编辑状态反馈。
+- **`HostWriteCoordinator` 失败语义**：写入失败时 **不返回回滚配置**，UI 也不用快照覆盖草稿。配置草稿在 apply 调用前已通过 `MenuBarViewModel.persistDraftConfig()` 持久化；失败时 hosts 保持未应用，UI 提示「hosts 未应用」并保留用户当前编辑内容。`HostWriteCoordinator.lastSuccessfulConfigSnapshot` 仅作为 actor 内部状态供服务层判定真实 hosts 内容，不通过 API 返回。
+- **`HelperService` 语言标识严格校验**：Helper 端 XPC 接口只接受已解析的具体语言标识（`en` / `zh-Hans`）；收到 `"system"` 或未知值时记录 warning 并回退到 `zh-Hans`。主应用必须先在客户端调用 `AppLanguage.effectiveLocalizationIdentifier()` 解析后再传递。语言标识仅用于格式化错误响应，不参与路径、权限或内容判定。
 
 ## 初步取舍
 

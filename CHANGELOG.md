@@ -6,6 +6,9 @@
 
 ### Added
 
+- 新增 `ValidatorParityTests`，验证 `HostsParser.validate` 与 `HostsContentValidator.validate` 在语法错误上行为一致，避免编辑器校验通过但写入侧二次拒绝的边界差异。
+- 补充 `HostWriteCoordinatorTests` 失败语义测试：hash mismatch 不自动重试、失败批次不阻塞后续批次。
+- 在 `/memory-bank/` 下新建 6 份记忆银行文件（projectbrief / productContext / systemPatterns / techContext / activeContext / progress），供后续 AI 会话快速恢复项目上下文。
 - 添加简体中文与英文字符串资源，覆盖菜单栏、编辑/预览、Helper 设置、备份恢复、设置页及 Core 用户可见错误。
 - 添加设置页语言选择器，支持跟随系统、简体中文与 English 在运行期间即时切换。
 - **【语法高亮与行号】hosts 编辑器语法高亮与多行错误定位标记：使用 TextKit 2 与 NSRulerView 实现极佳的等宽 hosts 编辑与校验体验。**
@@ -64,6 +67,8 @@
 
 ### Fixed
 
+- 修复编辑器「放弃」按钮使用 ⌘Z 与 macOS 标准撤销快捷键冲突的问题，长时间编辑后按 ⌘Z 可能整体丢弃草稿；改为 ⇧⌘Z，并在 tooltip 中提示快捷键。
+- 修复 `HelperService` 未严格校验 `localizationIdentifier` 的问题：未知值或 `"system"` 时记录 warning 并显式回退到 `zh-Hans`，防止英语用户看到中文错误文案。
 - 修复切换界面语言后菜单栏操作标题需等待鼠标悬停才更新的问题；菜单内容现在观察语言偏好并立即重建原生菜单项。
 - 修复国际化资源未接入 SwiftPM 和生成的 Xcode 工程导致项目无法构建、本地化 key 无法加载的问题。
 - 修复国际化迁移中错误复用文案导致的状态、字符数、冲突操作与分组删除风险提示失真问题。
@@ -83,7 +88,7 @@
 - 修复外部修改确认弹窗只挂在编辑器窗口的问题，现在菜单栏、合成预览和备份窗口入口也能处理外部修改。
 - 修复 `HostsParser` 对纯注释/空行内容误报 `emptyContent` 错误的问题，现在返回空记录数组。
 - 修复 `HostsMergerTests` 中重复的测试方法名 `testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed`。
-- 修复 `HostWriteCoordinator` 写入失败后的状态隔离问题，现在返回 `rolledBackConfig` 供调用方判断真实 hosts 状态。
+- 修复 `HostWriteCoordinator` 写入失败后的状态隔离问题，写入失败时草稿保留在 UI 层，hosts 保持未应用状态。
 - 放宽 `HostsParser` 的 hostname 校验，支持下划线 `_`。
 - 修复 `EditorView` 中 `ConfigMutationService` 被重复实例化的问题，改为统一使用 `@State` 属性。
 - 为 `HostsParser` 补充制表符分隔、下划线 hostname、纯注释/空内容等边界测试用例。
@@ -106,6 +111,7 @@
 
 ### Documentation
 
+- 更新 `docs/hostcat-design.md`：撤销快捷键改为 ⇧⌘Z、`HostWriteCoordinator` 失败语义、Helper 语言标识严格校验，并将最后更新日期推进至 2026-06-08。
 - 补充开发方案设计，明确 XPC 安全边界、状态快照、写入安全策略、测试策略和构建分发策略。
 - 新增 README、CHANGELOG 和 AGENTS 协作文档。
 - 更新 README，补充 `HostsImporter` 能力和阶段1当前进度。
@@ -115,6 +121,7 @@
 
 ### Refactored
 
+- 简化 `HostWriteCoordinator` 接口：`scheduleApply` / `applyImmediately` / `performWrite` 返回 `ApplyResult` 而非 `(ApplyResult, AppConfig?)` 元组；`lastSuccessfulConfigSnapshot` 保留为 actor 内部状态供服务层使用，不再作为 UI 回滚指令通过 API 返回，与 2026-05-27 设计调整后的"保留草稿"语义对齐。
 - 将 `EditorView` 中原有的标准 `TextEditor` 替换为自定义的 `HostsTextView` 桥接组件，极大改善了 hosts 编辑体验。
 - 重构 `HostsSyntaxHighlighter` 为 `@MainActor` 并使用主 Actor 级别的 static 属性，完美符合 Swift 6 Strict Concurrency 严格并发安全校验。
 - 拆分 `EditorView.swift`（747→362 行）为 `EditorView`、`SidebarComponents`、`NameInputDialog`、`NodeReorderDropDelegate` 四个文件。

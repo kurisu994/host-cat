@@ -35,6 +35,9 @@
 
 - `HostsTextView` 的 `updateNSView` 中 `isUpdatingFromSwiftUI` 标记用于防止编辑时光标跳动，此标记不可声明为 `private` 否则会导致 Xcode 构建失败。
 - 编辑器行号栏与标题栏的视觉层级已统一，后续样式调整需保持两者一致性。
+- `HostWriteCoordinator.scheduleApply` / `applyImmediately` 返回 `ApplyResult`（不再是 `(ApplyResult, AppConfig?)` 元组）。失败时草稿保留在 UI 层（已通过 `MenuBarViewModel.persistDraftConfig()` 持久化），不要再从 coordinator 拉取快照覆盖 UI。如需读取 actor 内部上次成功快照，访问 `lastSuccessfulConfigSnapshot` 属性即可。
+- `HelperService` 仅接受已解析的 `localizationIdentifier`（`en` / `zh-Hans`）；主应用须先调用 `AppLanguage.effectiveLocalizationIdentifier()` 解析后再通过 XPC 传递。
+- 编辑器「放弃」按钮快捷键为 ⇧⌘Z（避让 macOS 标准 ⌘Z 单步撤销），调整按钮或新增类似破坏性操作时遵循同一约定。
 
 ## 模块边界
 
@@ -66,10 +69,11 @@
 
 - 设计决策更新到 `docs/hostcat-design.md`。
 - 用户可见的运行、测试、模块说明更新到 `README.md`。
-- 已完成的重要变更更新到 `CHANGELOG.md`。
+- 已完成的重要变更更新到 `CHANGELOG.md`（仅 `## 未发布` 段，已发版本只读）。
 - 待办任务和进度更新到 `TODO.md`。
 - 已移除的文档（如 `ihosts-research.md`）需同步清理所有引用。
 - agent 协作规则更新到本文件。
+- **项目记忆银行**：`/memory-bank/` 下 6 个文件（projectbrief / productContext / systemPatterns / techContext / activeContext / progress）。新会话开始时读取这 6 个文件可在几秒内同步项目全貌；每次会话结束前应更新 `activeContext.md`（活跃文件、决策、下一步、阻塞），如有里程碑或架构变更同步更新 `progress.md`。Memory Bank 侧重项目记忆和动态状态，本文件侧重编码规范和约定，两者互补。
 
 ## 代码提交规则
 
