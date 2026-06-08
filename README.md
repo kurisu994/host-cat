@@ -188,6 +188,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 - [变更日志](CHANGELOG.md)
 - [Agent 协作说明](AGENTS.md)
 - [待办任务](TODO.md)
+- [项目记忆银行](memory-bank/) — 6 份 AI 协作上下文文件（项目愿景、产品上下文、系统模式、技术细节、活跃状态、进度历史）
 
 ## 开发原则
 
