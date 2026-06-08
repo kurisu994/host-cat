@@ -418,7 +418,7 @@ private struct EditorToolbar: View {
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
-            .keyboardShortcut("z", modifiers: .command)
+            .keyboardShortcut("z", modifiers: [.command, .shift])
             .help(L.editorDiscardTooltip)
             .disabled(!hasUnsavedEdits)
 

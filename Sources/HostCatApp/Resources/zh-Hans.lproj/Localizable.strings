@@ -51,7 +51,7 @@
 "editor.apply" = "应用";
 "editor.apply_tooltip" = "将更改应用到 /etc/hosts";
 "editor.discard" = "放弃";
-"editor.discard_tooltip" = "放弃更改";
+"editor.discard_tooltip" = "放弃当前节点的所有未保存修改 (⇧⌘Z)";
 "editor.preview" = "预览";
 "editor.preview_tooltip" = "预览合并后的 hosts";
 "editor.errors" = "错误";

@@ -33,7 +33,19 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
     ) {
         let content = contents as String
         let expectedHash = expectedCurrentHostsHash as? String
-        let language = AppLanguage(rawValue: localizationIdentifier as String) ?? .simplifiedChinese
+        // 仅接受主应用已解析后的具体语言标识；收到 system 或未知值时
+        // 记录警告并回退到中文，避免错误文案语言不一致。
+        let rawLanguage = localizationIdentifier as String
+        let language: AppLanguage
+        switch rawLanguage {
+        case AppLanguage.english.rawValue:
+            language = .english
+        case AppLanguage.simplifiedChinese.rawValue:
+            language = .simplifiedChinese
+        default:
+            logger.warning("Unexpected localizationIdentifier '\(rawLanguage)', falling back to zh-Hans")
+            language = .simplifiedChinese
+        }
 
         logger.info("收到写入请求, 内容长度=\(content.count), expectedHash=\(expectedHash?.prefix(8) ?? "nil")")
 

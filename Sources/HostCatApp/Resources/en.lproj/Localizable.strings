@@ -51,7 +51,7 @@
 "editor.apply" = "Apply";
 "editor.apply_tooltip" = "Apply changes to /etc/hosts";
 "editor.discard" = "Discard";
-"editor.discard_tooltip" = "Discard changes";
+"editor.discard_tooltip" = "Discard all unsaved changes for this node (⇧⌘Z)";
 "editor.preview" = "Preview";
 "editor.preview_tooltip" = "Preview merged hosts";
 "editor.errors" = "Errors";

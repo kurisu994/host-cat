@@ -1,7 +1,6 @@
 import Foundation
 import os.log
 
-private typealias ApplyOutcome = (result: ApplyResult, rolledBackConfig: AppConfig?)
 private typealias WritePlan = (merged: MergedHosts, expectedHash: String?)
 
 /// Apply result status codes, distinguishing different result types.
@@ -52,10 +51,13 @@ public actor HostWriteCoordinator {
     private let debounceInterval: Duration
     private let logger = Logger(subsystem: "com.hostcat.app", category: "HostWriteCoordinator")
 
-    private var pendingTask: Task<ApplyOutcome, Never>?
+    private var pendingTask: Task<ApplyResult, Never>?
     private var pendingGeneration = 0
     private var isWriting = false
 
+    /// 最近一次成功写入的配置快照，仅供服务层内部判定真实 hosts 状态，
+    /// 不再用于覆盖 UI 的草稿。写入失败时草稿保留在 UI 层，由 `MenuBarViewModel`
+    /// 通过 `persistDraftConfig` 在调用 apply 前已经持久化。
     public private(set) var lastSuccessfulConfigSnapshot: AppConfig?
     public private(set) var lastAppliedHash: String?
     public private(set) var lastAppliedAt: Date?
@@ -76,38 +78,33 @@ public actor HostWriteCoordinator {
 
     /// Schedules an apply operation. If a pending debounce exists, the old task is cancelled and restarted.
     /// The returned ApplyResult indicates whether the scheduled write completed successfully.
+    /// 失败时不返回回滚快照：UI 在调用前已持久化草稿，hosts 保持未应用状态。
     public func scheduleApply(
         config: AppConfig,
         force: Bool = false
-    ) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
+    ) async -> ApplyResult {
         // Cancel the previous debounce task.
         pendingTask?.cancel()
         pendingGeneration += 1
         let generation = pendingGeneration
 
         // If a write is currently in progress, create a new debounce task that waits for it to finish.
-        let task = Task<ApplyOutcome, Never> { [debounceInterval] in
+        let task = Task<ApplyResult, Never> { [debounceInterval] in
             do {
                 try await Task.sleep(for: debounceInterval)
                 guard !Task.isCancelled else {
-                    return (
-                        ApplyResult(
-                            success: false,
-                            status: .cancelled
-                        ),
-                        nil
+                    return ApplyResult(
+                        success: false,
+                        status: .cancelled
                     )
                 }
 
                 self.clearPendingTask(ifGeneration: generation)
                 return await self.performWrite(config: config, force: force)
             } catch {
-                return (
-                    ApplyResult(
-                        success: false,
-                        status: .cancelled
-                    ),
-                    nil
+                return ApplyResult(
+                    success: false,
+                    status: .cancelled
                 )
             }
         }
@@ -122,7 +119,7 @@ public actor HostWriteCoordinator {
     public func applyImmediately(
         config: AppConfig,
         force: Bool = false
-    ) async -> (result: ApplyResult, rolledBackConfig: AppConfig?) {
+    ) async -> ApplyResult {
         pendingTask?.cancel()
         pendingTask = nil
         return await performWrite(config: config, force: force)
@@ -152,14 +149,11 @@ public actor HostWriteCoordinator {
         return true
     }
 
-    private func performWrite(config: AppConfig, force: Bool) async -> ApplyOutcome {
+    private func performWrite(config: AppConfig, force: Bool) async -> ApplyResult {
         guard await waitUntilCurrentWriteFinishes() else {
-            return (
-                ApplyResult(
-                    success: false,
-                    status: .cancelled
-                ),
-                nil
+            return ApplyResult(
+                success: false,
+                status: .cancelled
             )
         }
 
@@ -177,24 +171,18 @@ public actor HostWriteCoordinator {
             logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount))")
         } catch let HostMergeError.conflicts(conflicts) {
             logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
-            return (
-                ApplyResult(
-                    success: false,
-                    conflicts: conflicts,
-                    status: .conflicts(conflicts)
-                ),
-                nil
+            return ApplyResult(
+                success: false,
+                conflicts: conflicts,
+                status: .conflicts(conflicts)
             )
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("\(LC.logMergeFailed(message))")
-            return (
-                ApplyResult(
-                    success: false,
-                    errorMessage: message,
-                    status: .mergeFailed(message)
-                ),
-                nil
+            return ApplyResult(
+                success: false,
+                errorMessage: message,
+                status: .mergeFailed(message)
             )
         }
 
@@ -208,13 +196,10 @@ public actor HostWriteCoordinator {
             } catch {
                 let message = "\(LC.logBackupFailed(error.localizedDescription))"
                 logger.error("\(message)")
-                return (
-                    ApplyResult(
-                        success: false,
-                        errorMessage: message,
-                        status: .writeFailed(message)
-                    ),
-                    lastSuccessfulConfigSnapshot
+                return ApplyResult(
+                    success: false,
+                    errorMessage: message,
+                    status: .writeFailed(message)
                 )
             }
         }
@@ -238,27 +223,22 @@ public actor HostWriteCoordinator {
 
             logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))))")
 
-            return (
-                ApplyResult(
-                    success: true,
-                    appliedHash: result.finalHostsHash,
-                    appliedAt: appliedAt,
-                    status: .success
-                ),
-                nil
+            return ApplyResult(
+                success: true,
+                appliedHash: result.finalHostsHash,
+                appliedAt: appliedAt,
+                status: .success
             )
         } catch {
-            // 5. Write failed: roll back to the last successful config snapshot
+            // 5. Write failed: 草稿已在 UI 层持久化，hosts 保持未应用状态。
+            // `lastSuccessfulConfigSnapshot` 仍保留供服务层判定真实 hosts 内容，
+            // 但 UI 不再用它覆盖用户正在编辑的草稿。
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("\(LC.logWriteFailed(message))")
-            let rolledBack = lastSuccessfulConfigSnapshot
-            return (
-                ApplyResult(
-                    success: false,
-                    errorMessage: message,
-                    status: .writeFailed(message)
-                ),
-                rolledBack
+            return ApplyResult(
+                success: false,
+                errorMessage: message,
+                status: .writeFailed(message)
             )
         }
     }

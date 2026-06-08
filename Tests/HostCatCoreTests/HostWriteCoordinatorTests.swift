@@ -44,7 +44,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
         let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config = makeConfig(defaultContent: "127.0.0.1 localhost\n::1 localhost")
 
-        let (result, _) = await coordinator.scheduleApply(config: config)
+        let result = await coordinator.scheduleApply(config: config)
 
         XCTAssertTrue(result.success)
         XCTAssertNotNil(result.appliedHash)
@@ -64,48 +64,46 @@ final class HostWriteCoordinatorTests: XCTestCase {
         var config = makeConfig()
         config.state.lastExternalHostsHash = "external_hash"
 
-        let (result, _) = await coordinator.scheduleApply(config: config)
+        let result = await coordinator.scheduleApply(config: config)
 
         XCTAssertTrue(result.success)
         let hashes = await fakeClient.expectedHashes
         XCTAssertEqual(hashes, ["external_hash"])
     }
 
-    func testWriteFailureDoesNotUpdateStateAndReturnsRolledBackConfig() async {
+    func testWriteFailureDoesNotUpdateStateNorSnapshot() async {
         let fakeClient = FakeHostHelperClient()
         await fakeClient.setShouldSucceed(false)
         let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config = makeConfig()
 
-        let (result, rolledBack) = await coordinator.scheduleApply(config: config)
+        let result = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
         XCTAssertNil(result.appliedHash)
         XCTAssertNil(result.appliedAt)
-        // 首次写入失败时，没有上次成功的快照，rolledBack 应为 nil
-        XCTAssertNil(rolledBack)
+        // 首次写入失败时，actor 内部也不应记录任何成功快照
+        let snapshot = await coordinator.lastSuccessfulConfigSnapshot
+        XCTAssertNil(snapshot)
     }
 
-    func testWriteFailureRollsBackToLastSuccessfulConfig() async {
+    func testWriteFailureKeepsLastSuccessfulSnapshotForServiceLayer() async {
         let fakeClient = FakeHostHelperClient()
         let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
         let config2 = makeConfig(defaultContent: "10.0.0.1 bad.com")
 
         // 先成功写入一次
-        let (result1, _) = await coordinator.scheduleApply(config: config1)
+        let result1 = await coordinator.scheduleApply(config: config1)
         XCTAssertTrue(result1.success)
 
         // 然后失败
         await fakeClient.setShouldSucceed(false)
-        let (result2, rolledBack) = await coordinator.scheduleApply(config: config2)
+        let result2 = await coordinator.scheduleApply(config: config2)
         XCTAssertFalse(result2.success)
 
-        // 应回滚到 config1
-        XCTAssertNotNil(rolledBack)
-        XCTAssertEqual(rolledBack?.defaultNode.content, "127.0.0.1 localhost")
-
-        // coordinator 内部状态也应保持为 config1
+        // coordinator 仍保留上次成功的快照供服务层判定真实 hosts 状态，
+        // 但 UI 不再用它回滚草稿（草稿在 UI 层已通过 persistDraftConfig 持久化）。
         let lastSuccessful = await coordinator.lastSuccessfulConfigSnapshot
         XCTAssertEqual(lastSuccessful?.defaultNode.content, "127.0.0.1 localhost")
     }
@@ -128,8 +126,8 @@ final class HostWriteCoordinatorTests: XCTestCase {
         let first = await r1
         let second = await r2
 
-        XCTAssertTrue(first.result.success)
-        XCTAssertTrue(second.result.success)
+        XCTAssertTrue(first.success)
+        XCTAssertTrue(second.success)
 
         let writes = await fakeClient.writtenContents
         XCTAssertEqual(writes.count, 2)
@@ -146,7 +144,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
         await fakeClient.setShouldSucceed(false)
         await fakeClient.setSimulatedError(HostHelperClientError.unavailable("hosts 已被外部修改"))
 
-        let (result, _) = await coordinator.scheduleApply(config: config)
+        let result = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
     }
@@ -162,7 +160,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
             HostGroup(name: "G", isSingleSelect: false, nodes: [node1, node2])
         ]
 
-        let (result, _) = await coordinator.scheduleApply(config: config)
+        let result = await coordinator.scheduleApply(config: config)
 
         XCTAssertFalse(result.success)
         XCTAssertNotNil(result.conflicts)
@@ -191,7 +189,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
             debounceInterval: .milliseconds(1)
         )
 
-        let (result, _) = await coordinator.applyImmediately(config: makeConfig())
+        let result = await coordinator.applyImmediately(config: makeConfig())
 
         XCTAssertFalse(result.success)
         if case .writeFailed(let message) = result.status {
@@ -201,6 +199,66 @@ final class HostWriteCoordinatorTests: XCTestCase {
         }
         let writes = await fakeClient.writtenContents
         XCTAssertEqual(writes.count, 0)
+    }
+
+    // MARK: - 失败语义补充
+
+    /// hash mismatch 失败后不应自动重试。helper 只被调用一次，
+    /// 后续重试必须由用户显式选择导入/取消/覆盖。
+    func testHashMismatchDoesNotAutoRetry() async {
+        let fakeClient = FakeHostHelperClient()
+        var config = makeConfig()
+        config.state.lastAppliedHostsHash = "stale_hash"
+
+        await fakeClient.setShouldSucceed(false)
+        await fakeClient.setSimulatedError(HostHelperClientError.unavailable("hosts 已被外部修改"))
+
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+
+        let result = await coordinator.scheduleApply(config: config)
+        XCTAssertFalse(result.success)
+
+        // 等待一段时间，确认 coordinator 没有内部触发新的写入尝试
+        try? await Task.sleep(nanoseconds: 200_000_000)
+
+        let writes = await fakeClient.writtenContents
+        XCTAssertEqual(writes.count, 0, "失败后不应自动重试")
+        let attempts = await fakeClient.expectedHashes
+        XCTAssertEqual(attempts.count, 1, "helper 应只被调用一次")
+    }
+
+    /// 当前批次写入失败时，后续到达的新批次必须能继续被独立处理，
+    /// 不被失败状态阻塞，且不会与失败批次的内容混合。
+    func testFailedBatchDoesNotBlockSubsequentBatch() async {
+        let fakeClient = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+
+        let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
+        let config2 = makeConfig(defaultContent: "127.0.0.1 localhost\n10.0.0.1 retry.test")
+
+        // 第一次失败
+        await fakeClient.setShouldSucceed(false)
+        let result1 = await coordinator.scheduleApply(config: config1)
+        XCTAssertFalse(result1.success, "第一次写入应失败")
+
+        // 第二次新批次必须能继续执行并成功（失败状态不阻塞后续）
+        await fakeClient.setShouldSucceed(true)
+        let result2 = await coordinator.scheduleApply(config: config2)
+        XCTAssertTrue(result2.success, "失败后的新批次必须能继续被处理")
+
+        // 失败批次不应有写入记录；成功批次写入的是新内容（非失败批次）
+        let writes = await fakeClient.writtenContents
+        XCTAssertEqual(writes.count, 1, "只有第二次（成功的）写入应被记录")
+        XCTAssertTrue(writes[0].contains("10.0.0.1 retry.test"),
+                      "实际写入的应是新批次内容，不被失败批次污染")
     }
 
     private func makeTemporaryDirectory() throws -> URL {

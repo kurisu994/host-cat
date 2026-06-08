@@ -137,12 +137,12 @@ public final class MenuBarViewModel: ObservableObject {
                 return
             }
 
-            let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config)
+            let result = await coordinator.scheduleApply(config: config)
             guard isCurrentApplyGeneration(generation) else {
                 return
             }
             isApplying = false
-            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Write failed")
+            handleApplyCompletion(result: result, failureLogPrefix: "Write failed")
         }
     }
 
@@ -162,13 +162,13 @@ public final class MenuBarViewModel: ObservableObject {
             )
         }
 
-        let (result, rolledBackConfig) = await coordinator.applyImmediately(config: config)
+        let result = await coordinator.applyImmediately(config: config)
 
         guard isCurrentApplyGeneration(generation) else {
             return result
         }
         isApplying = false
-        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Immediate apply failed")
+        handleApplyCompletion(result: result, failureLogPrefix: "Immediate apply failed")
 
         return result
     }
@@ -189,7 +189,7 @@ public final class MenuBarViewModel: ObservableObject {
             }
         }
 
-        let (result, rolledBackConfig) = await coordinator.applyImmediately(config: restoredConfig)
+        let result = await coordinator.applyImmediately(config: restoredConfig)
 
         guard isCurrentApplyGeneration(generation) else {
             return result
@@ -199,7 +199,7 @@ public final class MenuBarViewModel: ObservableObject {
         if result.success {
             config = restoredConfig
         }
-        handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Backup restore failed")
+        handleApplyCompletion(result: result, failureLogPrefix: "Backup restore failed")
 
         return result
     }
@@ -217,21 +217,20 @@ public final class MenuBarViewModel: ObservableObject {
                 return
             }
 
-            let (result, rolledBackConfig) = await coordinator.scheduleApply(config: config, force: true)
+            let result = await coordinator.scheduleApply(config: config, force: true)
             guard isCurrentApplyGeneration(generation) else {
                 return
             }
             isApplying = false
-            handleApplyCompletion(result: result, rolledBackConfig: rolledBackConfig, failureLogPrefix: "Force write failed")
+            handleApplyCompletion(result: result, failureLogPrefix: "Force write failed")
         }
     }
 
     private func handleApplyCompletion(
         result: ApplyResult,
-        rolledBackConfig: AppConfig?,
         failureLogPrefix: String
     ) {
-        if !result.success, rolledBackConfig != nil {
+        if !result.success {
             logger.warning("\(failureLogPrefix), keeping current config draft, hosts not applied")
         }
 
