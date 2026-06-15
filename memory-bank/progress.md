@@ -4,7 +4,7 @@
 
 | 版本 | 日期 | 状态 | 备注 |
 |------|------|------|------|
-| 未发布 | — | 进行中 | 阶段 1 + 阶段 2 完成；阶段 3 上线准备 |
+| 未发布 | — | 进行中 | 阶段 1 + 阶段 2 完成；阶段 3 上线准备（任务 14、1926已完成） |
 
 尚未打第一个 tag（`1.0.0`），CHANGELOG 全部归入「## 未发布」。
 
@@ -55,12 +55,12 @@
 
 | 子任务 | 状态 |
 |--------|------|
-| 任务 14 版本号与发布管理（tag 1.0.0） | ⏳ 未开始 |
+| 任务 14 版本号与发布管理（tag 1.0.0） | 🟡 主体完成（待打 tag） |
 | 任务 15 中英文多语言（主体已完成，残留底层诊断文本待清理） | 🟡 部分 |
 | 任务 16 Sparkle 自动更新 | ⏳ 未开始 |
 | 任务 17 GitHub Actions CI/CD | ⏳ 未开始 |
 | 任务 18 全局快捷键 | ⏳ 未开始 |
-| 任务 19 搜索和过滤 | ⏳ 未开始 |
+| 任务 19 搜索和过滤 | ✅ |
 | 任务 20 配置导入导出 | ⏳ 未开始 |
 | 任务 21 通知中心集成 | ⏳ 未开始 |
 | 任务 22 崩溃报告与诊断日志 | ⏳ 未开始 |
@@ -88,6 +88,8 @@
 | 2026-06-08 | 撤销快捷键 ⌘Z → ⇧⌘Z | 避让 macOS 标准撤销 |
 | 2026-06-08 | `HostWriteCoordinator` 移除 `rolledBackConfig` 返回值 | 与 5/27 设计调整对齐，清理 API artifact |
 | 2026-06-08 | `HelperService` 显式校验 `localizationIdentifier` | 防止 `"system"` 被错传导致语种不一致 |
+| 2026-06-15 | 版本号通过 project.yml 集中管理 | 一处修改全局生效，避免 App/Helper 版本不一致 |
+| 2026-06-15 | 编辑器侧边栏搜索过滤 | 高频用户需求，分组名/节点名/域名三路匹配 |
 
 ## 已解阻碍
 
@@ -120,5 +122,6 @@
 | 阶段 2 完成时 | 增加 coordinator + backup + file writer + viewmodel + importer 测试 |
 | 2026-05-27 | 增加 `AppLanguageTests`、`ModelsTests`、`TestDoubles.swift` 统一替身 |
 | 2026-06-08 | 增加 `ValidatorParityTests`（8）+ HostWriteCoordinatorTests `hashMismatchDoesNotAutoRetry` 和 `failedBatchDoesNotBlockSubsequentBatch` |
+| 2026-06-15 | 未新增测试（任务 14 和 19 为 UI 层变更，现有 155 个测试全通过） |
 
 当前测试总数：**128 XCTest + 27 Swift Testing**，全部通过。
