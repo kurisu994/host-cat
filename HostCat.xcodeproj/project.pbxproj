@@ -49,6 +49,7 @@
 		8E23ADD50916C3ADB7527A2F /* HostCatCodeSigningRequirements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */; };
 		909A2FA9970E2982279E83F9 /* ExternalModificationDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26065AECBA24A83ECDC521B0 /* ExternalModificationDetector.swift */; };
 		912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4EBCC23847724F1472FDC48 /* TestDoubles.swift */; };
+		94DBD4435C381CB24FADED96 /* ValidatorParityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF8AE7E37ADD245309203B30 /* ValidatorParityTests.swift */; };
 		9B2CC295C59A13A66B6EBD77 /* HostsParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 014FF435AFEA5342833791B7 /* HostsParser.swift */; };
 		9D22255196CC0B054CAC2DD0 /* SidebarComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */; };
 		9E5CAD830F2D7182B21A4FB7 /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
@@ -202,6 +203,7 @@
 		D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsImporterTests.swift; sourceTree = "<group>"; };
 		DD7C78F009E32AECCA011883 /* WindowFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFocus.swift; sourceTree = "<group>"; };
 		DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigTests.swift; sourceTree = "<group>"; };
+		DF8AE7E37ADD245309203B30 /* ValidatorParityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ValidatorParityTests.swift; sourceTree = "<group>"; };
 		E48A5B858538A466C34B7488 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E4EBCC23847724F1472FDC48 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
 		E69B5B3946975FB8A31D8755 /* HostsTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsTextView.swift; sourceTree = "<group>"; };
@@ -329,6 +331,7 @@
 				B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */,
 				2D5B515B2EED372EB9446D98 /* ModelsTests.swift */,
 				E4EBCC23847724F1472FDC48 /* TestDoubles.swift */,
+				DF8AE7E37ADD245309203B30 /* ValidatorParityTests.swift */,
 			);
 			path = HostCatCoreTests;
 			sourceTree = "<group>";
@@ -619,6 +622,7 @@
 				224631B8B32B406A5C7377F7 /* MenuBarViewModelTests.swift in Sources */,
 				73EB1323526D8696C4AAB3A9 /* ModelsTests.swift in Sources */,
 				912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */,
+				94DBD4435C381CB24FADED96 /* ValidatorParityTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -912,6 +916,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -924,6 +929,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -987,6 +993,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -1005,6 +1012,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

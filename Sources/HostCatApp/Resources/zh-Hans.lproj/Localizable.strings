@@ -221,3 +221,9 @@
 "error.overwrite" = "确认覆盖";
 "error.external_modification" = "hosts 文件已被外部修改";
 "error.external_modification.message" = "hosts 文件在 HostCat 之外发生了变化。你可以取消本次写入，或确认覆盖外部修改。";
+
+/* Search */
+"sidebar.search" = "搜索";
+"sidebar.search_placeholder" = "搜索节点和域名...";
+"sidebar.no_results" = "没有匹配结果";
+"sidebar.no_results_hint" = "换个关键词试试";

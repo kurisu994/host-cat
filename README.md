@@ -185,6 +185,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 ## 设计文档
 
 - [开发方案设计](docs/hostcat-design.md)
+- [1.0 发版路线图](docs/roadmap-to-1.0.md) — 距离实际使用的差距分析、推荐推进顺序和工作量估算
 - [变更日志](CHANGELOG.md)
 - [Agent 协作说明](AGENTS.md)
 - [待办任务](TODO.md)
@@ -200,9 +201,13 @@ export DEVELOPMENT_TEAM="TEAMID"
 
 ## 下一步
 
-阶段 2（真实写入版）与 hosts 编辑器高亮等功能已完成。接下来可以考虑：
-1.~~跨分组拖拽排序~~（已砍：产品决策不实现）
-2.搜索/过滤节点和域名
-3.自动化 CI/CD 流水线（GitHub Actions）
-4.UI 动画细节打磨与自动更新 (Sparkle)
-5.iCloud 同步支持
+阶段 1（安全预览版）+ 阶段 2（真实写入版）均已完成，当前处于阶段 3 上线准备阶段。
+
+详见 [1.0 发版路线图](docs/roadmap-to-1.0.md)，核心待完成项：
+
+1. 版本号与发布管理
+2. 搜索和过滤（高频用户需求）
+3. 结构化日志（OSLog 关键路径覆盖）
+4. GitHub Actions CI/CD 发布流水线
+5. Sparkle 自动更新
+6. DMG 安装体验打磨

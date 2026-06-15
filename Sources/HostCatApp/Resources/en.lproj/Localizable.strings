@@ -221,3 +221,9 @@
 "error.overwrite" = "Confirm Overwrite";
 "error.external_modification" = "hosts file has been modified externally";
 "error.external_modification.message" = "The hosts file changed outside HostCat. You can cancel this write or confirm to overwrite external changes.";
+
+/* Search */
+"sidebar.search" = "Search";
+"sidebar.search_placeholder" = "Search nodes and domains...";
+"sidebar.no_results" = "No matching results";
+"sidebar.no_results_hint" = "Try a different keyword";

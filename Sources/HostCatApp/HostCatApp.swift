@@ -200,6 +200,7 @@ private struct SettingsView: View {
 
                 settingsCard(L.settingsConfigInfo) {
                     VStack(alignment: .leading, spacing: 6) {
+                        Text("\(L.settingsVersion): \(Self.appVersionString)")
                         Text("\(L.settingsConfigVersion): \(config.configVersion)")
                         Text("\(L.settingsDefaultNode): \(config.defaultNode.name)")
                         Text("\(L.settingsGroupCount): \(config.groups.count)")
@@ -271,5 +272,14 @@ private struct SettingsView: View {
         default:
             .red
         }
+    }
+
+    /// 从 Info.plist 读取版本信息，格式为「1.0.0 (build 1 · abc1234)」。
+    static var appVersionString: String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = info["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info["CFBundleVersion"] as? String ?? "?"
+        let commit = info["HostCatBuildCommit"] as? String ?? "dev"
+        return "\(version) (build \(build) · \(commit))"
     }
 }

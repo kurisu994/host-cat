@@ -6,6 +6,9 @@
 
 ### Added
 
+- **【版本号管理】** `project.yml` 集中定义 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`，App 和 Helper 的 Info.plist 统一引用变量；设置页展示完整版本号（含 build 号和 Git commit hash）。
+- **【搜索过滤】** 编辑器侧边栏新增搜索框（`.searchable`），支持按分组名、节点名和 hosts 域名内容实时过滤，过滤后保持树状结构，搜索时自动展开折叠分组，空结果展示提示。
+- 构建脚本 `build-release.sh` 支持自动注入版本号、build 号和 Git commit hash，构建完成后恢复 Info.plist 默认值避免污染 Git 工作区。
 - 新增 `ValidatorParityTests`，验证 `HostsParser.validate` 与 `HostsContentValidator.validate` 在语法错误上行为一致，避免编辑器校验通过但写入侧二次拒绝的边界差异。
 - 补充 `HostWriteCoordinatorTests` 失败语义测试：hash mismatch 不自动重试、失败批次不阻塞后续批次。
 - 在 `/memory-bank/` 下新建 6 份记忆银行文件（projectbrief / productContext / systemPatterns / techContext / activeContext / progress），供后续 AI 会话快速恢复项目上下文。

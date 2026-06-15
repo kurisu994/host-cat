@@ -59,6 +59,10 @@ enum L {
     static var sidebarMultiSelect: String { localize("sidebar.multi_select") }
     static var sidebarEmptyState: String { localize("sidebar.empty_state") }
     static var sidebarDragHint: String { localize("sidebar.drag_hint") }
+    static var sidebarSearch: String { localize("sidebar.search") }
+    static var sidebarSearchPlaceholder: String { localize("sidebar.search_placeholder") }
+    static var sidebarNoResults: String { localize("sidebar.no_results") }
+    static var sidebarNoResultsHint: String { localize("sidebar.no_results_hint") }
 
     // MARK: - Editor
     static var editorTitle: String { localize("editor.title") }

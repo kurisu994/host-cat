@@ -24,28 +24,72 @@ struct EditorView: View {
     @State private var mutationService = ConfigMutationService()
     @State private var draggingNodeID: UUID?
     @State private var collapsedGroupIDs: Set<UUID> = []
+    @State private var searchText: String = ""
+
+    /// 搜索是否激活。
+    private var isSearching: Bool { !searchText.isEmpty }
+
+    /// 默认节点是否通过搜索过滤（无搜索时始终显示）。
+    private var showDefaultNode: Bool {
+        guard isSearching else { return true }
+        let query = searchText
+        return viewModel.config.defaultNode.name.localizedCaseInsensitiveContains(query)
+            || viewModel.config.defaultNode.content.localizedCaseInsensitiveContains(query)
+    }
+
+    /// 过滤后的分组列表（保持树状结构）。
+    private var filteredGroups: [HostGroup] {
+        guard isSearching else { return viewModel.config.groups }
+        let query = searchText
+        return viewModel.config.groups.compactMap { group in
+            // 分组名匹配 → 展示整个分组
+            if group.name.localizedCaseInsensitiveContains(query) {
+                return group
+            }
+            // 否则只保留匹配的节点
+            let matched = group.nodes.filter { node in
+                node.name.localizedCaseInsensitiveContains(query)
+                    || node.content.localizedCaseInsensitiveContains(query)
+            }
+            return matched.isEmpty
+                ? nil
+                : HostGroup(id: group.id, name: group.name, isSingleSelect: group.isSingleSelect, nodes: matched)
+        }
+    }
 
     var body: some View {
         NavigationSplitView {
             VStack(spacing: 0) {
                 // Left: groups and node tree
                 List {
-                    // Default node
-                    Section(L.sidebarDefault) {
-                        NodeRow(
-                            name: viewModel.config.defaultNode.name,
-                            isActive: viewModel.config.defaultNode.isActive,
-                            isDefault: true,
-                            isSelected: selectedNodeID == viewModel.config.defaultNode.id
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedNodeID = viewModel.config.defaultNode.id
+                    if showDefaultNode {
+                        // Default node
+                        Section(L.sidebarDefault) {
+                            NodeRow(
+                                name: viewModel.config.defaultNode.name,
+                                isActive: viewModel.config.defaultNode.isActive,
+                                isDefault: true,
+                                isSelected: selectedNodeID == viewModel.config.defaultNode.id
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedNodeID = viewModel.config.defaultNode.id
+                            }
                         }
                     }
 
+                    if filteredGroups.isEmpty && !showDefaultNode {
+                        // 搜索无结果
+                        ContentUnavailableView(
+                            L.sidebarNoResults,
+                            systemImage: "magnifyingglass",
+                            description: Text(L.sidebarNoResultsHint)
+                        )
+                        .listRowSeparator(.hidden)
+                    }
+
                     // Groups (supports drag-and-drop reordering)
-                    ForEach(viewModel.config.groups) { group in
+                    ForEach(filteredGroups) { group in
                         Section(header: GroupHeader(
                             name: group.name,
                             isCollapsed: collapsedGroupIDs.contains(group.id),
@@ -68,7 +112,7 @@ struct EditorView: View {
                                 showDeleteGroupConfirmation = true
                             }
                         )) {
-                            if !collapsedGroupIDs.contains(group.id) {
+                            if isSearching || !collapsedGroupIDs.contains(group.id) {
                                 ForEach(group.nodes) { node in
                                     NodeRow(
                                         name: node.name,
@@ -123,6 +167,7 @@ struct EditorView: View {
                     }
                 }
                 .listStyle(.sidebar)
+                .searchable(text: $searchText, prompt: L.sidebarSearchPlaceholder)
                 .onChange(of: selectedNodeID) { _, newID in
                     loadNodeContent(id: newID)
                 }
