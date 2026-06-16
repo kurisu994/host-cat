@@ -74,9 +74,9 @@ xcodebuild -exportArchive \
     -exportPath "$EXPORT_PATH" \
     -quiet
 
-# 7. 打包 DMG (使用 hdiutil)
+# 7. 打包 DMG（带背景图和拖拽安装引导）
 echo "💿 创建 DMG..."
-hdiutil create -volname "${APP_NAME}" -srcfolder "$APP_BUNDLE" -ov -format UDZO "$DMG_PATH"
+"${PROJECT_DIR}/scripts/create-dmg.sh" "$APP_BUNDLE" "$DMG_PATH"
 
 echo "✅ 构建完成！"
 echo "   版本: ${VERSION} (build ${BUILD_NUMBER} · ${GIT_HASH})"

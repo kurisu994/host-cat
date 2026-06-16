@@ -8,39 +8,32 @@
 
 - **分支**：main（commit `a68b586`）
 - **版本**：1.0.0（pre-release，尚未打 tag）
-- **阶段进度**：阶段 1 + 阶段 2 完成；阶段 3 进行中（任务 14 版本号管理 + 任务 19 搜索过滤 + 任务 22 结构化日志最小集已完成）
+- **阶段进度**：阶段 1 + 阶段 2 完成；阶段 3 进行中（任务 14 版本号管理 + 任务 19 搜索过滤 + 任务 22 结构化日志最小集 + 任务 26 DMG 拖拽安装背景已完成）
 
 ## 最近一次重要变更
 
-**2026-06-16 任务 22 结构化日志最小集 + XPC timeout 假日志修复**
+**2026-06-16 DMG 拖拽安装体验与 Finder 布局定制**
 
-1. 新增 `DiagnosticLogExporter`，默认导出最近一小时 `com.hostcat.*` OSLog 到纯文本 `.log` 文件；失败时回退当前进程日志 store。
-2. 设置页新增「导出诊断日志」按钮和导出状态提示，文案覆盖中英文。
-3. 补强 `AppConfigStore` 配置加载/恢复/保存日志，以及 `XPCHostHelperClient` 写入请求、超时、reply 成功/失败日志；既有 `BackupStore`、`HostWriteCoordinator`、Helper 写入日志继续覆盖备份与 hosts 写入。
-4. 修复 review 发现的 `XPCHostHelperClient` 成功 reply 后 timeout task 仍会记录假超时并断开连接的问题；新增 `XPCHostHelperPendingRepliesTests` 覆盖首次完成与批量失败清理。
-5. 更新 `docs/roadmap-to-1.0.md`、`TODO.md`、`docs/hostcat-design.md`、README、CHANGELOG 和 Xcode 工程。
+1. 准备了精美的暗色科技感 DMG 安装背景图 `scripts/dmg-background.png`，对齐 Apple 官方设计指南，规范了 App 图标与 Applications 软链接的位置。
+2. 编写了 `scripts/create-dmg.sh` 脚本，通过 AppleScript 自动配置 DMG 挂载后 Finder 窗口的尺寸（660x400）、隐藏状态栏与工具栏、应用背景图、定位 `HostCat.app` 和 `Applications` 快捷方式并启用自定义卷图标，确保极佳的首次安装体验。
+3. 升级 `scripts/build-release.sh`，在打包阶段采用 `create-dmg.sh` 替代原有简单的 `hdiutil create`，并在本地挂载验证通过。
 
 构建状态：✅ `swift test` 160 全通过（133 XCTest + 27 Swift Testing）/ ✅ `swift build` / ✅ `xcodegen generate` / ✅ `xcodebuild build -project HostCat.xcodeproj -scheme HostCatApp -destination 'platform=macOS,arch=arm64'` / ✅ `git diff --check`。
 
 ## 活跃文件
 
 近期接触：
-- `Sources/HostCatCore/DiagnosticLogExporter.swift` — 诊断日志读取、格式化和导出
-- `Tests/HostCatCoreTests/DiagnosticLogExporterTests.swift` — 导出器格式、空状态、级别名测试
-- `Sources/HostCatApp/HostCatApp.swift` — SettingsView 诊断日志导出入口
-- `Sources/HostCatApp/Localization.swift` — 诊断日志设置文案 key
-- `Sources/HostCatApp/Resources/{zh-Hans,en}.lproj/Localizable.strings` — 诊断日志中英文文案
-- `Sources/HostCatCore/AppConfigStore.swift` — 配置加载/恢复/保存 OSLog
-- `Sources/HostCatHelperClient/XPCHostHelperClient.swift` — XPC 写入请求/超时/reply OSLog
-- `Tests/HostCatCoreTests/XPCHostHelperPendingRepliesTests.swift` — 重复完成 request 与批量清理的回归测试
-- `Package.swift`、`project.yml` — `HostCatCoreTests` 测试 target 增加 `HostCatHelperClient` 依赖
-- `HostCat.xcodeproj/project.pbxproj` — xcodegen 重新生成，纳入新增 Core 文件
-- `docs/roadmap-to-1.0.md`、`TODO.md`、`docs/hostcat-design.md`、README、CHANGELOG — 任务 22 文档状态
+- `scripts/dmg-background.png` — DMG 拖拽安装背景设计图
+- `scripts/create-dmg.sh` — 自动化 DMG 制作、Finder 布局和 AppleScript 设置脚本
+- `scripts/build-release.sh` — 更新 release 脚本调用新打包方法
+- `memory-bank/activeContext.md`、`memory-bank/progress.md` — 更新开发上下文和最新进度记录
+- `TODO.md`、`CHANGELOG.md`、`docs/roadmap-to-1.0.md` — 打包相关状态勾选及变更归档
 
 ## 已做决策（最近）
 
 | 决策 | 时间 | 原因 |
 |------|------|------|
+| 使用 AppleScript 动态构建 DMG 布局 | 2026-06-16 | macOS 官方首选方案，能在只读 DMG 中准确保持 Finder 窗口边界、背景与图标坐标 |
 | 版本号通过 project.yml 集中管理 | 2026-06-15 | 一处修改全局生效，避免 App/Helper Info.plist 版本不一致 |
 | build-release.sh 注入 Git hash 后恢复默认值 | 2026-06-15 | 避免污染 Git 工作区 |
 | 搜索使用 .searchable 修饰符 | 2026-06-15 | macOS 原生风格，简洁且自动处理搜索框位置和键盘交互 |
@@ -55,7 +48,7 @@
 按 `docs/roadmap-to-1.0.md` 路线图，剩余必做项：
 1. **任务 17** GitHub Actions CI/CD 发布流水线
 2. **任务 16** Sparkle 自动更新（依赖任务 17 的 appcast.xml）
-3. **任务 26** DMG 安装体验（背景图 + landing page）
+3. **任务 26 剩余** 准备 landing page 作为临时官网
 4. **任务 14 收尾** 首次打 `1.0.0` tag
 
 ## 阻塞

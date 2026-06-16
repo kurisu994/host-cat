@@ -266,7 +266,7 @@
 
 - [x] 确定走**独立官网分发**（LaunchDaemon 方案不支持 Mac App Store）。
 - [ ] 准备官网 landing page（或 GitHub 页面作为临时官网）。
-- [ ] 准备 DMG 背景图和拖拽安装指引。
+- [x] 准备 DMG 背景图和拖拽安装指引。
 
 ## 常用验证命令
 

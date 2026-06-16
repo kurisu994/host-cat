@@ -6,7 +6,8 @@
 
 ### Added
 
-- **【版本号管理】** `project.yml` 集中定义 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`，App 和 Helper 的 Info.plist 统一引用变量；设置页展示完整版本号（含 build 号和 Git commit hash）。
+- **【DMG 安装体验】** 准备了精美的 macOS 科技感暗色调拖拽安装背景图 `scripts/dmg-background.png`；编写了 `scripts/create-dmg.sh` 脚本，基于 AppleScript 精准配置 DMG 挂载后的 Finder 窗口尺寸、背景图布局、应用图标与 Applications 快捷方式位置；升级了 `scripts/build-release.sh` 以在构建发布版本时自动调用该脚本生成高品质的 DMG 镜像。
+- **【版本号管理】** `project.yml` 集中定义 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`，App 和 Helper 的 Info.plist 统一引用变量；设置页展示完整版本号（含 build 号 and Git commit hash）。
 - **【搜索过滤】** 编辑器侧边栏新增搜索框（`.searchable`），支持按分组名、节点名和 hosts 域名内容实时过滤，过滤后保持树状结构，搜索时自动展开折叠分组，空结果展示提示。
 - **【诊断日志】** 新增 `DiagnosticLogExporter`，设置页支持导出最近一小时 `com.hostcat.*` OSLog 诊断日志；补强 XPC、hosts 写入、备份和配置加载关键路径日志。
 - 构建脚本 `build-release.sh` 支持自动注入版本号、build 号和 Git commit hash，构建完成后恢复 Info.plist 默认值避免污染 Git 工作区。
