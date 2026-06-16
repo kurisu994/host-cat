@@ -238,9 +238,9 @@
 ### 22. 崩溃报告与诊断日志
 
 - [ ] 集成崩溃报告（Sentry 或 Apple Crash Reports 符号化）。
-- [ ] 增加结构化日志系统（`OSLog` 或 `swift-log`），覆盖关键路径：XPC、写入、备份、配置加载。
-- [ ] 设置页面增加「导出诊断日志」按钮。
-- [ ] 日志级别：error、warning、info、debug。
+- [x] 增加结构化日志系统（`OSLog`），覆盖关键路径：XPC、写入、备份、配置加载。
+- [x] 设置页面增加「导出诊断日志」按钮。
+- [x] 日志级别：error、warning、info、debug。
 
 ### 23. 大文件性能与稳定性验证
 

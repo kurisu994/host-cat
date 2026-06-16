@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1070F460441BA5007710E2F7 /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
 		14D2B6B7234D4F88CBEB5172 /* HelperDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5584A791D448EB4268A8164B /* HelperDelegate.swift */; };
+		165A1520F6E42EA28A9C79BE /* XPCHostHelperPendingRepliesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7166180120D056B25BB40B67 /* XPCHostHelperPendingRepliesTests.swift */; };
 		17998537F01F6E93F60BD10E /* HostsFileWriterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */; };
 		18CF904087FB17A8CE7B8B82 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 12C2526DB9BA18B6C63117AD /* Localizable.strings */; };
 		1C1EF3C299739617BA334B69 /* ExternalModificationDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */; };
@@ -28,6 +29,7 @@
 		4D07BC839713C761B1DC861E /* AppLanguageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0951D99F787F38B7533BE6EB /* AppLanguageTests.swift */; };
 		51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */; };
 		520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
+		55A9B1B92466F52746C43A39 /* DiagnosticLogExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB65726DDE6F7D635E3F5440 /* DiagnosticLogExporter.swift */; };
 		5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */; };
 		635EF833C7E9E078EC10E5E1 /* MenuBarViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDD8E733CAC8ED8396B6E6F9 /* MenuBarViewModel.swift */; };
 		64A0BBA8209E2B9CAC85A761 /* BackupStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */; };
@@ -65,9 +67,12 @@
 		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
 		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
+		C6A35C1ACD6B29813905F8BB /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
+		C9B6545BBCC41A9D36D328A4 /* DiagnosticLogExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */; };
 		CCC52FE9DAB79B722541DD0F /* HoverPreviewPopover.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56355C12CD58AF07F27CC702 /* HoverPreviewPopover.swift */; };
 		D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */; };
 		DB973E463FB120D41D7416D5 /* HostsMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF2470AD5775FB15B089832 /* HostsMerger.swift */; };
+		E782D1348111B13AC2BE0CEA /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E9E24A6E65FF4E7BABB20B8C /* HostsHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */; };
 		EDED5CD6E7C1FD21C6176D2B /* HostsParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00742A95D2D11025BEC36E42 /* HostsParserTests.swift */; };
 		F821285041AD5606408628BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A92A1835D30534129D14FC33 /* Assets.xcassets */; };
@@ -111,6 +116,13 @@
 			remoteGlobalIDString = F6C1EBE12C8BA8AAE53D2BFA;
 			remoteInfo = HostCatCore;
 		};
+		E8FD5F9076AA1BFD33A91700 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9479EF03FD5264642C797635;
+			remoteInfo = HostCatHelperClient;
+		};
 		E9DE444E7C276CF67DD09386 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 32BD2606AFB2AE0B91ED2382 /* Project object */;
@@ -140,6 +152,7 @@
 			dstSubfolderSpec = 10;
 			files = (
 				B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */,
+				E782D1348111B13AC2BE0CEA /* HostCatHelperClient.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -177,6 +190,8 @@
 		57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalModificationDetectorTests.swift; sourceTree = "<group>"; };
 		5D9AC91BD0174459BFDA004D /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatCodeSigningRequirements.swift; sourceTree = "<group>"; };
+		716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogExporterTests.swift; sourceTree = "<group>"; };
+		7166180120D056B25BB40B67 /* XPCHostHelperPendingRepliesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCHostHelperPendingRepliesTests.swift; sourceTree = "<group>"; };
 		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
 		7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatPrivilegedHelperMain.swift; sourceTree = "<group>"; };
 		810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSigningRequirementsTests.swift; sourceTree = "<group>"; };
@@ -190,6 +205,7 @@
 		A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsFileWriterTests.swift; sourceTree = "<group>"; };
 		A92A1835D30534129D14FC33 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AAA0D027C98AB37ADCF179BC /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		AB65726DDE6F7D635E3F5440 /* DiagnosticLogExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogExporter.swift; sourceTree = "<group>"; };
 		B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModelTests.swift; sourceTree = "<group>"; };
 		BA45A066C0D26D09E36DD601 /* HostsSyntaxHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsSyntaxHighlighter.swift; sourceTree = "<group>"; };
 		BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DNSRefresher.swift; sourceTree = "<group>"; };
@@ -245,6 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				369701FCD0ADB8AD41A492E4 /* HostCatCore.framework in Frameworks */,
+				C6A35C1ACD6B29813905F8BB /* HostCatHelperClient.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,6 +275,7 @@
 				84EF760F5F41996E0DC96CB1 /* AppLanguage.swift */,
 				CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */,
 				721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */,
+				AB65726DDE6F7D635E3F5440 /* DiagnosticLogExporter.swift */,
 				BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */,
 				26065AECBA24A83ECDC521B0 /* ExternalModificationDetector.swift */,
 				5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */,
@@ -322,6 +340,7 @@
 				1170E06A567EC5F28A7CC50D /* BackupStoreTests.swift */,
 				810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */,
 				0CBB2BC9AD0E1D4E9DCD57D1 /* ConfigMutationServiceTests.swift */,
+				716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */,
 				57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */,
 				A080D777438E6502DA733A47 /* HostsFileWriterTests.swift */,
 				D42D8199BD7635C081BC8502 /* HostsImporterTests.swift */,
@@ -332,6 +351,7 @@
 				2D5B515B2EED372EB9446D98 /* ModelsTests.swift */,
 				E4EBCC23847724F1472FDC48 /* TestDoubles.swift */,
 				DF8AE7E37ADD245309203B30 /* ValidatorParityTests.swift */,
+				7166180120D056B25BB40B67 /* XPCHostHelperPendingRepliesTests.swift */,
 			);
 			path = HostCatCoreTests;
 			sourceTree = "<group>";
@@ -439,6 +459,7 @@
 			);
 			dependencies = (
 				B25B3660C064ED37BA2BF4BA /* PBXTargetDependency */,
+				DBE639FE1C83C69477B7043D /* PBXTargetDependency */,
 			);
 			name = HostCatCoreTests;
 			packageProductDependencies = (
@@ -613,6 +634,7 @@
 				9E870546E70E7ECB9D5D329F /* BackupStoreTests.swift in Sources */,
 				493690B838AFADDAEA560106 /* CodeSigningRequirementsTests.swift in Sources */,
 				F8A706BE662A35C074D61652 /* ConfigMutationServiceTests.swift in Sources */,
+				C9B6545BBCC41A9D36D328A4 /* DiagnosticLogExporterTests.swift in Sources */,
 				1C1EF3C299739617BA334B69 /* ExternalModificationDetectorTests.swift in Sources */,
 				D07D2B89DDE1C093960A68CC /* HostWriteCoordinatorTests.swift in Sources */,
 				17998537F01F6E93F60BD10E /* HostsFileWriterTests.swift in Sources */,
@@ -623,6 +645,7 @@
 				73EB1323526D8696C4AAB3A9 /* ModelsTests.swift in Sources */,
 				912D3C44B22C73A5EF265EFE /* TestDoubles.swift in Sources */,
 				94DBD4435C381CB24FADED96 /* ValidatorParityTests.swift in Sources */,
+				165A1520F6E42EA28A9C79BE /* XPCHostHelperPendingRepliesTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -635,6 +658,7 @@
 				64A0BBA8209E2B9CAC85A761 /* BackupStore.swift in Sources */,
 				6BAD6BBFB88BD5DCCAB72D14 /* ConfigMutationService.swift in Sources */,
 				C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */,
+				55A9B1B92466F52746C43A39 /* DiagnosticLogExporter.swift in Sources */,
 				909A2FA9970E2982279E83F9 /* ExternalModificationDetector.swift in Sources */,
 				8E23ADD50916C3ADB7527A2F /* HostCatCodeSigningRequirements.swift in Sources */,
 				2DCCF82A00983C3E0A0A8F00 /* HostHelperClient.swift in Sources */,
@@ -693,6 +717,11 @@
 			isa = PBXTargetDependency;
 			target = F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */;
 			targetProxy = 41EF83012072B1F668A342E8 /* PBXContainerItemProxy */;
+		};
+		DBE639FE1C83C69477B7043D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9479EF03FD5264642C797635 /* HostCatHelperClient */;
+			targetProxy = E8FD5F9076AA1BFD33A91700 /* PBXContainerItemProxy */;
 		};
 		F3539115F47CE9014E03376B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

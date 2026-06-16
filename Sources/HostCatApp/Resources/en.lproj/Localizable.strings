@@ -184,6 +184,8 @@
 "settings.general" = "General";
 "settings.helper" = "Privileged Helper";
 "settings.config_info" = "Configuration";
+"settings.diagnostics" = "Diagnostics";
+"settings.diagnostics.description" = "Export the last hour of HostCat logs for write failures, XPC disconnects, and backup issues.";
 "settings.launch_at_login" = "Launch at Login";
 "settings.version" = "Version";
 "settings.refresh" = "Refresh";
@@ -195,6 +197,10 @@
 "settings.language.system" = "Follow System";
 "settings.language.simplified_chinese" = "简体中文";
 "settings.language.english" = "English";
+"settings.export_diagnostic_logs" = "Export Diagnostic Logs";
+"settings.exporting_diagnostics" = "Exporting...";
+"settings.diagnostic_export.success" = "Exported %d log entries to %@";
+"settings.diagnostic_export.failed" = "Export failed: %@";
 
 /* MenuBarViewModel */
 "external.modification.detected" = "External modification to hosts file detected";

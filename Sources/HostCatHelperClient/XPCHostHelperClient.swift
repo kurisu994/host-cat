@@ -12,7 +12,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     private let replyTimeoutNanoseconds: UInt64
 
     private var connection: NSXPCConnection?
-    private var pendingReplies: [UUID: PendingReply] = [:]
+    private let pendingReplies = XPCHostHelperPendingReplies<PendingReply>()
     private let lock = NSLock()
     private let logger = Logger(subsystem: "com.hostcat.app", category: "XPCHostHelperClient")
 
@@ -38,35 +38,46 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             try await withCheckedThrowingContinuation { continuation in
                 let pending = PendingReply(continuation: continuation)
                 registerPendingReply(pending, id: requestID)
+                logger.debug("XPC write request registered: \(requestID.uuidString)")
 
                 guard !Task.isCancelled else {
-                    completePendingReply(requestID, with: .failure(CancellationError()))
+                    if completePendingReply(requestID, with: .failure(CancellationError())) {
+                        logger.warning("XPC write request cancelled before proxy lookup: \(requestID.uuidString)")
+                    }
                     return
                 }
 
                 let proxy: HostCatHelperXPCProtocol
                 do {
                     proxy = try getProxy { [weak self, logger] error in
-                        logger.error("XPC remote object error: \(error.localizedDescription)")
-                        self?.completePendingReply(
+                        let didComplete = self?.completePendingReply(
                             requestID,
                             with: .failure(HostHelperClientError.unavailable(error.localizedDescription))
-                        )
-                        self?.invalidateConnection()
+                        ) ?? false
+                        if didComplete {
+                            logger.error("XPC remote object error: \(error.localizedDescription)")
+                            self?.invalidateConnection()
+                        }
                     }
                 } catch {
                     completePendingReply(requestID, with: .failure(error))
                     return
                 }
 
-                Task { [weak self, replyTimeoutNanoseconds] in
+                Task { [weak self, replyTimeoutNanoseconds, logger] in
                     do {
                         try await Task.sleep(nanoseconds: replyTimeoutNanoseconds)
                     } catch {
                         return
                     }
 
-                    self?.completePendingReply(requestID, with: .failure(HostHelperClientError.requestTimedOut))
+                    guard self?.completePendingReply(
+                        requestID,
+                        with: .failure(HostHelperClientError.requestTimedOut)
+                    ) == true else {
+                        return
+                    }
+                    logger.error("XPC write request timed out: \(requestID.uuidString)")
                     self?.invalidateConnection()
                 }
 
@@ -77,14 +88,21 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                 ) { [weak self, logger] resultDict in
                     do {
                         let result = try Self.parseReply(resultDict, logger: logger)
-                        self?.completePendingReply(requestID, with: .success(result))
+                        if self?.completePendingReply(requestID, with: .success(result)) == true {
+                            logger.info("XPC write request completed: \(requestID.uuidString)")
+                        }
                     } catch {
-                        self?.completePendingReply(requestID, with: .failure(error))
+                        if self?.completePendingReply(requestID, with: .failure(error)) == true {
+                            logger.error("XPC write request failed while parsing reply: \(error.localizedDescription)")
+                        }
                     }
                 }
             }
         } onCancel: { [weak self] in
-            self?.completePendingReply(requestID, with: .failure(CancellationError()))
+            guard let self else { return }
+            if self.completePendingReply(requestID, with: .failure(CancellationError())) {
+                self.logger.warning("XPC write request cancelled: \(requestID.uuidString)")
+            }
         }
     }
 
@@ -148,26 +166,21 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     }
 
     private func registerPendingReply(_ pending: PendingReply, id: UUID) {
-        lock.lock()
-        pendingReplies[id] = pending
-        lock.unlock()
+        pendingReplies.register(pending, id: id)
     }
 
-    private func completePendingReply(_ id: UUID, with result: Result<HostHelperWriteResult, Error>) {
-        lock.lock()
-        let pending = pendingReplies.removeValue(forKey: id)
-        lock.unlock()
+    @discardableResult
+    private func completePendingReply(_ id: UUID, with result: Result<HostHelperWriteResult, Error>) -> Bool {
+        guard let pending = pendingReplies.complete(id: id) else {
+            return false
+        }
 
-        pending?.resume(with: result)
+        pending.resume(with: result)
+        return true
     }
 
     private func failAllPendingReplies(with error: Error) {
-        lock.lock()
-        let pending = Array(pendingReplies.values)
-        pendingReplies.removeAll()
-        lock.unlock()
-
-        for reply in pending {
+        for reply in pendingReplies.removeAll() {
             reply.resume(with: .failure(error))
         }
     }
@@ -193,6 +206,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             if let dnsError, !dnsError.isEmpty {
                 logger.warning("Write succeeded but DNS refresh failed: \(dnsError)")
             }
+            logger.info("Helper write reply success, finalHash=\(String(finalHash.prefix(8)))..., didRefreshDNS=\(didRefreshDNS)")
 
             return HostHelperWriteResult(
                 finalHostsHash: finalHash,
@@ -230,5 +244,32 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                 continuation.resume(throwing: error)
             }
         }
+    }
+}
+
+/// 跟踪 XPC 请求是否仍处于 pending 状态，确保 reply、timeout、取消只会完成一次。
+final class XPCHostHelperPendingReplies<Value>: @unchecked Sendable {
+    private var pendingByID: [UUID: Value] = [:]
+    private let lock = NSLock()
+
+    func register(_ value: Value, id: UUID) {
+        lock.lock()
+        pendingByID[id] = value
+        lock.unlock()
+    }
+
+    @discardableResult
+    func complete(id: UUID) -> Value? {
+        lock.lock()
+        defer { lock.unlock() }
+        return pendingByID.removeValue(forKey: id)
+    }
+
+    func removeAll() -> [Value] {
+        lock.lock()
+        defer { lock.unlock() }
+        let pending = Array(pendingByID.values)
+        pendingByID.removeAll()
+        return pending
     }
 }

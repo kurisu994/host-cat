@@ -138,6 +138,7 @@ targets:
       - path: Tests/HostCatCoreTests
     dependencies:
       - target: HostCatCore
+      - target: HostCatHelperClient
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.core-tests

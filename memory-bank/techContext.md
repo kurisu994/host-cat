@@ -114,7 +114,7 @@ export DEVELOPMENT_TEAM="TEAMID"
 - 测试目录：`Tests/HostCatCoreTests/`
 - 测试替身集中：`TestDoubles.swift`
 - 框架：XCTest + Swift Testing（混用）
-- 当前测试数：128 XCTest + 27 Swift Testing
+- 当前测试数：133 XCTest + 27 Swift Testing
 - CI：尚未配置（阶段 3 任务 17 — GitHub Actions）
 
 ## 关键配置文件

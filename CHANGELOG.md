@@ -8,6 +8,7 @@
 
 - **【版本号管理】** `project.yml` 集中定义 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`，App 和 Helper 的 Info.plist 统一引用变量；设置页展示完整版本号（含 build 号和 Git commit hash）。
 - **【搜索过滤】** 编辑器侧边栏新增搜索框（`.searchable`），支持按分组名、节点名和 hosts 域名内容实时过滤，过滤后保持树状结构，搜索时自动展开折叠分组，空结果展示提示。
+- **【诊断日志】** 新增 `DiagnosticLogExporter`，设置页支持导出最近一小时 `com.hostcat.*` OSLog 诊断日志；补强 XPC、hosts 写入、备份和配置加载关键路径日志。
 - 构建脚本 `build-release.sh` 支持自动注入版本号、build 号和 Git commit hash，构建完成后恢复 Info.plist 默认值避免污染 Git 工作区。
 - 新增 `ValidatorParityTests`，验证 `HostsParser.validate` 与 `HostsContentValidator.validate` 在语法错误上行为一致，避免编辑器校验通过但写入侧二次拒绝的边界差异。
 - 补充 `HostWriteCoordinatorTests` 失败语义测试：hash mismatch 不自动重试、失败批次不阻塞后续批次。
@@ -70,6 +71,7 @@
 
 ### Fixed
 
+- 修复 `XPCHostHelperClient` 成功收到 XPC reply 后 timeout task 仍会继续记录假超时并断开连接的问题；重复完成同一 request 现在会被忽略。
 - 修复编辑器「放弃」按钮使用 ⌘Z 与 macOS 标准撤销快捷键冲突的问题，长时间编辑后按 ⌘Z 可能整体丢弃草稿；改为 ⇧⌘Z，并在 tooltip 中提示快捷键。
 - 修复 `HelperService` 未严格校验 `localizationIdentifier` 的问题：未知值或 `"system"` 时记录 warning 并显式回退到 `zh-Hans`，防止英语用户看到中文错误文案。
 - 修复切换界面语言后菜单栏操作标题需等待鼠标悬停才更新的问题；菜单内容现在观察语言偏好并立即重建原生菜单项。

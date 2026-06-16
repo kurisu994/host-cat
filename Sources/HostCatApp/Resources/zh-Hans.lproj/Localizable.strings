@@ -184,6 +184,8 @@
 "settings.general" = "通用";
 "settings.helper" = "Privileged Helper";
 "settings.config_info" = "配置信息";
+"settings.diagnostics" = "诊断";
+"settings.diagnostics.description" = "导出最近一小时 HostCat 相关日志，用于排查写入失败、XPC 断开和备份问题。";
 "settings.launch_at_login" = "开机自启动";
 "settings.version" = "版本";
 "settings.refresh" = "刷新";
@@ -195,6 +197,10 @@
 "settings.language.system" = "跟随系统";
 "settings.language.simplified_chinese" = "简体中文";
 "settings.language.english" = "English";
+"settings.export_diagnostic_logs" = "导出诊断日志";
+"settings.exporting_diagnostics" = "正在导出...";
+"settings.diagnostic_export.success" = "已导出 %d 条日志到 %@";
+"settings.diagnostic_export.failed" = "导出失败: %@";
 
 /* MenuBarViewModel */
 "external.modification.detected" = "检测到 hosts 文件被外部修改";

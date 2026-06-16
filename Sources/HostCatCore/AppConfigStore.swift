@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import os.log
 
 public struct AppConfigLoadResult: Equatable, Sendable {
     public var config: AppConfig
@@ -49,6 +50,7 @@ public struct AppConfigStore: Sendable {
     public static let currentConfigVersion = 1
 
     public var configURL: URL
+    private let logger = Logger(subsystem: "com.hostcat.app", category: "AppConfigStore")
 
     public init(configURL: URL = Self.defaultConfigURL()) {
         self.configURL = configURL
@@ -63,16 +65,20 @@ public struct AppConfigStore: Sendable {
 
     public func load(defaultHosts: String, currentHostsHash: String? = nil) throws -> AppConfigLoadResult {
         guard FileManager.default.fileExists(atPath: configURL.path) else {
+            logger.info("Config file missing; creating default config at \(self.configURL.path, privacy: .private)")
             let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
             try save(config)
+            logger.info("Default config created, groups=\(config.groups.count), defaultNodeActive=\(config.defaultNode.isActive)")
             return AppConfigLoadResult(config: config, status: .createdDefault)
         }
 
+        logger.debug("Loading config from \(self.configURL.path, privacy: .private)")
         let data = try Data(contentsOf: configURL)
         let decodedConfig: AppConfig
         do {
             decodedConfig = try JSONDecoder.hostCatConfigDecoder.decode(AppConfig.self, from: data)
         } catch {
+            logger.warning("Config decode failed; preserving corrupt config: \(error.localizedDescription, privacy: .public)")
             try preserveRecoverableConfig(reason: "corrupt")
             return try recoverDefault(
                 defaultHosts: defaultHosts,
@@ -82,6 +88,7 @@ public struct AppConfigStore: Sendable {
         }
 
         guard decodedConfig.configVersion == Self.currentConfigVersion else {
+            logger.warning("Unsupported config version \(decodedConfig.configVersion); expected \(Self.currentConfigVersion)")
             try preserveRecoverableConfig(reason: "unsupported")
             return try recoverDefault(
                 defaultHosts: defaultHosts,
@@ -95,8 +102,10 @@ public struct AppConfigStore: Sendable {
            loadedConfig.state.lastAppliedHostsHash == nil,
            loadedConfig.state.lastExternalHostsHash == nil {
             loadedConfig.state.lastExternalHostsHash = currentHostsHash
+            logger.info("Backfilled external hosts hash for first existing config load")
         }
 
+        logger.info("Config loaded, groups=\(loadedConfig.groups.count), configVersion=\(loadedConfig.configVersion)")
         return AppConfigLoadResult(config: loadedConfig, status: .loadedExisting)
     }
 
@@ -124,7 +133,9 @@ public struct AppConfigStore: Sendable {
             guard rename(tempURL.path, configURL.path) == 0 else {
                 throw AppConfigStoreError.atomicReplaceFailed(errno: errno)
             }
+            logger.debug("Config saved to \(self.configURL.path, privacy: .private)")
         } catch {
+            logger.error("Config save failed at \(self.configURL.path, privacy: .private): \(error.localizedDescription, privacy: .public)")
             try? FileManager.default.removeItem(at: tempURL)
             throw error
         }
@@ -137,6 +148,7 @@ public struct AppConfigStore: Sendable {
     ) throws -> AppConfigLoadResult {
         let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
         try save(config)
+        logger.warning("Recovered default config because \(reason.localizedDescription, privacy: .public)")
         return AppConfigLoadResult(config: config, status: .recoveredDefault(reason))
     }
 

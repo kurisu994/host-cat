@@ -4,7 +4,7 @@
 
 | 版本 | 日期 | 状态 | 备注 |
 |------|------|------|------|
-| 未发布 | — | 进行中 | 阶段 1 + 阶段 2 完成；阶段 3 上线准备（任务 14、1926已完成） |
+| 未发布 | — | 进行中 | 阶段 1 + 阶段 2 完成；阶段 3 上线准备（任务 14、19、22 最小集已完成） |
 
 尚未打第一个 tag（`1.0.0`），CHANGELOG 全部归入「## 未发布」。
 
@@ -63,7 +63,7 @@
 | 任务 19 搜索和过滤 | ✅ |
 | 任务 20 配置导入导出 | ⏳ 未开始 |
 | 任务 21 通知中心集成 | ⏳ 未开始 |
-| 任务 22 崩溃报告与诊断日志 | ⏳ 未开始 |
+| 任务 22 崩溃报告与诊断日志 | 🟡 诊断日志最小集完成（崩溃报告后置） |
 | 任务 23 大文件性能与稳定性验证 | ⏳ 未开始 |
 | 任务 24 可访问性 | ⏳ 未开始 |
 | 任务 25 隐私政策 | ⏳ 未开始 |
@@ -90,6 +90,7 @@
 | 2026-06-08 | `HelperService` 显式校验 `localizationIdentifier` | 防止 `"system"` 被错传导致语种不一致 |
 | 2026-06-15 | 版本号通过 project.yml 集中管理 | 一处修改全局生效，避免 App/Helper 版本不一致 |
 | 2026-06-15 | 编辑器侧边栏搜索过滤 | 高频用户需求，分组名/节点名/域名三路匹配 |
+| 2026-06-16 | 结构化日志与诊断日志导出 | 1.0 前排查 XPC 断连、写入失败、备份和配置加载问题 |
 
 ## 已解阻碍
 
@@ -123,5 +124,7 @@
 | 2026-05-27 | 增加 `AppLanguageTests`、`ModelsTests`、`TestDoubles.swift` 统一替身 |
 | 2026-06-08 | 增加 `ValidatorParityTests`（8）+ HostWriteCoordinatorTests `hashMismatchDoesNotAutoRetry` 和 `failedBatchDoesNotBlockSubsequentBatch` |
 | 2026-06-15 | 未新增测试（任务 14 和 19 为 UI 层变更，现有 155 个测试全通过） |
+| 2026-06-16 | 增加 `DiagnosticLogExporterTests`（3），覆盖导出格式、空结果文案和诊断级别名 |
+| 2026-06-16 | 增加 `XPCHostHelperPendingRepliesTests`（2），覆盖 XPC request 重复完成只接受首次结果，以及批量失败时清空 pending replies |
 
-当前测试总数：**128 XCTest + 27 Swift Testing**，全部通过。
+当前测试总数：**133 XCTest + 27 Swift Testing**，全部通过。

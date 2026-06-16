@@ -203,11 +203,9 @@ export DEVELOPMENT_TEAM="TEAMID"
 
 阶段 1（安全预览版）+ 阶段 2（真实写入版）均已完成，当前处于阶段 3 上线准备阶段。
 
-详见 [1.0 发版路线图](docs/roadmap-to-1.0.md)，核心待完成项：
+详见 [1.0 发版路线图](docs/roadmap-to-1.0.md)，已完成版本号主体、搜索过滤和结构化日志最小集；核心待完成项：
 
-1. 版本号与发布管理
-2. 搜索和过滤（高频用户需求）
-3. 结构化日志（OSLog 关键路径覆盖）
-4. GitHub Actions CI/CD 发布流水线
-5. Sparkle 自动更新
-6. DMG 安装体验打磨
+1. GitHub Actions CI/CD 发布流水线
+2. Sparkle 自动更新
+3. DMG 安装体验打磨
+4. 首次打 `1.0.0` tag

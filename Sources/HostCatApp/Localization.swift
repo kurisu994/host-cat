@@ -256,6 +256,8 @@ enum L {
     static var settingsGeneral: String { localize("settings.general") }
     static var settingsHelper: String { localize("settings.helper") }
     static var settingsConfigInfo: String { localize("settings.config_info") }
+    static var settingsDiagnostics: String { localize("settings.diagnostics") }
+    static var settingsDiagnosticsDescription: String { localize("settings.diagnostics.description") }
     static var settingsLaunchAtLogin: String { localize("settings.launch_at_login") }
     static var settingsVersion: String { localize("settings.version") }
     static var settingsRefresh: String { localize("settings.refresh") }
@@ -267,6 +269,14 @@ enum L {
     static var languageSystem: String { localize("settings.language.system") }
     static var languageSimplifiedChinese: String { localize("settings.language.simplified_chinese") }
     static var languageEnglish: String { localize("settings.language.english") }
+    static var settingsExportDiagnosticLogs: String { localize("settings.export_diagnostic_logs") }
+    static var settingsExportingDiagnostics: String { localize("settings.exporting_diagnostics") }
+    static func settingsDiagnosticExportSuccess(recordCount: Int, filename: String) -> String {
+        String(format: localize("settings.diagnostic_export.success"), recordCount, filename)
+    }
+    static func settingsDiagnosticExportFailed(_ message: String) -> String {
+        String(format: localize("settings.diagnostic_export.failed"), message)
+    }
 
     // MARK: - Private
 

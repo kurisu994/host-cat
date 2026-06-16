@@ -118,6 +118,8 @@ private struct SettingsView: View {
     let config: AppConfig
     @ObservedObject var registrationManager: HelperRegistrationManager
     @Binding var preferredLanguage: AppLanguage
+    @State private var diagnosticExportStatus: DiagnosticExportStatus?
+    @State private var isExportingDiagnostics = false
 
     var body: some View {
         ScrollView {
@@ -198,6 +200,46 @@ private struct SettingsView: View {
                     }
                 }
 
+                settingsCard(L.settingsDiagnostics) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(L.settingsDiagnosticsDescription)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        HStack(spacing: 8) {
+                            Spacer()
+
+                            Button {
+                                exportDiagnosticLogs()
+                            } label: {
+                                if isExportingDiagnostics {
+                                    HStack(spacing: 8) {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                        Text(L.settingsExportingDiagnostics)
+                                    }
+                                } else {
+                                    Label(
+                                        L.settingsExportDiagnosticLogs,
+                                        systemImage: "square.and.arrow.up"
+                                    )
+                                }
+                            }
+                            .disabled(isExportingDiagnostics)
+                        }
+
+                        if let diagnosticExportStatus {
+                            Text(diagnosticExportMessage(for: diagnosticExportStatus))
+                                .font(.caption)
+                                .foregroundStyle(diagnosticExportStatus.isSuccess ? Color.secondary : Color.red)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                }
+
                 settingsCard(L.settingsConfigInfo) {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("\(L.settingsVersion): \(Self.appVersionString)")
@@ -214,7 +256,7 @@ private struct SettingsView: View {
             .padding(.vertical, 22)
         }
         .frame(width: 420)
-        .frame(minHeight: 430)
+        .frame(minHeight: 540)
         .onAppear {
             registrationManager.refreshHelperStatus()
         }
@@ -281,5 +323,68 @@ private struct SettingsView: View {
         let build = info["CFBundleVersion"] as? String ?? "?"
         let commit = info["HostCatBuildCommit"] as? String ?? "dev"
         return "\(version) (build \(build) · \(commit))"
+    }
+
+    /// 打开保存面板并导出最近一小时 HostCat 相关 OSLog。
+    private func exportDiagnosticLogs() {
+        let panel = NSSavePanel()
+        panel.title = L.settingsExportDiagnosticLogs
+        panel.nameFieldStringValue = "HostCat-Diagnostics-\(Self.diagnosticFilenameTimestamp()).log"
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let destinationURL = panel.url else {
+            return
+        }
+
+        isExportingDiagnostics = true
+        diagnosticExportStatus = nil
+        let exporter = DiagnosticLogExporter()
+
+        Task {
+            let result = await Task.detached(priority: .utility) {
+                Result {
+                    try exporter.export(to: destinationURL)
+                }
+            }.value
+
+            isExportingDiagnostics = false
+            switch result {
+            case let .success(exportResult):
+                diagnosticExportStatus = .success(
+                    recordCount: exportResult.recordCount,
+                    filename: exportResult.destinationURL.lastPathComponent
+                )
+            case let .failure(error):
+                diagnosticExportStatus = .failure(error.localizedDescription)
+            }
+        }
+    }
+
+    private func diagnosticExportMessage(for status: DiagnosticExportStatus) -> String {
+        switch status {
+        case let .success(recordCount, filename):
+            L.settingsDiagnosticExportSuccess(recordCount: recordCount, filename: filename)
+        case let .failure(message):
+            L.settingsDiagnosticExportFailed(message)
+        }
+    }
+
+    private static func diagnosticFilenameTimestamp() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd_HHmmss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter.string(from: Date())
+    }
+
+    private enum DiagnosticExportStatus: Equatable, Sendable {
+        case success(recordCount: Int, filename: String)
+        case failure(String)
+
+        var isSuccess: Bool {
+            if case .success = self {
+                return true
+            }
+            return false
+        }
     }
 }
