@@ -39,6 +39,7 @@ struct HostCatApplication: App {
             EditorView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
                 .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
+                .debugPreviewBanner()
                 .background(WindowFocusView(title: L.editorTitle))
                 .environment(\.locale, appLanguage.locale)
         }
@@ -48,6 +49,7 @@ struct HostCatApplication: App {
             MergedPreviewView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
                 .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
+                .debugPreviewBanner()
                 .background(WindowFocusView(title: L.previewMergedHosts))
                 .environment(\.locale, appLanguage.locale)
         }
@@ -57,6 +59,7 @@ struct HostCatApplication: App {
             BackupRestoreView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
                 .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
+                .debugPreviewBanner()
                 .environment(\.locale, appLanguage.locale)
         }
         .defaultSize(width: 700, height: 450)

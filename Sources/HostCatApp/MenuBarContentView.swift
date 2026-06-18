@@ -20,6 +20,12 @@ struct MenuBarContentView: View {
         Text("HostCat")
             .font(.headline)
 
+        #if DEBUG
+        // Debug 构建用 PreviewHostHelperClient，菜单里加一条 disabled 项明示，
+        // 避免开发者从菜单切换节点后误以为已落盘 /etc/hosts。
+        Label("⚠️ DEBUG：写入未真正落盘到 /etc/hosts", systemImage: "exclamationmark.triangle.fill")
+        #endif
+
         Divider()
 
         // Default node (always active, cannot be toggled)
