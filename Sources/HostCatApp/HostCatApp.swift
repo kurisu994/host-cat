@@ -1,10 +1,12 @@
 import AppKit
 import HostCatCore
 import HostCatHelperClient
+import KeyboardShortcuts
 import SwiftUI
 
 @main
 struct HostCatApplication: App {
+    @NSApplicationDelegateAdaptor(HostCatAppDelegate.self) private var appDelegate
     @StateObject private var viewModel: MenuBarViewModel
     @StateObject private var registrationManager = HelperRegistrationManager()
     @AppStorage(AppLanguage.preferenceKey) private var storedLanguage = AppLanguage.system.rawValue
@@ -111,6 +113,15 @@ struct HostCatApplication: App {
     }
 }
 
+// MARK: - App Delegate
+
+/// 用于在应用启动完成时挂载全局快捷键监听等只需执行一次的副作用。
+final class HostCatAppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        GlobalShortcutManager.registerHandlers()
+    }
+}
+
 // MARK: - Settings View
 
 /// 汇总通用设置、Helper 状态和配置信息的设置页面。
@@ -152,6 +163,30 @@ private struct SettingsView: View {
                             .labelsHidden()
                             .toggleStyle(.switch)
                     }
+                }
+
+                settingsCard(L.settingsShortcuts) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(L.settingsShortcutsDescription)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        HStack(spacing: 10) {
+                            Text(L.settingsShortcutToggleMenuBar)
+
+                            Spacer()
+
+                            KeyboardShortcuts.Recorder(for: .toggleMenuBar)
+                        }
+
+                        Text(L.settingsShortcutToggleMenuBarHint)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
                 }
 
                 settingsCard(L.settingsHelper) {

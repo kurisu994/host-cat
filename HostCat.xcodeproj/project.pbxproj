@@ -15,6 +15,7 @@
 		1C1EF3C299739617BA334B69 /* ExternalModificationDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */; };
 		224631B8B32B406A5C7377F7 /* MenuBarViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6DA30E069E926F48EAD4848 /* MenuBarViewModelTests.swift */; };
 		24A79368968C11ACD4EFABEB /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		29623CE95209940E6EAD1FD3 /* GlobalShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96BCF52FD10A2BADFC2CCA1 /* GlobalShortcuts.swift */; };
 		2BCC78E4CF1101CD2260D34E /* HostsImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E7DD731488812BF6C21188 /* HostsImporter.swift */; };
 		2DCCF82A00983C3E0A0A8F00 /* HostHelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080D17737691D76CE83D4ED8 /* HostHelperClient.swift */; };
 		357597C66748513B9D9FDF11 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84EF760F5F41996E0DC96CB1 /* AppLanguage.swift */; };
@@ -66,6 +67,7 @@
 		B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		C3B8974B5DD1983C00C2D64B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */; };
 		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
 		C6A35C1ACD6B29813905F8BB /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
 		C9B6545BBCC41A9D36D328A4 /* DiagnosticLogExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */; };
@@ -223,6 +225,7 @@
 		E48A5B858538A466C34B7488 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E4EBCC23847724F1472FDC48 /* TestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDoubles.swift; sourceTree = "<group>"; };
 		E69B5B3946975FB8A31D8755 /* HostsTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsTextView.swift; sourceTree = "<group>"; };
+		E96BCF52FD10A2BADFC2CCA1 /* GlobalShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalShortcuts.swift; sourceTree = "<group>"; };
 		EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinatorTests.swift; sourceTree = "<group>"; };
 		F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinator.swift; sourceTree = "<group>"; };
 		F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = HostCatPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -245,6 +248,7 @@
 			files = (
 				9E5CAD830F2D7182B21A4FB7 /* HostCatCore.framework in Frameworks */,
 				520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */,
+				C3B8974B5DD1983C00C2D64B /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +397,7 @@
 				012F9428E3ED97A9216A38DE /* BackupRestoreView.swift */,
 				2EE0D54F96044F2F57634C83 /* EditorView.swift */,
 				CAA59E6BD9E301A08C41418A /* ExternalModificationAlert.swift */,
+				E96BCF52FD10A2BADFC2CCA1 /* GlobalShortcuts.swift */,
 				098317E3D7EC90CA857B8437 /* HostCatApp.swift */,
 				BA45A066C0D26D09E36DD601 /* HostsSyntaxHighlighter.swift */,
 				E69B5B3946975FB8A31D8755 /* HostsTextView.swift */,
@@ -442,6 +447,7 @@
 			);
 			name = HostCatApp;
 			packageProductDependencies = (
+				F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */,
 			);
 			productName = HostCatApp;
 			productReference = 25F7589652B270A9BE4FC933 /* HostCat.app */;
@@ -545,6 +551,9 @@
 			);
 			mainGroup = 5DDCA8D97EFE015E4A4E35FA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7C8191A389BC6859DF954E61 /* Products */;
 			projectDirPath = "";
@@ -609,6 +618,7 @@
 				43082EE1A7A45942B27116A4 /* BackupRestoreView.swift in Sources */,
 				7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */,
 				80BA8CC94376BE88A9BF23B3 /* ExternalModificationAlert.swift in Sources */,
+				29623CE95209940E6EAD1FD3 /* GlobalShortcuts.swift in Sources */,
 				B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */,
 				9FB9B27C5B5278F61075F88F /* HostsSyntaxHighlighter.swift in Sources */,
 				8636804EA1B5E8916038D2A8 /* HostsTextView.swift in Sources */,
@@ -1143,6 +1153,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 32BD2606AFB2AE0B91ED2382 /* Project object */;
 }

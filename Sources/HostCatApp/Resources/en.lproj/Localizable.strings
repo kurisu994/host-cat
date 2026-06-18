@@ -202,6 +202,12 @@
 "settings.diagnostic_export.success" = "Exported %d log entries to %@";
 "settings.diagnostic_export.failed" = "Export failed: %@";
 
+/* Shortcuts */
+"settings.shortcuts" = "Shortcuts";
+"settings.shortcuts.description" = "Global shortcut to quickly summon the HostCat menu. Not bound by default — click the recorder below to set one.";
+"settings.shortcut.toggle_menu_bar" = "Open Menu Bar";
+"settings.shortcut.toggle_menu_bar.hint" = "Pressing the shortcut simulates a click on the menu bar icon to open the menu.";
+
 /* MenuBarViewModel */
 "external.modification.detected" = "External modification to hosts file detected";
 "external.modification.confirm" = "hosts file has been modified externally. Overwrite?";

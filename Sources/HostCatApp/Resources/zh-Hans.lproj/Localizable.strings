@@ -202,6 +202,12 @@
 "settings.diagnostic_export.success" = "已导出 %d 条日志到 %@";
 "settings.diagnostic_export.failed" = "导出失败: %@";
 
+/* Shortcuts */
+"settings.shortcuts" = "快捷键";
+"settings.shortcuts.description" = "设置全局快捷键以快速调出 HostCat 菜单。默认未绑定，点击下方录制框即可设置。";
+"settings.shortcut.toggle_menu_bar" = "打开菜单栏";
+"settings.shortcut.toggle_menu_bar.hint" = "按下快捷键时，会模拟点击菜单栏图标弹出菜单。";
+
 /* MenuBarViewModel */
 "external.modification.detected" = "检测到 hosts 文件被外部修改";
 "external.modification.confirm" = "hosts 文件已被外部修改，确认覆盖？";

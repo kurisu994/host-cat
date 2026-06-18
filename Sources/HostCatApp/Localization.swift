@@ -278,6 +278,12 @@ enum L {
         String(format: localize("settings.diagnostic_export.failed"), message)
     }
 
+    // MARK: - Shortcuts
+    static var settingsShortcuts: String { localize("settings.shortcuts") }
+    static var settingsShortcutsDescription: String { localize("settings.shortcuts.description") }
+    static var settingsShortcutToggleMenuBar: String { localize("settings.shortcut.toggle_menu_bar") }
+    static var settingsShortcutToggleMenuBarHint: String { localize("settings.shortcut.toggle_menu_bar.hint") }
+
     // MARK: - Private
 
     private static func localize(_ key: String) -> String {

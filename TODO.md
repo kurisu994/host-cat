@@ -160,7 +160,7 @@
 - [x] 修复编辑器行号与标题栏样式问题。
 - [x] ~~跨分组拖拽排序（当前已实现分组内节点拖拽）~~ — **已砍**，产品决策：跨组拖拽引入的交互复杂度和意外行为风险大于收益，保持分组内拖拽即可满足核心排序需求。
 - [x] 搜索和过滤节点、域名。
-- [ ] 全局快捷键打开菜单栏。
+- [x] 全局快捷键打开菜单栏。
 - [x] 鼠标悬停预览 hosts 内容。
 - [ ] 中文/英文完整多语言覆盖（主界面和主要错误流已完成，仍需收敛底层诊断细节并评估字符串目录迁移）。
 - [ ] Sparkle 自动更新。
@@ -207,10 +207,10 @@
 
 ### 18. 全局快捷键
 
-- [ ] 引入 `MASShortcut` 或 `KeyboardShortcuts`（推荐 SwiftUI 友好方案）。
-- [ ] 支持「打开菜单栏」全局快捷键（默认未绑定，首次设置时引导）。
-- [ ] 快捷键偏好持久化到 `AppSettings`。
-- [ ] 注册/注销 `CGEventTap` 或 `NSEvent` 全局监听。
+- [x] 引入 `KeyboardShortcuts`（sindresorhus，SwiftUI 友好）。
+- [x] 支持「打开菜单栏」全局快捷键（默认未绑定，设置页提供录制框）。
+- [x] 快捷键偏好持久化（由 KeyboardShortcuts 通过 UserDefaults 自动落盘，键名 `KeyboardShortcuts_toggleMenuBar`）。
+- [x] 注册全局快捷键监听（KeyboardShortcuts 内部使用 Carbon `RegisterEventHotKey`，无需辅助功能授权）。
 
 ### 19. 搜索和过滤
 
