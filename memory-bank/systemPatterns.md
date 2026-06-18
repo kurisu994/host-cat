@@ -57,6 +57,10 @@ Sources/
 │   ├── MergedPreviewView.swift    # 合成预览窗口
 │   ├── BackupRestoreView.swift    # 备份恢复窗口
 │   ├── ExternalModificationAlert.swift  # 外部修改弹窗
+│   ├── GlobalShortcuts.swift      # `ShortcutStore` 持久化 + `MenuBarStatusItemOpener` 弹菜单
+│   ├── Shortcut.swift             # 值类型：keyCode + Carbon modifier + UCKeyTranslate 翻译
+│   ├── CarbonHotKeyMonitor.swift  # Carbon `RegisterEventHotKey` 全局监听
+│   ├── ShortcutRecorderView.swift # NSViewRepresentable 快捷键录制框
 │   ├── Localization.swift         # UI 本地化字符串入口
 │   └── Resources/
 │       ├── zh-Hans.lproj/Localizable.strings

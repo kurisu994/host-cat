@@ -19,8 +19,9 @@
 |------|------|
 | Foundation | 基础类型 |
 | SwiftUI | UI 层 |
-| AppKit | NSTextView / NSRulerView 桥接 |
+| AppKit | NSTextView / NSRulerView / ShortcutRecorderView 桥接 |
 | Combine | `@Published` ObservableObject |
+| Carbon.HIToolbox | `RegisterEventHotKey` 全局快捷键监听 + `UCKeyTranslate` 键码翻译 |
 | os.log | 日志 |
 | ServiceManagement | `SMAppService` Helper 注册 |
 | Network | `IPv4Address` / `IPv6Address` 校验 |
@@ -29,7 +30,6 @@
 
 阶段 3 计划引入：
 - **Sparkle**（自动更新）
-- **KeyboardShortcuts**（全局快捷键，推荐 SwiftUI 友好方案）
 
 ## Bundle Identifiers
 
@@ -50,6 +50,8 @@
 | `~/Library/Application Support/com.hostcat.app/config.json.<reason>.<ts>.<uuid>` | 配置损坏时的 preserved 副本 |
 | `/private/etc/hosts` | 真实 hosts 文件（仅 Helper 写入，realpath 解析） |
 | `UserDefaults["HostCat.appLanguage"]` | 界面语言偏好（`system` / `zh-Hans` / `en`） |
+| `UserDefaults["HostCat.shortcut.toggleMenuBar"]` | 「打开菜单栏」全局快捷键（JSON: keyCode + carbonModifiers） |
+| `UserDefaults["HostCat.privacyWelcomeShown"]` | 首启隐私摘要欢迎窗口是否已展示过 |
 | `UserDefaults["HostCatTeamIdentifier"]` | Team ID（Info.plist 注入） |
 
 ## HostCat 管理区块格式
