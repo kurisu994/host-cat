@@ -44,6 +44,7 @@
 		7C03322DA4A4BAEB8C0CA0B5 /* DebugPreviewBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB3BC8C984153D34FD6E598 /* DebugPreviewBanner.swift */; };
 		7C33C8F07228FB43AA9D3F25 /* XPCHostHelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4FD6F87BC790D98BC29F49 /* XPCHostHelperClient.swift */; };
 		7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EE0D54F96044F2F57634C83 /* EditorView.swift */; };
+		7E5025ABE0AEC1F0D1651146 /* CarbonHotKeyMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 812BA7FFFC56C97A37884EAE /* CarbonHotKeyMonitor.swift */; };
 		80BA8CC94376BE88A9BF23B3 /* ExternalModificationAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAA59E6BD9E301A08C41418A /* ExternalModificationAlert.swift */; };
 		81ACA36DAAB37D49763BB40F /* HostsFileWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */; };
 		81BA2A8CAB33A32ECB651708 /* NameInputDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 478548346A1B1FFD6C125EEA /* NameInputDialog.swift */; };
@@ -62,13 +63,14 @@
 		A854C9E2C21C4350D1A3AFDC /* AppConfigStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */; };
 		AA5B7E95C9AFB695AA8E20A5 /* LocalizationCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D267B8245B3643CBEA8AC84C /* LocalizationCore.swift */; };
 		B1DC4984DA362BD870025F5F /* AppConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF4DC6B8B59AA91180F6B174 /* AppConfigTests.swift */; };
+		B4D4AC939C75A1DCA15C597B /* ShortcutRecorderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01D2BD5921F5B3FB225B1E5C /* ShortcutRecorderView.swift */; };
 		B561B66C2664362F94C181B9 /* HelperRegistrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E3277403B5D6778F2D5830C /* HelperRegistrationManager.swift */; };
 		B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 098317E3D7EC90CA857B8437 /* HostCatApp.swift */; };
 		B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		BC84BBD5C8C3EC3D7BA2E57C /* Shortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5C29E125E22EA05750BF8E9 /* Shortcut.swift */; };
 		BCEF47C58652AF1FBE975599 /* HelperRecoveryAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3798507DB316D113C5AE5C3 /* HelperRecoveryAlert.swift */; };
-		C3B8974B5DD1983C00C2D64B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */; };
 		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
 		C6A35C1ACD6B29813905F8BB /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
 		C9B6545BBCC41A9D36D328A4 /* DiagnosticLogExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */; };
@@ -168,6 +170,7 @@
 		00742A95D2D11025BEC36E42 /* HostsParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsParserTests.swift; sourceTree = "<group>"; };
 		012F9428E3ED97A9216A38DE /* BackupRestoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupRestoreView.swift; sourceTree = "<group>"; };
 		014FF435AFEA5342833791B7 /* HostsParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsParser.swift; sourceTree = "<group>"; };
+		01D2BD5921F5B3FB225B1E5C /* ShortcutRecorderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutRecorderView.swift; sourceTree = "<group>"; };
 		05B2FC0550AF804D01C7F520 /* HelperService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperService.swift; sourceTree = "<group>"; };
 		080D17737691D76CE83D4ED8 /* HostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostHelperClient.swift; sourceTree = "<group>"; };
 		0951D99F787F38B7533BE6EB /* AppLanguageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguageTests.swift; sourceTree = "<group>"; };
@@ -201,6 +204,7 @@
 		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
 		7670D0CAED502DB6F517DBAB /* HostCatPrivilegedHelperMain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatPrivilegedHelperMain.swift; sourceTree = "<group>"; };
 		810E8D23915755A95A793E45 /* CodeSigningRequirementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeSigningRequirementsTests.swift; sourceTree = "<group>"; };
+		812BA7FFFC56C97A37884EAE /* CarbonHotKeyMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarbonHotKeyMonitor.swift; sourceTree = "<group>"; };
 		84EF760F5F41996E0DC96CB1 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 		8C751DFEBEC42468BFAC9FCC /* AppConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStore.swift; sourceTree = "<group>"; };
 		8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarComponents.swift; sourceTree = "<group>"; };
@@ -218,6 +222,7 @@
 		BDCF8B1FD3C18CCEDEB24B61 /* AppConfigStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfigStoreTests.swift; sourceTree = "<group>"; };
 		BFF2470AD5775FB15B089832 /* HostsMerger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsMerger.swift; sourceTree = "<group>"; };
 		C3D025B1EECD75015C0838E8 /* HostsFileWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsFileWriter.swift; sourceTree = "<group>"; };
+		C5C29E125E22EA05750BF8E9 /* Shortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcut.swift; sourceTree = "<group>"; };
 		CAA59E6BD9E301A08C41418A /* ExternalModificationAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalModificationAlert.swift; sourceTree = "<group>"; };
 		CDD8E733CAC8ED8396B6E6F9 /* MenuBarViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarViewModel.swift; sourceTree = "<group>"; };
 		CF2F0EAF0D3F21D9832F522A /* BackupStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupStore.swift; sourceTree = "<group>"; };
@@ -252,7 +257,6 @@
 			files = (
 				9E5CAD830F2D7182B21A4FB7 /* HostCatCore.framework in Frameworks */,
 				520813041DABFE1FE754431C /* HostCatHelperClient.framework in Frameworks */,
-				C3B8974B5DD1983C00C2D64B /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,6 +403,7 @@
 			isa = PBXGroup;
 			children = (
 				012F9428E3ED97A9216A38DE /* BackupRestoreView.swift */,
+				812BA7FFFC56C97A37884EAE /* CarbonHotKeyMonitor.swift */,
 				AFB3BC8C984153D34FD6E598 /* DebugPreviewBanner.swift */,
 				2EE0D54F96044F2F57634C83 /* EditorView.swift */,
 				CAA59E6BD9E301A08C41418A /* ExternalModificationAlert.swift */,
@@ -414,6 +419,8 @@
 				177F78F484B36F16EFDAC9D1 /* MergedPreviewView.swift */,
 				478548346A1B1FFD6C125EEA /* NameInputDialog.swift */,
 				5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */,
+				C5C29E125E22EA05750BF8E9 /* Shortcut.swift */,
+				01D2BD5921F5B3FB225B1E5C /* ShortcutRecorderView.swift */,
 				8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */,
 				67C07576A08A754F376668BE /* WelcomeView.swift */,
 				DD7C78F009E32AECCA011883 /* WindowFocus.swift */,
@@ -455,7 +462,6 @@
 			);
 			name = HostCatApp;
 			packageProductDependencies = (
-				F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */,
 			);
 			productName = HostCatApp;
 			productReference = 25F7589652B270A9BE4FC933 /* HostCat.app */;
@@ -559,9 +565,6 @@
 			);
 			mainGroup = 5DDCA8D97EFE015E4A4E35FA;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7C8191A389BC6859DF954E61 /* Products */;
 			projectDirPath = "";
@@ -643,6 +646,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				43082EE1A7A45942B27116A4 /* BackupRestoreView.swift in Sources */,
+				7E5025ABE0AEC1F0D1651146 /* CarbonHotKeyMonitor.swift in Sources */,
 				7C03322DA4A4BAEB8C0CA0B5 /* DebugPreviewBanner.swift in Sources */,
 				7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */,
 				80BA8CC94376BE88A9BF23B3 /* ExternalModificationAlert.swift in Sources */,
@@ -658,6 +662,8 @@
 				51ED9B071CA473D56E00A971 /* MergedPreviewView.swift in Sources */,
 				81BA2A8CAB33A32ECB651708 /* NameInputDialog.swift in Sources */,
 				5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */,
+				BC84BBD5C8C3EC3D7BA2E57C /* Shortcut.swift in Sources */,
+				B4D4AC939C75A1DCA15C597B /* ShortcutRecorderView.swift in Sources */,
 				9D22255196CC0B054CAC2DD0 /* SidebarComponents.swift in Sources */,
 				E868C680C67DB228AD65B0F3 /* WelcomeView.swift in Sources */,
 				8BFBED698502A3FACE80865A /* WindowFocus.swift in Sources */,
@@ -1162,25 +1168,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.2.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EAF31942DEF381B3C06BE94C /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
-			productName = KeyboardShortcuts;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 32BD2606AFB2AE0B91ED2382 /* Project object */;
 }

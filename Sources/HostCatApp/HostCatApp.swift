@@ -1,7 +1,6 @@
 import AppKit
 import HostCatCore
 import HostCatHelperClient
-import KeyboardShortcuts
 import SwiftUI
 
 @main
@@ -9,9 +8,13 @@ struct HostCatApplication: App {
     @NSApplicationDelegateAdaptor(HostCatAppDelegate.self) private var appDelegate
     @StateObject private var viewModel: MenuBarViewModel
     @StateObject private var registrationManager = HelperRegistrationManager()
+    @StateObject private var shortcutStore: ShortcutStore
     @AppStorage(AppLanguage.preferenceKey) private var storedLanguage = AppLanguage.system.rawValue
 
     init() {
+        // ShortcutStore 是单例（确保 Carbon 注册唯一），用 wrappedValue 包给 @StateObject 复用同一实例。
+        _shortcutStore = StateObject(wrappedValue: ShortcutStore.shared)
+
         let config = Self.loadInitialConfig()
 
         #if DEBUG
@@ -68,6 +71,7 @@ struct HostCatApplication: App {
             SettingsView(
                 config: viewModel.config,
                 registrationManager: registrationManager,
+                shortcutStore: shortcutStore,
                 preferredLanguage: appLanguageBinding
             )
             .environment(\.locale, appLanguage.locale)
@@ -130,7 +134,7 @@ final class HostCatAppDelegate: NSObject, NSApplicationDelegate {
     private var welcomeWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        GlobalShortcutManager.registerHandlers()
+        ShortcutStore.shared.bootstrap()
         presentPrivacyWelcomeIfNeeded()
     }
 
@@ -178,6 +182,7 @@ extension HostCatAppDelegate: NSWindowDelegate {
 private struct SettingsView: View {
     let config: AppConfig
     @ObservedObject var registrationManager: HelperRegistrationManager
+    @ObservedObject var shortcutStore: ShortcutStore
     @Binding var preferredLanguage: AppLanguage
     @State private var diagnosticExportStatus: DiagnosticExportStatus?
     @State private var isExportingDiagnostics = false
@@ -227,7 +232,12 @@ private struct SettingsView: View {
 
                             Spacer()
 
-                            KeyboardShortcuts.Recorder(for: .toggleMenuBar)
+                            ShortcutRecorderView(
+                                shortcut: $shortcutStore.toggleMenuBar,
+                                idlePlaceholder: L.settingsShortcutPlaceholderIdle,
+                                recordingPlaceholder: L.settingsShortcutPlaceholderRecording
+                            )
+                            .frame(width: 140, height: 24)
                         }
 
                         Text(L.settingsShortcutToggleMenuBarHint)

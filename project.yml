@@ -23,11 +23,6 @@ configs:
   Debug: debug
   Release: release
 
-packages:
-  KeyboardShortcuts:
-    url: https://github.com/sindresorhus/KeyboardShortcuts.git
-    from: "2.2.0"
-
 targets:
   # HostCatCore - 纯 Swift 业务核心 framework
   HostCatCore:
@@ -88,7 +83,6 @@ targets:
       - target: HostCatPrivilegedHelper
         embed: false
         # Helper 需通过 Copy Files phase 放到指定位置
-      - package: KeyboardShortcuts
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.app

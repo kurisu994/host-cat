@@ -285,6 +285,8 @@ enum L {
     static var settingsShortcutsDescription: String { localize("settings.shortcuts.description") }
     static var settingsShortcutToggleMenuBar: String { localize("settings.shortcut.toggle_menu_bar") }
     static var settingsShortcutToggleMenuBarHint: String { localize("settings.shortcut.toggle_menu_bar.hint") }
+    static var settingsShortcutPlaceholderIdle: String { localize("settings.shortcut.placeholder.idle") }
+    static var settingsShortcutPlaceholderRecording: String { localize("settings.shortcut.placeholder.recording") }
 
     // MARK: - Welcome / Privacy
     static var welcomeTitle: String { localize("welcome.title") }

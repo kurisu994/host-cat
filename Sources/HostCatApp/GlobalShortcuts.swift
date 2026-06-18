@@ -1,33 +1,66 @@
 import AppKit
-import KeyboardShortcuts
 import OSLog
 
-/// 全局快捷键名称定义。
+/// 全局快捷键的持久化与运行时注册中心。
 ///
-/// 仅声明键名，默认不绑定具体快捷键，由用户在「设置 > 通用 > 快捷键」中录入。
-extension KeyboardShortcuts.Name {
-    /// 弹出菜单栏菜单的全局快捷键。
-    static let toggleMenuBar = Self("toggleMenuBar")
-}
+/// - 通过 `UserDefaults` 持久化用户绑定的 `Shortcut`（JSON 编码）。
+/// - 任何修改都会立即同步给 `CarbonHotKeyMonitor` 重新注册，无需重启 app。
+/// - `ObservableObject` 让 SwiftUI 设置页能直接以 `Binding` 形式编辑当前绑定。
+@MainActor
+final class ShortcutStore: ObservableObject {
+    static let shared = ShortcutStore()
 
-/// 全局快捷键注册与触发的入口。
-///
-/// 当前只承载「打开菜单栏」一个键，后续如需新增（例如直接打开编辑器）可在此扩展。
-enum GlobalShortcutManager {
-    private static let logger = Logger(subsystem: "com.hostcat.app", category: "global-shortcuts")
+    private static let userDefaultsKey = "HostCat.shortcut.toggleMenuBar"
+    private static let logger = Logger(subsystem: "com.hostcat.app", category: "shortcut-store")
 
-    /// 一次性注册所有全局快捷键回调，重复调用会被忽略。
-    @MainActor
-    static func registerHandlers() {
-        guard !hasRegistered else { return }
-        hasRegistered = true
+    @Published var toggleMenuBar: Shortcut? {
+        didSet {
+            guard toggleMenuBar != oldValue else { return }
+            persist()
+            applyToMonitor()
+        }
+    }
 
-        KeyboardShortcuts.onKeyDown(for: .toggleMenuBar) {
+    private init() {
+        // 用 `_toggleMenuBar` 直接初始化绕过 didSet：恢复时不希望触发"再次写盘 + 重注册"。
+        _toggleMenuBar = Published(initialValue: Self.load())
+    }
+
+    /// 应用启动后调用一次，把已持久化的快捷键挂到 Carbon。
+    /// 之后通过 `toggleMenuBar` setter 自动维护。
+    func bootstrap() {
+        applyToMonitor()
+    }
+
+    private func applyToMonitor() {
+        CarbonHotKeyMonitor.shared.register(shortcut: toggleMenuBar) {
             MenuBarStatusItemOpener.open()
         }
     }
 
-    @MainActor private static var hasRegistered = false
+    private func persist() {
+        let defaults = UserDefaults.standard
+        guard let toggleMenuBar else {
+            defaults.removeObject(forKey: Self.userDefaultsKey)
+            return
+        }
+        do {
+            let data = try JSONEncoder().encode(toggleMenuBar)
+            defaults.set(data, forKey: Self.userDefaultsKey)
+        } catch {
+            Self.logger.warning("快捷键持久化失败：\(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private static func load() -> Shortcut? {
+        guard let data = UserDefaults.standard.data(forKey: userDefaultsKey) else { return nil }
+        do {
+            return try JSONDecoder().decode(Shortcut.self, from: data)
+        } catch {
+            Self.logger.warning("读取已持久化快捷键失败：\(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+    }
 }
 
 /// 通过遍历 `NSApp.windows` 查找 MenuBarExtra 对应的 `NSStatusBarWindow`，
