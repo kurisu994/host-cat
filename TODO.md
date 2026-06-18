@@ -180,7 +180,7 @@
 
 ### 15. 中英文多语言覆盖
 
-- [ ] 将当前 `.strings` 资源迁移到 `Localizable.xcstrings`。
+- [x] 将当前 `.strings` 资源迁移到 `Localizable.xcstrings`（App 资源迁移到 `Localizable.xcstrings`，Core 资源迁移到 `LocalizableCore.xcstrings`；SwiftPM/Xcode 均会在构建时生成 `*.lproj/*.strings`，运行时通过 `AppLanguage.localizedBundle(in:)` 取值的路径不变）。
 - [x] 接入中文（简体）和英文两套 App/Core 字符串资源及构建资源 bundle。
 - [x] 菜单栏项、弹窗、主要错误提示和设置页面完成本地化。
 - [x] 设置页提供跟随系统/简体中文/English 选择，并支持界面运行时即时切换。

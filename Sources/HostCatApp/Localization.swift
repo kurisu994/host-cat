@@ -4,7 +4,7 @@ import SwiftUI
 /// HostCat localization string wrapper.
 ///
 /// Provides type-safe access to localized strings, avoiding raw string literals in UI code.
-/// All keys must be defined in both en.lproj/Localizable.strings and zh-Hans.lproj/Localizable.strings.
+/// All keys must be defined in `Resources/Localizable.xcstrings` with both `en` and `zh-Hans` localizations.
 enum L {
     // MARK: - App
     static var appName: String { localize("app.name") }
