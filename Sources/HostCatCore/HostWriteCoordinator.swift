@@ -10,6 +10,8 @@ public enum ApplyStatus: Equatable, Sendable {
     case conflicts([HostConflict])
     case writeFailed(String)
     case mergeFailed(String)
+    /// Helper 不可用（未注册、未审批或 XPC 连接断开），UI 应当引导用户去注册/启用 Helper。
+    case helperUnavailable(String)
 }
 
 public struct ApplyResult: Equatable, Sendable {
@@ -235,11 +237,30 @@ public actor HostWriteCoordinator {
             // 但 UI 不再用它覆盖用户正在编辑的草稿。
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
             logger.error("\(LC.logWriteFailed(message))")
+            let status: ApplyStatus = Self.isHelperUnavailable(error)
+                ? .helperUnavailable(message)
+                : .writeFailed(message)
             return ApplyResult(
                 success: false,
                 errorMessage: message,
-                status: .writeFailed(message)
+                status: status
             )
+        }
+    }
+
+    /// 判断 helper client 抛出的错误是否属于「Helper 整体不可用」类，
+    /// 用于驱动 UI 进入辅助注册引导，而不是直接显示一段红色错误。
+    private static func isHelperUnavailable(_ error: Error) -> Bool {
+        guard let helperError = error as? HostHelperClientError else { return false }
+        switch helperError {
+        case .unavailable,
+             .helperNotRegistered,
+             .helperNotApproved,
+             .connectionInterrupted,
+             .connectionInvalidated:
+            return true
+        case .hashMismatch, .fileImmutable, .requestTimedOut, .unexpectedReply:
+            return false
         }
     }
 }

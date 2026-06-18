@@ -167,6 +167,90 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertTrue(viewModel.isApplying)
     }
 
+    // MARK: - Helper Recovery Prompt
+
+    /// 当 apply 因 Helper 不可用失败时，viewModel 必须把状态映射成 `helperRecoveryPrompt`，
+    /// 而不是设置 applyError；UI 才能弹出引导注册对话框，而不是只显示一条红色文字。
+    func testHelperUnavailableErrorPopulatesRecoveryPrompt() async {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        await helper.setSimulatedError(HostHelperClientError.helperNotRegistered)
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+
+        _ = await viewModel.applyImmediately()
+
+        XCTAssertNotNil(viewModel.helperRecoveryPrompt, "Helper 不可用时必须暴露 recovery prompt")
+        XCTAssertNil(viewModel.applyError, "弹引导对话框时不应再显示底部红色 banner，避免重复打扰")
+    }
+
+    /// 用户在 Helper 引导对话框点「取消」/「稍后再说」后调用 dismiss，
+    /// prompt 必须被清空且不会触发额外的 apply。
+    func testDismissHelperRecoveryPromptClearsState() async {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        await helper.setSimulatedError(HostHelperClientError.helperNotRegistered)
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: makeStoreURL())
+        )
+
+        _ = await viewModel.applyImmediately()
+        XCTAssertNotNil(viewModel.helperRecoveryPrompt)
+
+        viewModel.dismissHelperRecoveryPrompt()
+
+        XCTAssertNil(viewModel.helperRecoveryPrompt)
+    }
+
+    /// 用户在系统设置启用 Helper 后点「我已开启，重试应用」时，
+    /// viewModel 必须重新调用 helper 并在成功时把 prompt 清掉。
+    func testRetryAfterHelperRecoveryClearsPromptOnSuccess() async {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        await helper.setSimulatedError(HostHelperClientError.helperNotApproved)
+        let coordinator = HostWriteCoordinator(
+            helperClient: helper,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: makeStoreURL())
+        )
+
+        _ = await viewModel.applyImmediately()
+        XCTAssertNotNil(viewModel.helperRecoveryPrompt)
+
+        // 模拟用户在系统设置完成审批后 helper 可用
+        await helper.setShouldSucceed(true)
+        await helper.setSimulatedError(nil)
+
+        let retryResult = await viewModel.retryApplyAfterHelperRecovery()
+
+        XCTAssertTrue(retryResult.success)
+        XCTAssertNil(viewModel.helperRecoveryPrompt, "重试成功后必须清空 prompt")
+        let writes = await helper.writtenContents
+        XCTAssertEqual(writes.count, 1, "重试时应当再调用一次 helper")
+    }
+
     private func waitForApplyToFinish(
         _ viewModel: MenuBarViewModel,
         timeoutNanoseconds: UInt64 = 1_000_000_000

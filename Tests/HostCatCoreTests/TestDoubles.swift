@@ -22,7 +22,9 @@ actor FakeHostHelperClient: HostHelperClient {
             if let error = simulatedError {
                 throw error
             } else {
-                throw HostHelperClientError.unavailable("模拟写入失败")
+                // 默认抛 fileImmutable 模拟"写入路径本身失败"，
+                // 走 .writeFailed 分支；如需测试 Helper 不可用请显式 setSimulatedError(.unavailable(...))。
+                throw HostHelperClientError.fileImmutable
             }
         }
 

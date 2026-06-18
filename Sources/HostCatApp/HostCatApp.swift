@@ -30,6 +30,7 @@ struct HostCatApplication: App {
         MenuBarExtra("HostCat", systemImage: "pawprint") {
             MenuBarContentView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
                 .environment(\.locale, appLanguage.locale)
         }
         .menuBarExtraStyle(.menu)
@@ -37,6 +38,7 @@ struct HostCatApplication: App {
         Window(L.editorTitle, id: "editor") {
             EditorView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
                 .background(WindowFocusView(title: L.editorTitle))
                 .environment(\.locale, appLanguage.locale)
         }
@@ -45,6 +47,7 @@ struct HostCatApplication: App {
         Window(L.previewMergedHosts, id: "preview") {
             MergedPreviewView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
                 .background(WindowFocusView(title: L.previewMergedHosts))
                 .environment(\.locale, appLanguage.locale)
         }
@@ -53,6 +56,7 @@ struct HostCatApplication: App {
         Window(L.backupTitle, id: "backup") {
             BackupRestoreView(viewModel: viewModel)
                 .externalModificationAlert(viewModel: viewModel)
+                .helperRecoveryAlert(viewModel: viewModel, registrationManager: registrationManager)
                 .environment(\.locale, appLanguage.locale)
         }
         .defaultSize(width: 700, height: 450)

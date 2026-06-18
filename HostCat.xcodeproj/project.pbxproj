@@ -66,6 +66,7 @@
 		B62E2FBEF229ED4676E37100 /* HostCatCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B88C1891AD1FE15074DDF37E /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B9FFDC852FCD1668203068AE /* HostCatCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9682678AF698BEFE8887AE91 /* HostCatCore.framework */; };
+		BCEF47C58652AF1FBE975599 /* HelperRecoveryAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3798507DB316D113C5AE5C3 /* HelperRecoveryAlert.swift */; };
 		C3B8974B5DD1983C00C2D64B /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = F4FFC88E4FE88844FF446F27 /* KeyboardShortcuts */; };
 		C5592AE2F47F3D415480F57F /* DNSRefresher.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1779A9C17C5BCA801BA093 /* DNSRefresher.swift */; };
 		C6A35C1ACD6B29813905F8BB /* HostCatHelperClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; };
@@ -228,6 +229,7 @@
 		E96BCF52FD10A2BADFC2CCA1 /* GlobalShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalShortcuts.swift; sourceTree = "<group>"; };
 		EC2D86335DC0404E3371DD44 /* HostWriteCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinatorTests.swift; sourceTree = "<group>"; };
 		F088F0ABB0C1E699B9C82DB2 /* HostWriteCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostWriteCoordinator.swift; sourceTree = "<group>"; };
+		F3798507DB316D113C5AE5C3 /* HelperRecoveryAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelperRecoveryAlert.swift; sourceTree = "<group>"; };
 		F66A1A6402152F84AC774962 /* HostCatPrivilegedHelper */ = {isa = PBXFileReference; includeInIndex = 0; path = HostCatPrivilegedHelper; sourceTree = BUILT_PRODUCTS_DIR; };
 		FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = HostCatHelperClient.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF4FD6F87BC790D98BC29F49 /* XPCHostHelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCHostHelperClient.swift; sourceTree = "<group>"; };
@@ -398,6 +400,7 @@
 				2EE0D54F96044F2F57634C83 /* EditorView.swift */,
 				CAA59E6BD9E301A08C41418A /* ExternalModificationAlert.swift */,
 				E96BCF52FD10A2BADFC2CCA1 /* GlobalShortcuts.swift */,
+				F3798507DB316D113C5AE5C3 /* HelperRecoveryAlert.swift */,
 				098317E3D7EC90CA857B8437 /* HostCatApp.swift */,
 				BA45A066C0D26D09E36DD601 /* HostsSyntaxHighlighter.swift */,
 				E69B5B3946975FB8A31D8755 /* HostsTextView.swift */,
@@ -640,6 +643,7 @@
 				7D99032F3AC3C417EC14E288 /* EditorView.swift in Sources */,
 				80BA8CC94376BE88A9BF23B3 /* ExternalModificationAlert.swift in Sources */,
 				29623CE95209940E6EAD1FD3 /* GlobalShortcuts.swift in Sources */,
+				BCEF47C58652AF1FBE975599 /* HelperRecoveryAlert.swift in Sources */,
 				B5942F4C283391170FB00593 /* HostCatApp.swift in Sources */,
 				9FB9B27C5B5278F61075F88F /* HostsSyntaxHighlighter.swift in Sources */,
 				8636804EA1B5E8916038D2A8 /* HostsTextView.swift in Sources */,

@@ -160,6 +160,14 @@ public enum LC {
     }
     public static var errorUnknown: String { localize("error.unknown") }
 
+    // MARK: - Helper Recovery Prompt
+    /// Apply 失败时弹出的 Helper 引导文案。Core 模块持有 string key，
+    /// UI 层在 SwiftUI 视图里通过 `L.*` 显示，但失败原因本身仍走 Core 层翻译。
+    public static var helperRecoveryTitle: String { localize("helper.recovery.title") }
+    public static func helperRecoveryMessage(reason: String) -> String {
+        String(format: localize("helper.recovery.message"), reason)
+    }
+
     // MARK: - Resource Resolution
 
     static func localizedString(

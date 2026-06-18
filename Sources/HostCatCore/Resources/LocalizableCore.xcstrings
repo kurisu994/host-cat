@@ -596,6 +596,40 @@
         }
       }
     },
+    "helper.recovery.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat needs the Privileged Helper"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat 需要 Privileged Helper 才能写入 /etc/hosts"
+          }
+        }
+      }
+    },
+    "helper.recovery.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply could not reach the Helper. Reason: %@\n\nInstall or enable the Helper, then retry."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本次应用没能连上 Helper。原因：%@\n\n请按下方按钮安装或在「系统设置」中启用 Helper 后再重试。"
+          }
+        }
+      }
+    },
     "helper.not_registered": {
       "extractionState": "manual",
       "localizations": {

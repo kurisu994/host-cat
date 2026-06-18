@@ -146,6 +146,8 @@ enum L {
     static var helperPendingApproval: String { localize("helper.pending_approval") }
     static var helperOpenSettings: String { localize("helper.open_settings") }
     static var helperEnabled: String { localize("helper.enabled") }
+    static var helperRecoveryRetry: String { localize("helper.recovery.retry") }
+    static var helperRecoveryDismiss: String { localize("helper.recovery.dismiss") }
 
     // MARK: - Backup & Restore View
     static var backupHistory: String { localize("backup.history") }

@@ -17,6 +17,18 @@ public struct MenuBarNodeItem: Equatable, Identifiable, Sendable {
     }
 }
 
+/// Helper 不可用时呈现给 UI 的引导信息，包含原始错误描述。
+/// 设计为 Identifiable，方便 SwiftUI `.alert(item:)` / `.sheet(item:)` 直接绑定。
+public struct HelperRecoveryPrompt: Equatable, Identifiable, Sendable {
+    public let id: UUID
+    public let errorMessage: String
+
+    public init(id: UUID = UUID(), errorMessage: String) {
+        self.id = id
+        self.errorMessage = errorMessage
+    }
+}
+
 /// Group information for menu bar display.
 public struct MenuBarGroupItem: Equatable, Identifiable, Sendable {
     public var id: UUID
@@ -46,8 +58,9 @@ public final class MenuBarViewModel: ObservableObject {
     @Published public var showExternalModificationAlert = false
     @Published public var externalModificationContent: String?
 
-    // Helper status alert
-    @Published public var showHelperRegistrationAlert = false
+    /// 当 Apply 失败原因属于 Helper 不可用时，UI 通过此值弹出引导注册的对话框。
+    /// 引导完成后调用 `retryApplyAfterHelperRecovery()` 重新触发写入。
+    @Published public var helperRecoveryPrompt: HelperRecoveryPrompt?
 
     private let mutationService = ConfigMutationService()
     private let coordinator: HostWriteCoordinator
@@ -254,9 +267,14 @@ public final class MenuBarViewModel: ObservableObject {
             applyError = LC.conflictsDetected(conflicts.count)
             logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
         } else if let errorMessage = result.errorMessage {
-            // Distinguish external modifications from other write errors.
-            if case .writeFailed(let msg) = result.status,
-               msg == HostHelperClientError.hashMismatch.localizedDescription {
+            // Distinguish helper-unavailable / external-modification / other write errors.
+            if case .helperUnavailable(let msg) = result.status {
+                // Helper 没就绪，不再用纯文字 banner，而是抛给 UI 的辅助注册流程。
+                helperRecoveryPrompt = HelperRecoveryPrompt(errorMessage: msg)
+                applyError = nil
+                logger.warning("Helper unavailable: \(msg)")
+            } else if case .writeFailed(let msg) = result.status,
+                      msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true
                 applyError = LC.externalModificationDetected
                 logger.warning("\(LC.logExternalModification)")
@@ -265,6 +283,20 @@ public final class MenuBarViewModel: ObservableObject {
                 logger.error("\(LC.logApplyFailed(failureLogPrefix, errorMessage))")
             }
         }
+    }
+
+    // MARK: - Helper Recovery
+
+    /// 用户在 Helper 引导对话框中点了「取消」时清空提示，不重试。
+    public func dismissHelperRecoveryPrompt() {
+        helperRecoveryPrompt = nil
+    }
+
+    /// 用户在 Helper 引导对话框完成注册/审批后调用，立即重试写入。
+    @discardableResult
+    public func retryApplyAfterHelperRecovery() async -> ApplyResult {
+        helperRecoveryPrompt = nil
+        return await applyImmediately()
     }
 
     private func persistDraftConfig() -> Bool {

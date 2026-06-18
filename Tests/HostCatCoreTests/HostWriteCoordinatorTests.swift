@@ -142,7 +142,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
         // 模拟 helper 检测到 hash 不匹配
         await fakeClient.setShouldSucceed(false)
-        await fakeClient.setSimulatedError(HostHelperClientError.unavailable("hosts 已被外部修改"))
+        await fakeClient.setSimulatedError(HostHelperClientError.hashMismatch)
 
         let result = await coordinator.scheduleApply(config: config)
 
@@ -211,7 +211,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
         config.state.lastAppliedHostsHash = "stale_hash"
 
         await fakeClient.setShouldSucceed(false)
-        await fakeClient.setSimulatedError(HostHelperClientError.unavailable("hosts 已被外部修改"))
+        await fakeClient.setSimulatedError(HostHelperClientError.hashMismatch)
 
         let coordinator = HostWriteCoordinator(
             helperClient: fakeClient,
@@ -259,6 +259,72 @@ final class HostWriteCoordinatorTests: XCTestCase {
         XCTAssertEqual(writes.count, 1, "只有第二次（成功的）写入应被记录")
         XCTAssertTrue(writes[0].contains("10.0.0.1 retry.test"),
                       "实际写入的应是新批次内容，不被失败批次污染")
+    }
+
+    // MARK: - Helper Unavailable 状态分流
+
+    /// 当 helper 抛出 `unavailable` / `helperNotRegistered` / `connectionInvalidated`
+    /// 等"整个 Helper 不可用"类错误时，coordinator 必须返回 `.helperUnavailable`，
+    /// 让 UI 走辅助注册引导，而不是当作普通 writeFailed 显示红色 banner。
+    func testHelperUnavailableErrorMapsToHelperUnavailableStatus() async {
+        let cases: [(HostHelperClientError, String)] = [
+            (.unavailable("mach service 未启动"), "unavailable"),
+            (.helperNotRegistered, "helperNotRegistered"),
+            (.helperNotApproved, "helperNotApproved"),
+            (.connectionInterrupted, "connectionInterrupted"),
+            (.connectionInvalidated, "connectionInvalidated"),
+        ]
+
+        for (error, label) in cases {
+            let fakeClient = FakeHostHelperClient()
+            await fakeClient.setShouldSucceed(false)
+            await fakeClient.setSimulatedError(error)
+            let coordinator = HostWriteCoordinator(
+                helperClient: fakeClient,
+                backupStore: nil,
+                debounceInterval: .milliseconds(1)
+            )
+
+            let result = await coordinator.scheduleApply(config: makeConfig())
+
+            XCTAssertFalse(result.success, "\(label) 应当失败")
+            if case .helperUnavailable = result.status {
+                // 期望分支
+            } else {
+                XCTFail("\(label) 应映射到 .helperUnavailable，实际: \(result.status)")
+            }
+        }
+    }
+
+    /// `hashMismatch` / `fileImmutable` 等真实写入错误必须仍走 `.writeFailed`，
+    /// 不能被新的 helper 引导路径吞掉。
+    func testWriteErrorStillReportsWriteFailed() async {
+        let writeErrors: [HostHelperClientError] = [
+            .hashMismatch,
+            .fileImmutable,
+            .requestTimedOut,
+            .unexpectedReply("missing finalHash"),
+        ]
+
+        for error in writeErrors {
+            let fakeClient = FakeHostHelperClient()
+            await fakeClient.setShouldSucceed(false)
+            await fakeClient.setSimulatedError(error)
+            let coordinator = HostWriteCoordinator(
+                helperClient: fakeClient,
+                backupStore: nil,
+                debounceInterval: .milliseconds(1)
+            )
+
+            let result = await coordinator.scheduleApply(config: makeConfig())
+
+            XCTAssertFalse(result.success)
+            if case .writeFailed = result.status {
+                // 期望分支
+            } else {
+                XCTFail("\(error) 应保持 .writeFailed，实际: \(result.status)")
+            }
+        }
     }
 
     private func makeTemporaryDirectory() throws -> URL {
