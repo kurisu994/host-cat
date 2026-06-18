@@ -115,10 +115,53 @@ struct HostCatApplication: App {
 
 // MARK: - App Delegate
 
-/// 用于在应用启动完成时挂载全局快捷键监听等只需执行一次的副作用。
+/// 用于在应用启动完成时挂载全局快捷键监听、首次启动隐私摘要等只需执行一次的副作用。
 final class HostCatAppDelegate: NSObject, NSApplicationDelegate {
+    /// UserDefaults 中标记隐私摘要是否已展示过的键。
+    static let privacyWelcomeShownKey = "HostCat.privacyWelcomeShown"
+
+    private var welcomeWindowController: NSWindowController?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         GlobalShortcutManager.registerHandlers()
+        presentPrivacyWelcomeIfNeeded()
+    }
+
+    /// 首次启动时弹出隐私 & 使用方式摘要；用户关闭后写入 UserDefaults 标记，后续启动不再展示。
+    @MainActor
+    func presentPrivacyWelcomeIfNeeded(userDefaults: UserDefaults = .standard) {
+        guard !userDefaults.bool(forKey: Self.privacyWelcomeShownKey) else { return }
+        guard welcomeWindowController == nil else { return }
+
+        let language = AppLanguage.stored(in: userDefaults)
+        let welcome = WelcomeView { [weak self] in
+            self?.welcomeWindowController?.close()
+        }
+        .environment(\.locale, language.locale)
+
+        let hosting = NSHostingController(rootView: welcome)
+        let window = NSWindow(contentViewController: hosting)
+        window.title = L.welcomeTitle
+        window.styleMask = [.titled, .closable]
+        window.isReleasedWhenClosed = false
+        window.center()
+        window.delegate = self
+
+        let controller = NSWindowController(window: window)
+        welcomeWindowController = controller
+        controller.showWindow(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
+extension HostCatAppDelegate: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        guard let closing = notification.object as? NSWindow,
+              closing === welcomeWindowController?.window else {
+            return
+        }
+        UserDefaults.standard.set(true, forKey: Self.privacyWelcomeShownKey)
+        welcomeWindowController = nil
     }
 }
 

@@ -258,9 +258,9 @@
 
 ### 25. 隐私政策与合规
 
-- [ ] 编写 `PRIVACY.md`：声明不收集用户数据、不联网（除 Sparkle 更新检查）。
-- [ ] 首次启动展示隐私政策摘要（可跳过）。
-- [ ] 如集成 Sentry，明确说明收集的崩溃信息范围。
+- [x] 编写 `PRIVACY.md`：中英文合并版本，覆盖不收集数据、本地处理范围、Sparkle 联网预告、Privileged Helper 边界、用户控制项与第三方组件。
+- [x] 首次启动展示隐私政策摘要：通过 `HostCatAppDelegate` 在 `applicationDidFinishLaunching` 检测 `HostCat.privacyWelcomeShown` 标记，未展示过时弹出 `WelcomeView`；关闭后写入标记不再弹出，「查看完整隐私政策」按钮打开打包进 bundle 的 PRIVACY.md。
+- [ ] 如集成 Sentry，明确说明收集的崩溃信息范围（暂未集成，留待 Sentry 接入时同步更新 PRIVACY.md）。
 
 ### 26. 分发渠道决策
 

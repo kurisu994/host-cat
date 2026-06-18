@@ -3383,6 +3383,227 @@
           }
         }
       }
+    },
+    "welcome.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to HostCat"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎使用 HostCat"
+          }
+        }
+      }
+    },
+    "welcome.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thanks for installing HostCat. Here are a few things to know about how it handles your data."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "感谢安装 HostCat。下面是 HostCat 处理数据方式的几个要点，请简单了解。"
+          }
+        }
+      }
+    },
+    "welcome.point.local.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local-First, No Telemetry"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本地优先，没有遥测"
+          }
+        }
+      }
+    },
+    "welcome.point.local.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat does not phone home, upload, or collect any usage data. Configuration and backups stay in your standard user directories."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat 不联网、不上传、不收集任何使用数据；配置和备份只存在你账户的标准目录下。"
+          }
+        }
+      }
+    },
+    "welcome.point.helper.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authorized hosts writes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授权后才会写入 hosts"
+          }
+        }
+      }
+    },
+    "welcome.point.helper.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifying /etc/hosts requires installing a Privileged Helper and approving it in System Settings. The Helper only writes to a fixed hosts path."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "修改 /etc/hosts 需要安装 Privileged Helper 并在系统设置中审批，Helper 仅允许写入固定的 hosts 路径。"
+          }
+        }
+      }
+    },
+    "welcome.point.backup.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic backups"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写入前自动备份"
+          }
+        }
+      }
+    },
+    "welcome.point.backup.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Every real write is preceded by an automatic backup. The latest three are kept by default and can be managed in the backup window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每次真实写入前 HostCat 会自动备份当前 hosts，默认保留最近 3 份，可在备份管理窗口查看与删除。"
+          }
+        }
+      }
+    },
+    "welcome.point.diagnostics.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics stay local"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断日志只在本机"
+          }
+        }
+      }
+    },
+    "welcome.point.diagnostics.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat uses the macOS unified logging system. Diagnostic logs only land on disk when you explicitly export them; HostCat never uploads them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HostCat 通过 macOS 系统日志记录关键路径，导出诊断日志只在你主动操作时落盘，HostCat 不会自动上传。"
+          }
+        }
+      }
+    },
+    "welcome.privacy_button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View Full Privacy Policy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查看完整隐私政策"
+          }
+        }
+      }
+    },
+    "welcome.acknowledge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I Understand"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我已了解"
+          }
+        }
+      }
+    },
+    "welcome.footnote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can revisit the full policy any time via PRIVACY.md in the HostCat repository."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "随时可以打开 HostCat 仓库的 PRIVACY.md 重新查看完整内容。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

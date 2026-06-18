@@ -7,6 +7,7 @@
 ### Added
 
 - **【全局快捷键】** 接入 `sindresorhus/KeyboardShortcuts`，新增「打开菜单栏」全局快捷键。设置页 → 通用 → 快捷键提供录制框，默认未绑定；按下快捷键时通过遍历 `NSStatusBarWindow` 找到 MenuBarExtra 的状态项 button 并模拟点击，弹出菜单。
+- **【隐私政策与首启摘要】** 新增仓库根目录 `PRIVACY.md`（中英合并），覆盖不联网/不收集、本地存储范围、Privileged Helper 边界、Sparkle 联网预告与第三方组件；首次启动通过 `HostCatAppDelegate` 弹出 `WelcomeView` 隐私摘要窗口（四条要点 + 「查看完整隐私政策」按钮），关闭后写入 `UserDefaults` 键 `HostCat.privacyWelcomeShown` 不再弹出；PRIVACY.md 同步打包进 app bundle，按钮通过 `NSWorkspace.open` 调用系统默认编辑器查看完整文本。
 - **【字符串目录迁移】** 将 App 与 Core 的本地化资源从 `*.lproj/*.strings` 迁移到 `Localizable.xcstrings` / `LocalizableCore.xcstrings` 字符串目录（Xcode 15+ 推荐格式），统一中英文翻译管理；构建期 Xcode 和 SwiftPM 都会自动生成 `*.lproj/*.strings`，运行时 `AppLanguage.localizedBundle(in:)` 取值路径不变。
 - **【DMG 安装体验】** 准备了精美的 macOS 科技感暗色调拖拽安装背景图 `scripts/dmg-background.png`；编写了 `scripts/create-dmg.sh` 脚本，基于 AppleScript 精准配置 DMG 挂载后的 Finder 窗口尺寸、背景图布局、应用图标与 Applications 快捷方式位置；升级了 `scripts/build-release.sh` 以在构建发布版本时自动调用该脚本生成高品质的 DMG 镜像。
 - **【版本号管理】** `project.yml` 集中定义 `MARKETING_VERSION` 和 `CURRENT_PROJECT_VERSION`，App 和 Helper 的 Info.plist 统一引用变量；设置页展示完整版本号（含 build 号 and Git commit hash）。

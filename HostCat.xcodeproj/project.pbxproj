@@ -75,6 +75,7 @@
 		DB973E463FB120D41D7416D5 /* HostsMerger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFF2470AD5775FB15B089832 /* HostsMerger.swift */; };
 		E5A258E85BFBEE54D8C35A3E /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 1FB0161BBA81E802E83752C5 /* Localizable.xcstrings */; };
 		E782D1348111B13AC2BE0CEA /* HostCatHelperClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FE078A3BE3D6D861FA16BA95 /* HostCatHelperClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		E868C680C67DB228AD65B0F3 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C07576A08A754F376668BE /* WelcomeView.swift */; };
 		E9E24A6E65FF4E7BABB20B8C /* HostsHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42FEF9B47A5CB5AC60C2D432 /* HostsHash.swift */; };
 		EDED5CD6E7C1FD21C6176D2B /* HostsParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00742A95D2D11025BEC36E42 /* HostsParserTests.swift */; };
 		F821285041AD5606408628BE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A92A1835D30534129D14FC33 /* Assets.xcassets */; };
@@ -192,6 +193,7 @@
 		57AAAC5B054594623851D97A /* ExternalModificationDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalModificationDetectorTests.swift; sourceTree = "<group>"; };
 		5D9AC91BD0174459BFDA004D /* Localization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Localization.swift; sourceTree = "<group>"; };
 		5E8CF26AAF0F097295B4B339 /* HostCatCodeSigningRequirements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostCatCodeSigningRequirements.swift; sourceTree = "<group>"; };
+		67C07576A08A754F376668BE /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		716435019249A8F770BCA452 /* DiagnosticLogExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogExporterTests.swift; sourceTree = "<group>"; };
 		7166180120D056B25BB40B67 /* XPCHostHelperPendingRepliesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XPCHostHelperPendingRepliesTests.swift; sourceTree = "<group>"; };
 		721A00E8F705C9F7572AB837 /* ConfigMutationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigMutationService.swift; sourceTree = "<group>"; };
@@ -407,6 +409,7 @@
 				478548346A1B1FFD6C125EEA /* NameInputDialog.swift */,
 				5546BB6C358C4B3A70BA5870 /* NodeReorderDropDelegate.swift */,
 				8FDDBC1BDDFB4C48BBEDB061 /* SidebarComponents.swift */,
+				67C07576A08A754F376668BE /* WelcomeView.swift */,
 				DD7C78F009E32AECCA011883 /* WindowFocus.swift */,
 				4ABB5A0B3D10E82B5720DE36 /* Resources */,
 			);
@@ -435,6 +438,7 @@
 				322D82A7FE0372B65892E747 /* Frameworks */,
 				4BCE088EA15ADF06CE10C2FF /* Embed Frameworks */,
 				F4B227E27AE8A2191315E9AF /* Copy Helper Tool and LaunchDaemon plist */,
+				0A62FB49251EF6BC2EA273E9 /* Copy PRIVACY.md into bundle resources */,
 			);
 			buildRules = (
 			);
@@ -587,6 +591,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		0A62FB49251EF6BC2EA273E9 /* Copy PRIVACY.md into bundle resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy PRIVACY.md into bundle resources";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# 把仓库根目录的 PRIVACY.md 同步进 app bundle，供 WelcomeView 通过 Bundle.main 查找展示。\ncp \"${SRCROOT}/PRIVACY.md\" \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PRIVACY.md\"\n";
+		};
 		F4B227E27AE8A2191315E9AF /* Copy Helper Tool and LaunchDaemon plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -628,6 +651,7 @@
 				81BA2A8CAB33A32ECB651708 /* NameInputDialog.swift in Sources */,
 				5E08E0A9DED741098A6A05E2 /* NodeReorderDropDelegate.swift in Sources */,
 				9D22255196CC0B054CAC2DD0 /* SidebarComponents.swift in Sources */,
+				E868C680C67DB228AD65B0F3 /* WelcomeView.swift in Sources */,
 				8BFBED698502A3FACE80865A /* WindowFocus.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

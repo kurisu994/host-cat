@@ -284,6 +284,21 @@ enum L {
     static var settingsShortcutToggleMenuBar: String { localize("settings.shortcut.toggle_menu_bar") }
     static var settingsShortcutToggleMenuBarHint: String { localize("settings.shortcut.toggle_menu_bar.hint") }
 
+    // MARK: - Welcome / Privacy
+    static var welcomeTitle: String { localize("welcome.title") }
+    static var welcomeSubtitle: String { localize("welcome.subtitle") }
+    static var welcomePointLocalTitle: String { localize("welcome.point.local.title") }
+    static var welcomePointLocalBody: String { localize("welcome.point.local.body") }
+    static var welcomePointHelperTitle: String { localize("welcome.point.helper.title") }
+    static var welcomePointHelperBody: String { localize("welcome.point.helper.body") }
+    static var welcomePointBackupTitle: String { localize("welcome.point.backup.title") }
+    static var welcomePointBackupBody: String { localize("welcome.point.backup.body") }
+    static var welcomePointDiagnosticsTitle: String { localize("welcome.point.diagnostics.title") }
+    static var welcomePointDiagnosticsBody: String { localize("welcome.point.diagnostics.body") }
+    static var welcomePrivacyButton: String { localize("welcome.privacy_button") }
+    static var welcomeAcknowledge: String { localize("welcome.acknowledge") }
+    static var welcomeFootnote: String { localize("welcome.footnote") }
+
     // MARK: - Private
 
     private static func localize(_ key: String) -> String {

@@ -117,6 +117,11 @@ targets:
           mkdir -p "${LAUNCH_DAEMONS_DIR}"
           cp "${SRCROOT}/Sources/HostCatPrivilegedHelper/com.hostcat.helper.plist" "${LAUNCH_DAEMONS_DIR}/"
         basedOnDependencyAnalysis: false
+      - name: "Copy PRIVACY.md into bundle resources"
+        script: |
+          # 把仓库根目录的 PRIVACY.md 同步进 app bundle，供 WelcomeView 通过 Bundle.main 查找展示。
+          cp "${SRCROOT}/PRIVACY.md" "${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/PRIVACY.md"
+        basedOnDependencyAnalysis: false
 
   # HostCatPrivilegedHelper - root Helper 可执行文件
   HostCatPrivilegedHelper:
