@@ -8,8 +8,8 @@
 | 架构 | arm64 only（无 x86_64） |
 | Swift | 6.0 |
 | Swift Strict Concurrency | `complete` |
-| Xcode | 26.5（`xcodeVersion` in project.yml） |
-| 包管理 | SwiftPM（核心 + 测试） + XcodeGen（Xcode 工程） |
+| Xcode | 26.6（`xcodeVersion` in project.yml） |
+| 包管理 | SwiftPM（核心 + 测试） + XcodeGen 2.46.0+（Xcode 工程） |
 
 ## 第三方依赖
 

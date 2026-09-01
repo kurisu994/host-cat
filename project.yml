@@ -3,11 +3,11 @@ options:
   bundleIdPrefix: com.hostcat
   deploymentTarget:
     macOS: "14.0"
-  xcodeVersion: "26.5"
+  xcodeVersion: "26.6"
   defaultConfig: Debug
   createIntermediateGroups: true
   generateEmptyDirectories: false
-  minimumXcodeGenVersion: "2.40.0"
+  minimumXcodeGenVersion: "2.46.0"
 
 settings:
   base:

@@ -551,7 +551,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2650;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 				};
 			};
@@ -570,11 +570,11 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				07A50D03B9C37AB6F0B930ED /* HostCatApp */,
 				F6C1EBE12C8BA8AAE53D2BFA /* HostCatCore */,
-				77CF98B97260F455FA2532B4 /* HostCatCoreTests */,
 				9479EF03FD5264642C797635 /* HostCatHelperClient */,
+				07A50D03B9C37AB6F0B930ED /* HostCatApp */,
 				AD36AAF12ACF443F5705E68B /* HostCatPrivilegedHelper */,
+				77CF98B97260F455FA2532B4 /* HostCatCoreTests */,
 			);
 		};
 /* End PBXProject section */
