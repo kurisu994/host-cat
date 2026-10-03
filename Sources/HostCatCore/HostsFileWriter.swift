@@ -40,7 +40,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func readFile(at path: String) throws -> Data {
         guard let data = FileManager.default.contents(atPath: path) else {
-            throw HostsWriteError.writeFailed("Failed to read file \(path)")
+            throw HostsWriteError.writeFailed(.readFileFailed(path))
         }
         return data
     }
@@ -50,7 +50,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
         var templateBytes = Array(fullTemplate.utf8CString)
         let fd = mkstemp(&templateBytes)
         guard fd >= 0 else {
-            throw HostsWriteError.tempFileCreationFailed(String(cString: strerror(errno)))
+            throw HostsWriteError.tempFileCreationFailed(.raw(String(cString: strerror(errno))))
         }
         let path = templateBytes.withUnsafeBufferPointer { buffer in
             String(decoding: buffer.prefix(while: { $0 != 0 }).map { UInt8($0) }, as: UTF8.self)
@@ -66,7 +66,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
             while remaining > 0 {
                 let written = Darwin.write(fd, base.advanced(by: offset), remaining)
                 guard written > 0 else {
-                    throw HostsWriteError.writeFailed("write() failed: \(String(cString: strerror(errno)))")
+                    throw HostsWriteError.writeFailed(.writeSyscallFailed(String(cString: strerror(errno))))
                 }
                 offset += written
                 remaining -= written
@@ -76,7 +76,7 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func fsyncFD(_ fd: Int32) throws {
         guard Darwin.fsync(fd) == 0 else {
-            throw HostsWriteError.writeFailed("fsync failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed(.fsyncFailed(String(cString: strerror(errno))))
         }
     }
 
@@ -86,19 +86,19 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func setPermissions(at path: String, mode: mode_t) throws {
         guard chmod(path, mode) == 0 else {
-            throw HostsWriteError.permissionSetFailed("chmod \(String(mode, radix: 8)) failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.permissionSetFailed(.chmodFailed(mode: String(mode, radix: 8), reason: String(cString: strerror(errno))))
         }
     }
 
     public func setOwner(at path: String, uid: uid_t, gid: gid_t) throws {
         guard chown(path, uid, gid) == 0 else {
-            throw HostsWriteError.permissionSetFailed("chown \(uid):\(gid) failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.permissionSetFailed(.chownFailed(owner: "\(uid):\(gid)", reason: String(cString: strerror(errno))))
         }
     }
 
     public func rename(from oldPath: String, to newPath: String) throws {
         guard Darwin.rename(oldPath, newPath) == 0 else {
-            throw HostsWriteError.renameFailed("rename failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.renameFailed(.renameFailed(String(cString: strerror(errno))))
         }
     }
 
@@ -111,21 +111,21 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
 
     public func removeFile(at path: String) throws {
         guard Darwin.unlink(path) == 0 || errno == ENOENT else {
-            throw HostsWriteError.writeFailed("Failed to remove temp file: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed(.removeTempFailed(String(cString: strerror(errno))))
         }
     }
 
     public func fileFlags(at path: String) throws -> UInt32 {
         var sb = Darwin.stat()
         guard lstat(path, &sb) == 0 else {
-            throw HostsWriteError.writeFailed("stat failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed(.statFailed(String(cString: strerror(errno))))
         }
         return sb.st_flags
     }
 
     public func resolveRealPath(at path: String) throws -> String {
         guard let resolved = Darwin.realpath(path, nil) else {
-            throw HostsWriteError.writeFailed("realpath failed: \(String(cString: strerror(errno)))")
+            throw HostsWriteError.writeFailed(.realpathFailed(String(cString: strerror(errno))))
         }
         defer { free(resolved) }
         return String(cString: resolved)
@@ -167,15 +167,15 @@ public struct HostsContentValidator: Sendable {
         // 1. Non-empty
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            throw HostsWriteError.contentValidationFailed("Content is empty")
+            throw HostsWriteError.contentValidationFailed(.contentEmpty)
         }
 
         // 2. Contains HostCat management block markers
         guard content.contains(HostsImporter.beginMarkerPrefix) else {
-            throw HostsWriteError.contentValidationFailed("Missing HostCat Begin marker")
+            throw HostsWriteError.contentValidationFailed(.missingBeginMarker)
         }
         guard content.contains(HostsImporter.endMarker) else {
-            throw HostsWriteError.contentValidationFailed("Missing HostCat End marker")
+            throw HostsWriteError.contentValidationFailed(.missingEndMarker)
         }
 
         let records: [HostRecord]
@@ -183,7 +183,7 @@ public struct HostsContentValidator: Sendable {
             records = try HostsParser().parse(content)
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            throw HostsWriteError.contentValidationFailed(message)
+            throw HostsWriteError.contentValidationFailed(.raw(message))
         }
 
         for required in Self.requiredSystemEntries {
@@ -193,7 +193,7 @@ public struct HostsContentValidator: Sendable {
             }
             guard containsEntry else {
                 throw HostsWriteError.contentValidationFailed(
-                    "Missing required system entry \(required.ipAddress) \(required.hostname)"
+                    .missingSystemEntry(ip: required.ipAddress, hostname: required.hostname)
                 )
             }
         }

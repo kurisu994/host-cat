@@ -6,6 +6,12 @@
 
 ### Added
 
+- **【大文件编辑响应】** 新增 `LargeHostsPerformanceTests` 覆盖 6000 行解析、校验、合并、导入、哈希和配置读写。编辑器语法校验改为停止输入 200ms 后执行；`HostsTextView` 在文本和错误行未变化时跳过全量高亮，滚动时复用文档宽度缓存。
+- **【可访问性】** 编辑器侧边栏改为列表选择，方向键可移动节点；节点启用、分组折叠改为按钮。菜单栏节点、侧边栏、备份工具栏和快捷键清除按钮补充 VoiceOver 标签与提示。
+
+- **【写入诊断多语言收敛】** 新增 `WriteErrorDetail`：`HostsWriteError` 的底层细节不再硬编码英文，而是携带「key + 参数」，在 `description(in:)` 里按主应用经 XPC 传来的语言翻译（覆盖 chmod/chown/rename/fsync、内容校验、DNS 刷新等 15 条）；`strerror` 与命令名等系统原文保留以便排障。
+- **【通知中心集成】** 新增 `NotificationService`（`UserNotifications`）与 Core 层 `ApplyNotificationEvent` / `NotificationPreferences`：`MenuBarViewModel.applyEventHandler` 在写入成功、失败（含冲突、Helper 不可用）和检测到外部修改时广播事件，App 层按偏好转成系统通知；写入成功通知默认关闭，失败与外部修改默认开启；授权在用户首次需要时懒请求，被系统拒绝时设置页提示并可跳转系统通知设置；点击通知弹出菜单栏菜单。设置页新增「通知」卡片，三个开关即时生效。
+- **【配置导入导出】** 编辑器工具栏新增「更多」菜单，支持导出 / 导入 `config.json`：新增 `ConfigTransferService`（纯逻辑、可单测），导出时清除 `state`（hash 与应用时间）避免换机后误判外部修改；导入先校验格式与 `configVersion`（经 `migrate` 迁移入口），再由用户选择「合并」（按分组名 / 节点名匹配，同名节点仅更新内容并保留本机激活状态，新增节点默认不启用，默认节点不变）或「替换」（覆盖默认节点内容与全部分组）；设置与本机 state 始终保留。
 - **【全局快捷键】** 新增「打开菜单栏」全局快捷键，零三方依赖：`CarbonHotKeyMonitor` 基于 Carbon `RegisterEventHotKey` 实现全局监听（Apple 官方稳定 API，10.3 起可用，不需要"输入监控"或"辅助功能"等系统授权）；`ShortcutRecorderView` 是原生 `NSViewRepresentable` 录制框，按下任意带 modifier 的组合键即写入并立即重注册、Esc 取消、清除按钮解绑；`ShortcutStore` 把绑定以 JSON 持久化到 `UserDefaults`，启动时自动恢复；触发回调时通过遍历 `NSStatusBarWindow` 找到 MenuBarExtra 状态项 button 并模拟点击弹出菜单。默认未绑定，在设置页 → 快捷键中录入。
 - **【隐私政策与首启摘要】** 新增仓库根目录 `PRIVACY.md`（中英合并），覆盖不联网/不收集、本地存储范围、Privileged Helper 边界、Sparkle 联网预告与第三方组件；首次启动通过 `HostCatAppDelegate` 弹出 `WelcomeView` 隐私摘要窗口（四条要点 + 「查看完整隐私政策」按钮），关闭后写入 `UserDefaults` 键 `HostCat.privacyWelcomeShown` 不再弹出；PRIVACY.md 同步打包进 app bundle，按钮通过 `NSWorkspace.open` 调用系统默认编辑器查看完整文本。
 - **【字符串目录迁移】** 将 App 与 Core 的本地化资源从 `*.lproj/*.strings` 迁移到 `Localizable.xcstrings` / `LocalizableCore.xcstrings` 字符串目录（Xcode 15+ 推荐格式），统一中英文翻译管理；构建期 Xcode 和 SwiftPM 都会自动生成 `*.lproj/*.strings`，运行时 `AppLanguage.localizedBundle(in:)` 取值路径不变。

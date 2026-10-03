@@ -11,16 +11,20 @@ struct NodeRow: View {
 
     var body: some View {
         HStack {
-            // Active state icon; non-default nodes can tap to toggle.
-            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(isActive ? .green : .secondary)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onToggleActive?()
-                }
-                .allowsHitTesting(onToggleActive != nil)
+            // 用 Button 而不是 onTapGesture，方便全键盘访问和 VoiceOver 操作。
+            Button {
+                onToggleActive?()
+            } label: {
+                Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isActive ? .green : .secondary)
+            }
+            .buttonStyle(.plain)
+            .disabled(onToggleActive == nil)
+            .accessibilityLabel(isActive ? L.sidebarDeactivate : L.sidebarActivate)
+            .accessibilityHint(L.a11yToggleNode)
 
             Text(name)
+                .accessibilityLabel(name)
 
             Spacer()
 
@@ -36,12 +40,21 @@ struct NodeRow: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(name)
+        .accessibilityValue(accessibilityValueText)
+        .accessibilityHint(L.a11ySelectNode)
         .background {
             if isSelected {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .fill(Color.accentColor.opacity(0.18))
             }
         }
+    }
+
+    private var accessibilityValueText: String {
+        if isDefault { return L.statusDefault }
+        return isActive ? L.a11yStateActive : L.a11yStateInactive
     }
 }
 
@@ -60,15 +73,15 @@ struct GroupHeader: View {
 
     var body: some View {
         HStack {
-            // Collapse arrow
-            Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .rotationEffect(.degrees(isCollapsed ? 0 : 90))
-                .animation(.easeInOut(duration: 0.2), value: isCollapsed)
-                .onTapGesture {
-                    onToggleCollapse()
-                }
+            Button(action: onToggleCollapse) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isCollapsed ? 0 : 90))
+                    .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCollapsed ? L.a11yExpandGroup : L.a11yCollapseGroup)
 
             if isRenaming {
                 TextField(L.dialogNamePlaceholder, text: $renameText)
@@ -115,6 +128,7 @@ struct GroupHeader: View {
                 }
                 .buttonStyle(.plain)
                 .help(L.sidebarDeleteGroup)
+                .accessibilityLabel(L.sidebarDeleteGroup)
             }
         }
         .onHover { hovering in
@@ -152,6 +166,7 @@ struct SidebarAddGroupButton: View {
             }
         }
         .help(L.sidebarAddGroup)
+        .accessibilityLabel(L.sidebarAddGroup)
     }
 }
 
@@ -190,5 +205,6 @@ struct AddNodeButton: View {
             }
         }
         .help(L.sidebarAddNode)
+        .accessibilityLabel(L.sidebarAddNode)
     }
 }

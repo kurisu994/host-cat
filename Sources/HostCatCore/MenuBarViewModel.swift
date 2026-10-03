@@ -62,6 +62,9 @@ public final class MenuBarViewModel: ObservableObject {
     /// 引导完成后调用 `retryApplyAfterHelperRecovery()` 重新触发写入。
     @Published public var helperRecoveryPrompt: HelperRecoveryPrompt?
 
+    /// 写入流程结果事件回调，App 层据此发送系统通知；Core 不依赖 UserNotifications。
+    public var applyEventHandler: (@MainActor (ApplyNotificationEvent) -> Void)?
+
     private let mutationService = ConfigMutationService()
     private let coordinator: HostWriteCoordinator
     private let configStore: AppConfigStore
@@ -262,9 +265,11 @@ public final class MenuBarViewModel: ObservableObject {
                 applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             }
             updateMergedPreview()
+            applyEventHandler?(.applied)
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
+            applyEventHandler?(.failed(LC.conflictsDetected(conflicts.count)))
             logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
         } else if let errorMessage = result.errorMessage {
             // Distinguish helper-unavailable / external-modification / other write errors.
@@ -272,17 +277,42 @@ public final class MenuBarViewModel: ObservableObject {
                 // Helper 没就绪，不再用纯文字 banner，而是抛给 UI 的辅助注册流程。
                 helperRecoveryPrompt = HelperRecoveryPrompt(errorMessage: msg)
                 applyError = nil
+                applyEventHandler?(.failed(LC.hostsNotApplied(msg)))
                 logger.warning("Helper unavailable: \(msg)")
             } else if case .writeFailed(let msg) = result.status,
                       msg == HostHelperClientError.hashMismatch.localizedDescription {
                 showExternalModificationAlert = true
                 applyError = LC.externalModificationDetected
+                applyEventHandler?(.externalModification)
                 logger.warning("\(LC.logExternalModification)")
             } else {
                 applyError = LC.hostsNotApplied(errorMessage)
+                applyEventHandler?(.failed(LC.hostsNotApplied(errorMessage)))
                 logger.error("\(LC.logApplyFailed(failureLogPrefix, errorMessage))")
             }
         }
+    }
+
+    // MARK: - Config Import / Export
+
+    /// 导出当前配置（已清除本机 state）。
+    public func exportConfigData() throws -> Data {
+        try ConfigTransferService().exportData(config)
+    }
+
+    /// 解析导入文件，校验失败时抛出 `ConfigTransferError`，不改动当前配置。
+    public func decodeImportedConfig(_ data: Data) throws -> AppConfig {
+        try ConfigTransferService().decode(data)
+    }
+
+    /// 按所选模式应用导入配置，并触发一次延迟写入。
+    @discardableResult
+    public func importConfig(_ imported: AppConfig, mode: ConfigImportMode) -> ConfigImportSummary {
+        let result = ConfigTransferService().apply(imported, to: config, mode: mode)
+        config = result.config
+        logger.info("Config imported, mode=\(String(describing: mode)), addedGroups=\(result.summary.addedGroups), addedNodes=\(result.summary.addedNodes), updatedNodes=\(result.summary.updatedNodes)")
+        scheduleApply()
+        return result.summary
     }
 
     // MARK: - Helper Recovery

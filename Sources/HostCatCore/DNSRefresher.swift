@@ -31,7 +31,7 @@ public struct SystemDNSRefresher: DNSRefreshing, Sendable {
         do {
             try process.run()
         } catch {
-            throw HostsWriteError.dnsRefreshFailed("Failed to launch \(path): \(error.localizedDescription)")
+            throw HostsWriteError.dnsRefreshFailed(.dnsLaunchFailed(path: path, reason: error.localizedDescription))
         }
 
         process.waitUntilExit()
@@ -39,7 +39,7 @@ public struct SystemDNSRefresher: DNSRefreshing, Sendable {
         if process.terminationStatus != 0 {
             let stderr = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
             let command = ([path] + arguments).joined(separator: " ")
-            throw HostsWriteError.dnsRefreshFailed("\(command) exited with \(process.terminationStatus): \(stderr)")
+            throw HostsWriteError.dnsRefreshFailed(.dnsCommandFailed(command: command, status: process.terminationStatus, stderr: stderr))
         }
     }
 }

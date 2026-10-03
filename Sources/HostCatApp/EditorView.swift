@@ -25,6 +25,8 @@ struct EditorView: View {
     @State private var draggingNodeID: UUID?
     @State private var collapsedGroupIDs: Set<UUID> = []
     @State private var searchText: String = ""
+    /// 语法校验防抖任务。大文件下逐键全量校验会卡住主线程。
+    @State private var validationTask: Task<Void, Never>?
 
     /// 搜索是否激活。
     private var isSearching: Bool { !searchText.isEmpty }
@@ -61,7 +63,7 @@ struct EditorView: View {
         NavigationSplitView {
             VStack(spacing: 0) {
                 // Left: groups and node tree
-                List {
+                List(selection: $selectedNodeID) {
                     if showDefaultNode {
                         // Default node
                         Section(L.sidebarDefault) {
@@ -71,10 +73,7 @@ struct EditorView: View {
                                 isDefault: true,
                                 isSelected: selectedNodeID == viewModel.config.defaultNode.id
                             )
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedNodeID = viewModel.config.defaultNode.id
-                            }
+                            .tag(viewModel.config.defaultNode.id)
                         }
                     }
 
@@ -123,10 +122,7 @@ struct EditorView: View {
                                             viewModel.toggleNode(id: node.id, inGroup: group.id)
                                         }
                                     )
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        selectedNodeID = node.id
-                                    }
+                                    .tag(node.id)
                                     .onTapGesture(count: 2) {
                                         editingNodeToRename = (group.id, node.id)
                                         renameNodeNewName = node.name
@@ -185,8 +181,10 @@ struct EditorView: View {
             if let nodeID = selectedNodeID {
                 VStack(alignment: .leading, spacing: 0) {
                     EditorToolbar(
+                        viewModel: viewModel,
                         title: editingName,
                         hasUnsavedEdits: hasUnsavedEdits,
+                        onImported: refreshAfterImport,
                         onApply: saveCurrentNode,
                         onRevert: {
                             reloadContent(id: nodeID)
@@ -198,7 +196,7 @@ struct EditorView: View {
                     HostsTextView(text: $editingContent, errorLines: errorLines)
                         .frame(minWidth: 400, minHeight: 300)
                         .onChange(of: editingContent) { _, newValue in
-                            validateContent(newValue)
+                            scheduleValidation(newValue)
                         }
 
                     // Status bar
@@ -337,6 +335,15 @@ struct EditorView: View {
         }
     }
 
+    /// 导入配置后，选中节点可能已被替换或不存在，需重新同步编辑区。
+    private func refreshAfterImport() {
+        if let id = selectedNodeID, currentNodeContent(id: id) == nil {
+            selectedNodeID = nil
+        } else {
+            loadNodeContent(id: selectedNodeID)
+        }
+    }
+
     private func loadNodeContent(id: UUID?) {
         guard let id = id else {
             editingContent = ""
@@ -414,6 +421,16 @@ struct EditorView: View {
         viewModel.scheduleApply()
     }
 
+    /// 停止输入约 200ms 后再做全量语法校验，避免超大 hosts 逐键卡顿。
+    private func scheduleValidation(_ content: String) {
+        validationTask?.cancel()
+        validationTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            validateContent(content)
+        }
+    }
+
     /// Validates edited content and extracts all error line numbers.
     private func validateContent(_ content: String) {
         let parser = HostsParser()
@@ -441,8 +458,10 @@ struct EditorView: View {
 private struct EditorToolbar: View {
     private static let titleLeadingInset: CGFloat = 56
 
+    @ObservedObject var viewModel: MenuBarViewModel
     let title: String
     let hasUnsavedEdits: Bool
+    let onImported: () -> Void
     let onApply: () -> Void
     let onRevert: () -> Void
 
@@ -456,6 +475,8 @@ private struct EditorToolbar: View {
 
             Spacer(minLength: 16)
 
+            ConfigTransferMenu(viewModel: viewModel, onImported: onImported)
+
             Button {
                 onRevert()
             } label: {
@@ -465,6 +486,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut("z", modifiers: [.command, .shift])
             .help(L.editorDiscardTooltip)
+            .accessibilityHint(L.editorDiscardTooltip)
             .disabled(!hasUnsavedEdits)
 
             Button {
@@ -476,6 +498,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut(.return, modifiers: .command)
             .help(L.editorApplyTooltip)
+            .accessibilityHint(L.editorApplyTooltip)
             .disabled(!hasUnsavedEdits)
         }
         .padding(.leading, Self.titleLeadingInset)

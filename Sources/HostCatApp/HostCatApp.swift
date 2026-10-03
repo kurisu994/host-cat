@@ -26,7 +26,9 @@ struct HostCatApplication: App {
         #endif
 
         let coordinator = HostWriteCoordinator(helperClient: helperClient)
-        _viewModel = StateObject(wrappedValue: MenuBarViewModel(config: config, coordinator: coordinator))
+        let model = MenuBarViewModel(config: config, coordinator: coordinator)
+        model.applyEventHandler = { NotificationService.shared.handle($0) }
+        _viewModel = StateObject(wrappedValue: model)
     }
 
     var body: some Scene {
@@ -135,6 +137,7 @@ final class HostCatAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         ShortcutStore.shared.bootstrap()
+        NotificationService.shared.bootstrap()
         presentPrivacyWelcomeIfNeeded()
     }
 
@@ -186,6 +189,13 @@ private struct SettingsView: View {
     @Binding var preferredLanguage: AppLanguage
     @State private var diagnosticExportStatus: DiagnosticExportStatus?
     @State private var isExportingDiagnostics = false
+    @AppStorage(NotificationPreferences.notifyOnSuccessKey)
+    private var notifyOnSuccess = NotificationPreferences.defaultNotifyOnSuccess
+    @AppStorage(NotificationPreferences.notifyOnFailureKey)
+    private var notifyOnFailure = NotificationPreferences.defaultNotifyOnFailure
+    @AppStorage(NotificationPreferences.notifyOnExternalModificationKey)
+    private var notifyOnExternalModification = NotificationPreferences.defaultNotifyOnExternalModification
+    @State private var notificationsDenied = false
 
     var body: some View {
         ScrollView {
@@ -235,8 +245,10 @@ private struct SettingsView: View {
                             ShortcutRecorderView(
                                 shortcut: $shortcutStore.toggleMenuBar,
                                 idlePlaceholder: L.settingsShortcutPlaceholderIdle,
-                                recordingPlaceholder: L.settingsShortcutPlaceholderRecording
+                                recordingPlaceholder: L.settingsShortcutPlaceholderRecording,
+                                clearAccessibilityLabel: L.a11yClearShortcut
                             )
+                            .accessibilityLabel(L.settingsShortcutToggleMenuBar)
                             .frame(width: 140, height: 24)
                         }
 
@@ -247,6 +259,10 @@ private struct SettingsView: View {
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 12)
+                }
+
+                settingsCard(L.settingsNotifications) {
+                    notificationsCardContent
                 }
 
                 settingsCard(L.settingsHelper) {
@@ -354,7 +370,64 @@ private struct SettingsView: View {
         .frame(minHeight: 540)
         .onAppear {
             registrationManager.refreshHelperStatus()
+            refreshNotificationDenied()
         }
+    }
+
+    /// 通知设置卡片：三个独立开关，任一开启时懒请求系统授权。
+    @ViewBuilder
+    private var notificationsCardContent: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L.settingsNotificationsDescription)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+
+        Divider().padding(.leading, 14)
+        notificationToggleRow(L.settingsNotifyOnSuccess, isOn: $notifyOnSuccess)
+        Divider().padding(.leading, 14)
+        notificationToggleRow(L.settingsNotifyOnFailure, isOn: $notifyOnFailure)
+        Divider().padding(.leading, 14)
+        notificationToggleRow(L.settingsNotifyOnExternalModification, isOn: $notifyOnExternalModification)
+
+        if notificationsDenied {
+            HStack(spacing: 8) {
+                Text(L.settingsNotificationsDenied)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button(L.settingsNotificationsOpenSettings) {
+                    NotificationService.shared.openSystemNotificationSettings()
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private func notificationToggleRow(_ title: String, isOn: Binding<Bool>) -> some View {
+        settingsRow {
+            Text(title)
+            Spacer()
+            Toggle(title, isOn: isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .onChange(of: isOn.wrappedValue) { _, enabled in
+                    guard enabled else { return }
+                    Task {
+                        _ = await NotificationService.shared.requestAuthorizationIfNeeded()
+                        notificationsDenied = await NotificationService.shared.isDenied()
+                    }
+                }
+        }
+    }
+
+    private func refreshNotificationDenied() {
+        Task { notificationsDenied = await NotificationService.shared.isDenied() }
     }
 
     /// 使用接近系统设置窗口的圆角面板样式承载各设置分组。

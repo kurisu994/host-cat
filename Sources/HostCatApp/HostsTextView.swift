@@ -51,6 +51,8 @@ struct HostsTextView: NSViewRepresentable {
         // Initial text and highlighting
         textView.string = text
         HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: errorLines)
+        context.coordinator.lastHighlightedText = text
+        context.coordinator.lastErrorLines = errorLines
 
         // Configure line-number gutter
         let rulerView = LineNumberRulerView(textView: textView)
@@ -72,7 +74,13 @@ struct HostsTextView: NSViewRepresentable {
         context.coordinator.scrollView = scrollView
         context.coordinator.textView = textView
         context.coordinator.rulerView = rulerView
-        Self.syncNonWrappingLayout(textView: textView, in: scrollView, resetHorizontalOffset: true)
+        Self.syncNonWrappingLayout(
+            textView: textView,
+            in: scrollView,
+            resetHorizontalOffset: true,
+            cachedWidth: &context.coordinator.cachedDocumentWidth,
+            remeasureWidth: true
+        )
 
         return scrollView
     }
@@ -91,12 +99,21 @@ struct HostsTextView: NSViewRepresentable {
             didReplaceText = true
         }
 
-        // Update highlighting and error lines
-        HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: errorLines)
+        // 文本和错误行都没变时跳过全量高亮（例如仅 isApplying 刷新）。
+        let needsHighlight = didReplaceText
+            || context.coordinator.lastHighlightedText != text
+            || context.coordinator.lastErrorLines != errorLines
+        if needsHighlight {
+            HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: errorLines)
+            context.coordinator.lastHighlightedText = text
+            context.coordinator.lastErrorLines = errorLines
+        }
         Self.syncNonWrappingLayout(
             textView: textView,
             in: scrollView,
-            resetHorizontalOffset: didReplaceText
+            resetHorizontalOffset: didReplaceText,
+            cachedWidth: &context.coordinator.cachedDocumentWidth,
+            remeasureWidth: needsHighlight
         )
 
         // Update line-number gutter error lines
@@ -111,12 +128,20 @@ struct HostsTextView: NSViewRepresentable {
     }
 
     /// Syncs document width in non-wrapping mode to prevent infinite container from drawing text into invisible areas.
+    /// 非换行布局。宽度按整篇文本测量，结果缓存；滚动只复用缓存，避免每帧扫全部行。
     private static func syncNonWrappingLayout(
         textView: NSTextView,
         in scrollView: NSScrollView,
-        resetHorizontalOffset: Bool
+        resetHorizontalOffset: Bool,
+        cachedWidth: inout CGFloat?,
+        remeasureWidth: Bool
     ) {
-        let documentWidth = preferredDocumentWidth(textView: textView, in: scrollView)
+        let documentWidth = resolvedDocumentWidth(
+            textView: textView,
+            in: scrollView,
+            cachedWidth: &cachedWidth,
+            remeasureWidth: remeasureWidth
+        )
         textView.textContainer?.containerSize = NSSize(
             width: documentWidth,
             height: CGFloat.greatestFiniteMagnitude
@@ -138,6 +163,20 @@ struct HostsTextView: NSViewRepresentable {
         if resetHorizontalOffset {
             resetHorizontalScroll(in: scrollView)
         }
+    }
+
+    private static func resolvedDocumentWidth(
+        textView: NSTextView,
+        in scrollView: NSScrollView,
+        cachedWidth: inout CGFloat?,
+        remeasureWidth: Bool
+    ) -> CGFloat {
+        if !remeasureWidth, let cachedWidth {
+            return cachedWidth
+        }
+        let width = preferredDocumentWidth(textView: textView, in: scrollView)
+        cachedWidth = width
+        return width
     }
 
     private static func preferredDocumentWidth(textView: NSTextView, in scrollView: NSScrollView) -> CGFloat {
@@ -194,6 +233,12 @@ struct HostsTextView: NSViewRepresentable {
         /// Prevents circular triggering between updateNSView and textDidChange.
         var isUpdatingFromSwiftUI = false
 
+        /// 最近一次高亮对应的文本和错误行，用于跳过无变化的全量重绘。
+        var lastHighlightedText: String?
+        var lastErrorLines: Set<Int>?
+        /// 非换行文档宽度缓存。仅文本变化时重测。
+        var cachedDocumentWidth: CGFloat?
+
         init(parent: HostsTextView) {
             self.parent = parent
         }
@@ -202,18 +247,8 @@ struct HostsTextView: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             guard !isUpdatingFromSwiftUI else { return }
 
-            // Write text back to SwiftUI binding
+            // 写回 binding 后由 updateNSView 做一次高亮和宽度测量，避免按键路径算两遍。
             parent.text = textView.string
-
-            // Real-time highlighting
-            HostsSyntaxHighlighter.highlight(textView.textStorage!, errorLines: parent.errorLines)
-            if let scrollView {
-                HostsTextView.syncNonWrappingLayout(
-                    textView: textView,
-                    in: scrollView,
-                    resetHorizontalOffset: false
-                )
-            }
 
             // Refresh line numbers
             rulerView?.needsDisplay = true
@@ -225,7 +260,9 @@ struct HostsTextView: NSViewRepresentable {
                 HostsTextView.syncNonWrappingLayout(
                     textView: textView,
                     in: scrollView,
-                    resetHorizontalOffset: false
+                    resetHorizontalOffset: false,
+                    cachedWidth: &cachedDocumentWidth,
+                    remeasureWidth: false
                 )
             }
             rulerView?.needsDisplay = true

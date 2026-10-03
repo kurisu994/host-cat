@@ -280,6 +280,50 @@ enum L {
         String(format: localize("settings.diagnostic_export.failed"), message)
     }
 
+    // MARK: - Config Transfer
+    static var transferMenu: String { localize("transfer.menu") }
+    static var transferExport: String { localize("transfer.export") }
+    static var transferImport: String { localize("transfer.import") }
+    static var transferExportPanelTitle: String { localize("transfer.export.panel_title") }
+    static var transferImportPanelTitle: String { localize("transfer.import.panel_title") }
+    static var transferImportDialogTitle: String { localize("transfer.import.dialog_title") }
+    static var transferImportDialogMessage: String { localize("transfer.import.dialog_message") }
+    static var transferImportMerge: String { localize("transfer.import.merge") }
+    static var transferImportReplace: String { localize("transfer.import.replace") }
+    static var transferResultTitle: String { localize("transfer.result.title") }
+    static func transferImportSuccess(groups: Int, nodes: Int, updated: Int) -> String {
+        String(format: localize("transfer.import.success"), groups, nodes, updated)
+    }
+    static func transferExportSuccess(_ filename: String) -> String {
+        String(format: localize("transfer.export.success"), filename)
+    }
+    static func transferFailed(_ message: String) -> String {
+        String(format: localize("transfer.failed"), message)
+    }
+
+    // MARK: - Notifications
+    static var notificationApplySuccessTitle: String { localize("notification.apply_success.title") }
+    static var notificationApplySuccessBody: String { localize("notification.apply_success.body") }
+    static var notificationApplyFailedTitle: String { localize("notification.apply_failed.title") }
+    static var notificationExternalModificationTitle: String { localize("notification.external_modification.title") }
+    static var notificationExternalModificationBody: String { localize("notification.external_modification.body") }
+    static var settingsNotifications: String { localize("settings.notifications") }
+    static var settingsNotificationsDescription: String { localize("settings.notifications.description") }
+    static var settingsNotifyOnSuccess: String { localize("settings.notifications.on_success") }
+    static var settingsNotifyOnFailure: String { localize("settings.notifications.on_failure") }
+    static var settingsNotifyOnExternalModification: String { localize("settings.notifications.on_external_modification") }
+    static var settingsNotificationsDenied: String { localize("settings.notifications.denied") }
+    static var settingsNotificationsOpenSettings: String { localize("settings.notifications.open_settings") }
+
+    // MARK: - Accessibility
+    static var a11yStateActive: String { localize("a11y.state.active") }
+    static var a11yStateInactive: String { localize("a11y.state.inactive") }
+    static var a11ySelectNode: String { localize("a11y.select_node") }
+    static var a11yToggleNode: String { localize("a11y.toggle_node") }
+    static var a11yCollapseGroup: String { localize("a11y.collapse_group") }
+    static var a11yExpandGroup: String { localize("a11y.expand_group") }
+    static var a11yClearShortcut: String { localize("a11y.clear_shortcut") }
+
     // MARK: - Shortcuts
     static var settingsShortcuts: String { localize("settings.shortcuts") }
     static var settingsShortcutsDescription: String { localize("settings.shortcuts.description") }

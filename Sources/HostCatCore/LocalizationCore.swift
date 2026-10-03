@@ -59,6 +59,9 @@ public enum LC {
     }
     public static var configErrorInvalidJSON: String { localize("config.error.invalid_json") }
 
+    // MARK: - Config Transfer
+    public static var transferErrorInvalidFormat: String { localize("transfer.error.invalid_format") }
+
     // MARK: - Recovery Reasons
     public static var recoveryInvalidJSON: String { localize("recovery.invalid_json") }
     public static func recoveryUnsupportedVersion(_ version: Int) -> String {
@@ -169,6 +172,11 @@ public enum LC {
     }
 
     // MARK: - Resource Resolution
+
+    /// 按指定语言取格式串并代入参数，供携带结构化参数的错误在展示时再翻译。
+    static func localizedFormat(_ key: String, arguments: [String], language: AppLanguage) -> String {
+        String(format: localizedString(key, language: language), arguments: arguments)
+    }
 
     static func localizedString(
         _ key: String,

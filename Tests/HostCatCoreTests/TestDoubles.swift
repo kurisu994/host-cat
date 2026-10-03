@@ -178,7 +178,7 @@ struct StubDNSRefresher: DNSRefreshing, Sendable {
 
     func refreshDNSCache() throws {
         if !shouldSucceed {
-            throw HostsWriteError.dnsRefreshFailed(errorMessage)
+            throw HostsWriteError.dnsRefreshFailed(.raw(errorMessage))
         }
     }
 }

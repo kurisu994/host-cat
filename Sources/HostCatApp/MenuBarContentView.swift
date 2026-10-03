@@ -45,6 +45,7 @@ struct MenuBarContentView: View {
                     node.name,
                     isOn: nodeActiveBinding(nodeID: node.id, groupID: node.groupID)
                 )
+                .accessibilityHint(L.a11yToggleNode)
             }
 
             Divider()

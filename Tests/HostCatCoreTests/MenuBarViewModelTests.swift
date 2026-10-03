@@ -54,6 +54,93 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertEqual(saved.defaultNode.content, "10.0.0.1 draft-after-success.test\n")
     }
 
+    func testImportConfigMergeUpdatesViewModelConfig() async throws {
+        let helper = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(1))
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+        var imported = AppConfig.initial(defaultHosts: "ignored\n")
+        imported.groups = [HostGroup(name: "G", nodes: [HostNode(name: "N", content: "1.1.1.1 n.test\n", isActive: true)])]
+
+        let summary = viewModel.importConfig(imported, mode: .merge)
+
+        XCTAssertEqual(summary.addedGroups, 1)
+        XCTAssertEqual(viewModel.config.groups.first?.nodes.first?.name, "N")
+        XCTAssertEqual(viewModel.config.defaultNode.content, "127.0.0.1 localhost\n")
+        XCTAssertFalse(viewModel.config.groups[0].nodes[0].isActive)
+    }
+
+    func testExportConfigDataRoundTripsThroughDecode() throws {
+        let coordinator = HostWriteCoordinator(helperClient: FakeHostHelperClient())
+        var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")
+        config.groups = [HostGroup(name: "G", nodes: [HostNode(name: "N", content: "1.1.1.1 n.test\n", isActive: false)])]
+        let viewModel = MenuBarViewModel(
+            config: config,
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: makeStoreURL())
+        )
+
+        let decoded = try viewModel.decodeImportedConfig(viewModel.exportConfigData())
+
+        XCTAssertEqual(decoded.groups, config.groups)
+    }
+
+    func testApplyEmitsAppliedEventOnSuccess() async throws {
+        let (viewModel, events, cleanup) = makeViewModelCollectingEvents(helper: FakeHostHelperClient())
+        defer { cleanup() }
+
+        _ = await viewModel.applyImmediately()
+
+        XCTAssertEqual(events.values, [.applied])
+    }
+
+    func testApplyEmitsFailedEventOnWriteFailure() async throws {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        let (viewModel, events, cleanup) = makeViewModelCollectingEvents(helper: helper)
+        defer { cleanup() }
+
+        _ = await viewModel.applyImmediately()
+
+        XCTAssertEqual(events.values.count, 1)
+        guard case .failed = events.values[0] else {
+            return XCTFail("应发出 failed 事件，实际：\(events.values)")
+        }
+    }
+
+    func testApplyEmitsExternalModificationEventOnHashMismatch() async throws {
+        let helper = FakeHostHelperClient()
+        await helper.setShouldSucceed(false)
+        await helper.setSimulatedError(HostHelperClientError.hashMismatch)
+        let (viewModel, events, cleanup) = makeViewModelCollectingEvents(helper: helper)
+        defer { cleanup() }
+
+        _ = await viewModel.applyImmediately()
+
+        XCTAssertEqual(events.values, [.externalModification])
+    }
+
+    func testApplyEmitsFailedEventOnConflicts() async throws {
+        let (viewModel, events, cleanup) = makeViewModelCollectingEvents(helper: FakeHostHelperClient())
+        defer { cleanup() }
+        viewModel.config.groups = [HostGroup(name: "G", nodes: [
+            HostNode(name: "A", content: "1.1.1.1 dup.test\n", isActive: true),
+            HostNode(name: "B", content: "2.2.2.2 dup.test\n", isActive: true)
+        ])]
+
+        _ = await viewModel.applyImmediately()
+
+        XCTAssertEqual(events.values.count, 1)
+        guard case .failed = events.values[0] else {
+            return XCTFail("冲突应发出 failed 事件，实际：\(events.values)")
+        }
+    }
+
     func testScheduledFailedApplyPersistsDraftConfig() async throws {
         let helper = FakeHostHelperClient()
         await helper.setShouldSucceed(false)
@@ -259,6 +346,26 @@ final class MenuBarViewModelTests: XCTestCase {
         while viewModel.isApplying && DispatchTime.now().uptimeNanoseconds < deadline {
             try? await Task.sleep(nanoseconds: 10_000_000)
         }
+    }
+
+    /// 收集 `applyEventHandler` 事件的小容器（主线程回调，测试同样在 MainActor）。
+    private final class EventBox {
+        var values: [ApplyNotificationEvent] = []
+    }
+
+    private func makeViewModelCollectingEvents(
+        helper: FakeHostHelperClient
+    ) -> (MenuBarViewModel, EventBox, () -> Void) {
+        let coordinator = HostWriteCoordinator(helperClient: helper, backupStore: nil, debounceInterval: .milliseconds(1))
+        let storeURL = makeStoreURL()
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+        let box = EventBox()
+        viewModel.applyEventHandler = { box.values.append($0) }
+        return (viewModel, box, { try? FileManager.default.removeItem(at: storeURL) })
     }
 
     private func makeStoreURL() -> URL {

@@ -11,11 +11,13 @@ struct ShortcutRecorderView: NSViewRepresentable {
     /// 当 placeholder 文案需要随系统语言切换时由外部传入；NSView 拿不到 SwiftUI 环境。
     let idlePlaceholder: String
     let recordingPlaceholder: String
+    let clearAccessibilityLabel: String
 
     func makeNSView(context: Context) -> ShortcutRecorderNSView {
         let view = ShortcutRecorderNSView()
         view.idlePlaceholder = idlePlaceholder
         view.recordingPlaceholder = recordingPlaceholder
+        view.clearAccessibilityLabel = clearAccessibilityLabel
         view.shortcut = shortcut
         view.onChange = { newValue in
             // updateNSView 同时也会写回 binding，需要避免反复重绘
@@ -29,6 +31,7 @@ struct ShortcutRecorderView: NSViewRepresentable {
     func updateNSView(_ nsView: ShortcutRecorderNSView, context: Context) {
         nsView.idlePlaceholder = idlePlaceholder
         nsView.recordingPlaceholder = recordingPlaceholder
+        nsView.clearAccessibilityLabel = clearAccessibilityLabel
         if nsView.shortcut != shortcut {
             nsView.shortcut = shortcut
         }
@@ -47,6 +50,10 @@ final class ShortcutRecorderNSView: NSView {
         didSet { refresh() }
     }
     var recordingPlaceholder: String = "" {
+        didSet { refresh() }
+    }
+
+    var clearAccessibilityLabel: String = "" {
         didSet { refresh() }
     }
 
@@ -73,7 +80,7 @@ final class ShortcutRecorderNSView: NSView {
         clearButton.title = ""
         clearButton.image = NSImage(
             systemSymbolName: "xmark.circle.fill",
-            accessibilityDescription: nil
+            accessibilityDescription: clearAccessibilityLabel
         )
         clearButton.imagePosition = .imageOnly
         clearButton.isBordered = false
@@ -154,5 +161,10 @@ final class ShortcutRecorderNSView: NSView {
         layer?.borderColor = (
             isRecording ? NSColor.controlAccentColor : NSColor.separatorColor
         ).cgColor
+        clearButton.setAccessibilityLabel(clearAccessibilityLabel)
+        clearButton.image = NSImage(
+            systemSymbolName: "xmark.circle.fill",
+            accessibilityDescription: clearAccessibilityLabel
+        )
     }
 }
