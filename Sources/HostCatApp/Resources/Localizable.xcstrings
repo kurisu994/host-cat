@@ -3797,13 +3797,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“Merge” matches by group and node name: same-name nodes get updated content, others are appended (new nodes start disabled), and the default node is untouched. “Replace” overwrites the default node content and all groups."
+            "value" : "“Merge” matches by group and node name: same-name nodes get updated content, others are appended (new nodes start disabled), and the default node is untouched. “Replace” overwrites the default node content and all groups, including which nodes are enabled. Hosts is written from the result."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "「合并」按分组名和节点名匹配：同名节点更新内容，其余追加（新增节点默认不启用），默认节点不变。「替换」会用导入内容替换默认节点内容和全部分组。"
+            "value" : "「合并」按分组名和节点名匹配：同名节点更新内容，其余追加（新增节点默认不启用），默认节点不变。「替换」会用导入内容替换默认节点内容、全部分组和节点启用状态。确认后会按结果写回 hosts。"
           }
         }
       }
@@ -4229,6 +4229,91 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "清除快捷键"
+          }
+        }
+      }
+    },
+    "transfer.unsaved.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unapplied Edits"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "有未应用的修改"
+          }
+        }
+      }
+    },
+    "transfer.unsaved.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This node has edits that are not applied yet. Import and export use the applied configuration, so these edits need to be handled first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前节点的修改还没应用。导入和导出只使用已应用的配置，继续前需要先处理这些修改。"
+          }
+        }
+      }
+    },
+    "transfer.unsaved.apply" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply and Continue"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "先应用再继续"
+          }
+        }
+      }
+    },
+    "transfer.unsaved.discard" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Discard and Continue"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放弃修改并继续"
+          }
+        }
+      }
+    },
+    "transfer.replace.success" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configuration replaced: %d groups and %d nodes. Enabled nodes follow the imported file and will be written to hosts."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已替换配置：%d 个分组、%d 个节点。启用状态以导入文件为准，并会写回 hosts。"
           }
         }
       }

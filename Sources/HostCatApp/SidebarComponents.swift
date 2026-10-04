@@ -8,42 +8,49 @@ struct NodeRow: View {
     let isSelected: Bool
     /// Callback when the active icon is tapped; nil means not toggleable (e.g., default node).
     var onToggleActive: (() -> Void)? = nil
+    /// 点击名称区域选中节点。列表自己的选择手势在 macOS 上不可靠，必须用按钮承接。
+    var onSelect: () -> Void = {}
 
     var body: some View {
-        HStack {
-            // 用 Button 而不是 onTapGesture，方便全键盘访问和 VoiceOver 操作。
-            Button {
-                onToggleActive?()
-            } label: {
-                Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isActive ? .green : .secondary)
+        HStack(spacing: 4) {
+            Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(isActive ? .green : .secondary)
+                .frame(width: 22, height: 22)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onToggleActive?()
+                }
+                .allowsHitTesting(onToggleActive != nil)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(isActive ? L.sidebarDeactivate : L.sidebarActivate)
+                .accessibilityHint(L.a11yToggleNode)
+                .accessibilityAction(.default) {
+                    onToggleActive?()
+                }
+
+            Button(action: onSelect) {
+                HStack {
+                    Text(name)
+                    Spacer(minLength: 0)
+                    if isDefault {
+                        Text(L.statusDefault)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    }
+                }
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(onToggleActive == nil)
-            .accessibilityLabel(isActive ? L.sidebarDeactivate : L.sidebarActivate)
-            .accessibilityHint(L.a11yToggleNode)
-
-            Text(name)
-                .accessibilityLabel(name)
-
-            Spacer()
-
-            if isDefault {
-                Text(L.statusDefault)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-            }
+            .accessibilityLabel(name)
+            .accessibilityValue(accessibilityValueText)
+            .accessibilityHint(L.a11ySelectNode)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(name)
-        .accessibilityValue(accessibilityValueText)
-        .accessibilityHint(L.a11ySelectNode)
         .background {
             if isSelected {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)

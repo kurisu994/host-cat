@@ -71,7 +71,8 @@ struct EditorView: View {
                                 name: viewModel.config.defaultNode.name,
                                 isActive: viewModel.config.defaultNode.isActive,
                                 isDefault: true,
-                                isSelected: selectedNodeID == viewModel.config.defaultNode.id
+                                isSelected: selectedNodeID == viewModel.config.defaultNode.id,
+                                onSelect: { selectedNodeID = viewModel.config.defaultNode.id }
                             )
                             .tag(viewModel.config.defaultNode.id)
                         }
@@ -119,16 +120,18 @@ struct EditorView: View {
                                         isDefault: false,
                                         isSelected: selectedNodeID == node.id,
                                         onToggleActive: {
+                                            selectedNodeID = node.id
                                             viewModel.toggleNode(id: node.id, inGroup: group.id)
-                                        }
+                                        },
+                                        onSelect: { selectedNodeID = node.id }
                                     )
                                     .tag(node.id)
-                                    .onTapGesture(count: 2) {
-                                        editingNodeToRename = (group.id, node.id)
-                                        renameNodeNewName = node.name
-                                        showRenameNodeDialog = true
-                                    }
                                     .contextMenu {
+                                        Button(L.sidebarRenameNode) {
+                                            editingNodeToRename = (group.id, node.id)
+                                            renameNodeNewName = node.name
+                                            showRenameNodeDialog = true
+                                        }
                                         Button(L.sidebarDeleteNode) {
                                             nodeToDelete = (group.id, node.id)
                                             showDeleteConfirmation = true
@@ -159,11 +162,20 @@ struct EditorView: View {
                         }
                     }
                     .onMove { source, destination in
+                        // 搜索结果的下标不是完整分组列表，按它排序会把真实顺序打乱。
+                        guard !isSearching else { return }
                         moveGroups(from: source, to: destination)
                     }
                 }
                 .listStyle(.sidebar)
                 .searchable(text: $searchText, prompt: L.sidebarSearchPlaceholder)
+                .onAppear {
+                    // 打开编辑器就进入默认节点，避免停在「请选择节点」。
+                    if selectedNodeID == nil {
+                        selectedNodeID = viewModel.config.defaultNode.id
+                    }
+                    loadNodeContent(id: selectedNodeID)
+                }
                 .onChange(of: selectedNodeID) { _, newID in
                     loadNodeContent(id: newID)
                 }
@@ -240,6 +252,9 @@ struct EditorView: View {
         .alert(L.dialogDeleteNodeTitle, isPresented: $showDeleteConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
+                    if selectedNodeID == nodeID {
+                        selectedNodeID = nil
+                    }
                     let service = mutationService
                     service.removeNode(id: nodeID, fromGroup: groupID, in: &viewModel.config)
                     viewModel.scheduleApply()
@@ -255,6 +270,10 @@ struct EditorView: View {
         .alert(L.dialogDeleteGroupTitle, isPresented: $showDeleteGroupConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let groupID = groupToDelete {
+                    if let selectedNodeID,
+                       viewModel.config.groups.first(where: { $0.id == groupID })?.nodes.contains(where: { $0.id == selectedNodeID }) == true {
+                        self.selectedNodeID = nil
+                    }
                     let service = mutationService
                     service.removeGroup(id: groupID, from: &viewModel.config)
                     viewModel.scheduleApply()
@@ -345,15 +364,18 @@ struct EditorView: View {
     }
 
     private func loadNodeContent(id: UUID?) {
+        validationTask?.cancel()
         guard let id = id else {
             editingContent = ""
             editingName = ""
+            validateContent("")
             return
         }
 
         if id == viewModel.config.defaultNode.id {
             editingContent = viewModel.config.defaultNode.content
             editingName = viewModel.config.defaultNode.name
+            validateContent(editingContent)
             return
         }
 
@@ -361,9 +383,14 @@ struct EditorView: View {
             if let node = group.nodes.first(where: { $0.id == id }) {
                 editingContent = node.content
                 editingName = node.name
+                validateContent(editingContent)
                 return
             }
         }
+
+        editingContent = ""
+        editingName = ""
+        validateContent("")
     }
 
     private var hasUnsavedEdits: Bool {
@@ -475,7 +502,13 @@ private struct EditorToolbar: View {
 
             Spacer(minLength: 16)
 
-            ConfigTransferMenu(viewModel: viewModel, onImported: onImported)
+            ConfigTransferMenu(
+                viewModel: viewModel,
+                hasUnsavedEdits: hasUnsavedEdits,
+                onApplyEdits: onApply,
+                onDiscardEdits: onRevert,
+                onImported: onImported
+            )
 
             Button {
                 onRevert()

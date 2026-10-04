@@ -74,13 +74,7 @@ struct HostsTextView: NSViewRepresentable {
         context.coordinator.scrollView = scrollView
         context.coordinator.textView = textView
         context.coordinator.rulerView = rulerView
-        Self.syncNonWrappingLayout(
-            textView: textView,
-            in: scrollView,
-            resetHorizontalOffset: true,
-            cachedWidth: &context.coordinator.cachedDocumentWidth,
-            remeasureWidth: true
-        )
+        context.coordinator.syncLayout(resetHorizontalOffset: true, remeasureWidth: true)
 
         return scrollView
     }
@@ -108,11 +102,8 @@ struct HostsTextView: NSViewRepresentable {
             context.coordinator.lastHighlightedText = text
             context.coordinator.lastErrorLines = errorLines
         }
-        Self.syncNonWrappingLayout(
-            textView: textView,
-            in: scrollView,
+        context.coordinator.syncLayout(
             resetHorizontalOffset: didReplaceText,
-            cachedWidth: &context.coordinator.cachedDocumentWidth,
             remeasureWidth: needsHighlight
         )
 
@@ -238,6 +229,21 @@ struct HostsTextView: NSViewRepresentable {
         var lastErrorLines: Set<Int>?
         /// 非换行文档宽度缓存。仅文本变化时重测。
         var cachedDocumentWidth: CGFloat?
+        /// 滚动会同步发出 bounds 通知。同步布局时忽略重入，避免同时改宽度缓存导致崩溃。
+        var isSyncingLayout = false
+
+        func syncLayout(resetHorizontalOffset: Bool, remeasureWidth: Bool) {
+            guard !isSyncingLayout, let textView, let scrollView else { return }
+            isSyncingLayout = true
+            defer { isSyncingLayout = false }
+            HostsTextView.syncNonWrappingLayout(
+                textView: textView,
+                in: scrollView,
+                resetHorizontalOffset: resetHorizontalOffset,
+                cachedWidth: &cachedDocumentWidth,
+                remeasureWidth: remeasureWidth
+            )
+        }
 
         init(parent: HostsTextView) {
             self.parent = parent
@@ -256,15 +262,7 @@ struct HostsTextView: NSViewRepresentable {
 
         @MainActor
         @objc func boundsDidChange(_: Notification) {
-            if let textView, let scrollView {
-                HostsTextView.syncNonWrappingLayout(
-                    textView: textView,
-                    in: scrollView,
-                    resetHorizontalOffset: false,
-                    cachedWidth: &cachedDocumentWidth,
-                    remeasureWidth: false
-                )
-            }
+            syncLayout(resetHorizontalOffset: false, remeasureWidth: false)
             rulerView?.needsDisplay = true
         }
     }

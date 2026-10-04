@@ -300,6 +300,13 @@ enum L {
     static func transferFailed(_ message: String) -> String {
         String(format: localize("transfer.failed"), message)
     }
+    static var transferUnsavedTitle: String { localize("transfer.unsaved.title") }
+    static var transferUnsavedMessage: String { localize("transfer.unsaved.message") }
+    static var transferUnsavedApply: String { localize("transfer.unsaved.apply") }
+    static var transferUnsavedDiscard: String { localize("transfer.unsaved.discard") }
+    static func transferReplaceSuccess(groups: Int, nodes: Int) -> String {
+        String(format: localize("transfer.replace.success"), groups, nodes)
+    }
 
     // MARK: - Notifications
     static var notificationApplySuccessTitle: String { localize("notification.apply_success.title") }
