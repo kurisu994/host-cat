@@ -9,14 +9,20 @@ actor FakeHostHelperClient: HostHelperClient {
     var simulatedError: Error?
     var writtenContents: [String] = []
     var expectedHashes: [String?] = []
+    var forceFlags: [Bool] = []
     var delayNanoseconds: UInt64 = 0
 
-    func writeHosts(_ contents: String, expectedCurrentHostsHash: String?) async throws -> HostHelperWriteResult {
+    func writeHosts(
+        _ contents: String,
+        expectedCurrentHostsHash: String?,
+        force: Bool
+    ) async throws -> HostHelperWriteResult {
         if delayNanoseconds > 0 {
             try await Task.sleep(nanoseconds: delayNanoseconds)
         }
 
         expectedHashes.append(expectedCurrentHostsHash)
+        forceFlags.append(force)
 
         if !shouldSucceed {
             if let error = simulatedError {

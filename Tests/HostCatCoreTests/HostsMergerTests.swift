@@ -185,4 +185,24 @@ final class HostsMergerTests: XCTestCase {
         XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.7 injected-node.test"))
         XCTAssertTrue(merged.text.contains("10.0.0.2 api.test"))
     }
+
+    func testCommentsAndBlankLinesAreKept() throws {
+        let config = AppConfig(
+            configVersion: 1,
+            defaultNode: HostNode(
+                name: "默认",
+                content: "# 只在本机使用\n\n127.0.0.1 localhost\n",
+                isActive: true
+            ),
+            groups: [],
+            settings: AppSettings(launchAtLogin: false),
+            state: AppStateMetadata()
+        )
+
+        let merged = try HostsMerger().merge(config)
+
+        XCTAssertTrue(merged.text.contains("# 只在本机使用"))
+        XCTAssertTrue(merged.text.contains("127.0.0.1 localhost"))
+        XCTAssertEqual(merged.records.count, 1)
+    }
 }

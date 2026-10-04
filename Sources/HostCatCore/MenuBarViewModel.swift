@@ -265,7 +265,18 @@ public final class MenuBarViewModel: ObservableObject {
                 applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             }
             updateMergedPreview()
-            applyEventHandler?(.applied)
+            if result.didRefreshDNS == false {
+                let message = LC.dnsRefreshUnconfirmed
+                applyError = message
+                applyEventHandler?(.failed(message))
+            } else {
+                applyEventHandler?(.applied)
+            }
+        } else if case .hashMismatch = result.status {
+            showExternalModificationAlert = true
+            applyError = LC.externalModificationDetected
+            applyEventHandler?(.externalModification)
+            logger.warning("\(LC.logExternalModification)")
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
@@ -279,12 +290,6 @@ public final class MenuBarViewModel: ObservableObject {
                 applyError = nil
                 applyEventHandler?(.failed(LC.hostsNotApplied(msg)))
                 logger.warning("Helper unavailable: \(msg)")
-            } else if case .writeFailed(let msg) = result.status,
-                      msg == HostHelperClientError.hashMismatch.localizedDescription {
-                showExternalModificationAlert = true
-                applyError = LC.externalModificationDetected
-                applyEventHandler?(.externalModification)
-                logger.warning("\(LC.logExternalModification)")
             } else {
                 applyError = LC.hostsNotApplied(errorMessage)
                 applyEventHandler?(.failed(LC.hostsNotApplied(errorMessage)))
@@ -375,5 +380,24 @@ public final class MenuBarViewModel: ObservableObject {
 
     public func clearError() {
         applyError = nil
+    }
+
+    /// 启动时对照磁盘 hash，标出还没写入，或被外面改过。
+    public func noteStartupDrift(diskHash: String) {
+        let mergedText = (try? HostsMerger().merge(config))?.text
+        switch HostsDriftChecker.evaluate(
+            diskHash: diskHash,
+            lastAppliedHostsHash: config.state.lastAppliedHostsHash,
+            lastExternalHostsHash: config.state.lastExternalHostsHash,
+            mergedText: mergedText
+        ) {
+        case .inSync:
+            break
+        case .unapplied:
+            applyError = LC.unappliedHosts
+        case .externallyModified:
+            showExternalModificationAlert = true
+            applyError = LC.externalModificationDetected
+        }
     }
 }

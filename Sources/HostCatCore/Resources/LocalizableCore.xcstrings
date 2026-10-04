@@ -1394,6 +1394,91 @@
           }
         }
       }
+    },
+    "status.unapplied_hosts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The current configuration has not been written to /etc/hosts."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前配置还没有写入 /etc/hosts。"
+          }
+        }
+      }
+    },
+    "status.dns_refresh_unconfirmed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hosts was written, but the DNS cache may not have been flushed."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hosts 已写入，但 DNS 缓存可能没有刷新。"
+          }
+        }
+      }
+    },
+    "detail.content_too_large": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Content exceeds 1 MB (%1$@ bytes)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内容超过 1 MB（%1$@ 字节）"
+          }
+        }
+      }
+    },
+    "write.error.missing_expected_hash": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Missing the current hosts hash. The write was refused."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缺少当前 hosts 的校验值，已拒绝写入。"
+          }
+        }
+      }
+    },
+    "write.error.refused_hosts_path": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The real path of /etc/hosts is not /private/etc/hosts. The write was refused."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "/etc/hosts 的真实路径不是 /private/etc/hosts，已拒绝写入。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

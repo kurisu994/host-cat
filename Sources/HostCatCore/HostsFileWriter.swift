@@ -65,6 +65,9 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
             var offset = 0
             while remaining > 0 {
                 let written = Darwin.write(fd, base.advanced(by: offset), remaining)
+                if written < 0, errno == EINTR {
+                    continue
+                }
                 guard written > 0 else {
                     throw HostsWriteError.writeFailed(.writeSyscallFailed(String(cString: strerror(errno))))
                 }
@@ -75,7 +78,13 @@ public struct RealFileSystemOperations: FileSystemOperations, Sendable {
     }
 
     public func fsyncFD(_ fd: Int32) throws {
-        guard Darwin.fsync(fd) == 0 else {
+        while true {
+            if Darwin.fsync(fd) == 0 {
+                return
+            }
+            if errno == EINTR {
+                continue
+            }
             throw HostsWriteError.writeFailed(.fsyncFailed(String(cString: strerror(errno))))
         }
     }
@@ -154,6 +163,9 @@ public struct HostsWriteOutcome: Equatable, Sendable {
 
 /// Validates hosts content before writing.
 public struct HostsContentValidator: Sendable {
+    /// 拒绝把过大的文本写进系统 hosts。
+    public static let maxContentUTF8Bytes = 1_048_576
+
     private static let requiredSystemEntries: [(ipAddress: String, hostname: String)] = [
         ("127.0.0.1", "localhost"),
         ("255.255.255.255", "broadcasthost"),
@@ -164,6 +176,11 @@ public struct HostsContentValidator: Sendable {
 
     /// Validates that the hosts content to be written is complete and valid.
     public func validate(_ content: String) throws {
+        let byteCount = content.utf8.count
+        guard byteCount <= Self.maxContentUTF8Bytes else {
+            throw HostsWriteError.contentValidationFailed(.contentTooLarge(bytes: byteCount))
+        }
+
         // 1. Non-empty
         let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {

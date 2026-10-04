@@ -15,7 +15,8 @@ struct HostCatApplication: App {
         // ShortcutStore 是单例（确保 Carbon 注册唯一），用 wrappedValue 包给 @StateObject 复用同一实例。
         _shortcutStore = StateObject(wrappedValue: ShortcutStore.shared)
 
-        let config = Self.loadInitialConfig()
+        let importedHosts = Self.readImportedDefaultHosts()
+        let config = Self.loadInitialConfig(importResult: importedHosts)
 
         #if DEBUG
         // Development: use PreviewHostHelperClient to bypass Helper registration,
@@ -28,6 +29,7 @@ struct HostCatApplication: App {
         let coordinator = HostWriteCoordinator(helperClient: helperClient)
         let model = MenuBarViewModel(config: config, coordinator: coordinator)
         model.applyEventHandler = { NotificationService.shared.handle($0) }
+        model.noteStartupDrift(diskHash: importedHosts.currentHostsHash)
         _viewModel = StateObject(wrappedValue: model)
     }
 
@@ -98,8 +100,7 @@ struct HostCatApplication: App {
 
     """
 
-    private static func loadInitialConfig() -> AppConfig {
-        let importResult = readImportedDefaultHosts()
+    private static func loadInitialConfig(importResult: HostsImportResult) -> AppConfig {
         let store = AppConfigStore()
 
         do {

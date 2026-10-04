@@ -14,7 +14,8 @@ public struct PreviewHostHelperClient: HostHelperClient {
 
     public func writeHosts(
         _ contents: String,
-        expectedCurrentHostsHash _: String?
+        expectedCurrentHostsHash _: String?,
+        force _: Bool
     ) async throws -> HostHelperWriteResult {
         let hash = HostsHash.sha256Hex(contents)
         logger.warning(
@@ -22,7 +23,7 @@ public struct PreviewHostHelperClient: HostHelperClient {
         )
         return HostHelperWriteResult(
             finalHostsHash: hash,
-            didRefreshDNS: false
+            didRefreshDNS: nil
         )
     }
 }

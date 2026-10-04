@@ -26,7 +26,8 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
 
     public func writeHosts(
         _ contents: String,
-        expectedCurrentHostsHash: String?
+        expectedCurrentHostsHash: String?,
+        force: Bool
     ) async throws -> HostHelperWriteResult {
         let contentsNS = contents as NSString
         let hashNS = expectedCurrentHostsHash as NSString?
@@ -84,6 +85,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                 proxy.writeHosts(
                     contentsNS,
                     expectedCurrentHostsHash: hashNS,
+                    force: force,
                     localizationIdentifier: localizationIdentifierNS
                 ) { [weak self, logger] resultDict in
                     do {
@@ -223,6 +225,8 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                 throw HostHelperClientError.hashMismatch
             case "fileImmutable":
                 throw HostHelperClientError.fileImmutable
+            case "hashRequired", "invalidHostsPath":
+                throw HostHelperClientError.writeRejected(errorMessage)
             default:
                 throw HostHelperClientError.unavailable(errorMessage)
             }

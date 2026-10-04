@@ -49,6 +49,7 @@ public struct HostsMerger: Sendable {
     private struct ParsedContext: Sendable {
         var groupName: String?
         var nodeName: String
+        var lines: [HostsDocumentLine]
         var records: [HostRecord]
     }
 
@@ -64,8 +65,17 @@ public struct HostsMerger: Sendable {
         let contexts = activeNodeContexts(in: config)
         let parsedContexts = try contexts.map { context in
             let source = HostRecordSource(groupName: context.groupName, nodeName: context.node.name)
-            let records = try parser.parse(context.node.content).map { $0.attachingSource(source) }
-            return ParsedContext(groupName: context.groupName, nodeName: context.node.name, records: records)
+            let document = try parser.parseDocument(context.node.content)
+            let records = document.compactMap { line -> HostRecord? in
+                guard case let .record(record) = line.kind else { return nil }
+                return record.attachingSource(source)
+            }
+            return ParsedContext(
+                groupName: context.groupName,
+                nodeName: context.node.name,
+                lines: document,
+                records: records
+            )
         }
 
         let conflicts = findConflicts(in: parsedContexts)
@@ -138,31 +148,43 @@ public struct HostsMerger: Sendable {
                 lines.append("# \(sanitizeCommentText(context.nodeName))")
             }
 
-            for record in context.records {
-                let uniqueHostnames = record.hostnames.filter { hostname in
-                    let key = "\(record.ipAddress)\u{0}\(hostname.lowercased())"
-                    if seenEntryKeys.contains(key) {
-                        duplicateCount += 1
-                        return false
+            for line in context.lines {
+                switch line.kind {
+                case .blank:
+                    lines.append("")
+                case .comment:
+                    lines.append(line.rawLine)
+                case let .record(record):
+                    let uniqueHostnames = record.hostnames.filter { hostname in
+                        let key = "\(record.ipAddress)\u{0}\(hostname.lowercased())"
+                        if seenEntryKeys.contains(key) {
+                            duplicateCount += 1
+                            return false
+                        }
+
+                        seenEntryKeys.insert(key)
+                        return true
                     }
 
-                    seenEntryKeys.insert(key)
-                    return true
-                }
+                    guard !uniqueHostnames.isEmpty else {
+                        continue
+                    }
 
-                guard !uniqueHostnames.isEmpty else {
-                    continue
+                    let emittedRecord = HostRecord(
+                        ipAddress: record.ipAddress,
+                        hostnames: uniqueHostnames,
+                        comment: record.comment,
+                        lineNumber: record.lineNumber,
+                        source: record.source
+                    )
+                    emittedRecords.append(emittedRecord)
+                    // 整行都还在时保留用户原文；只有删掉部分重复域名时才重排这一行。
+                    if uniqueHostnames.count == record.hostnames.count {
+                        lines.append(line.rawLine)
+                    } else {
+                        lines.append(format(emittedRecord))
+                    }
                 }
-
-                let emittedRecord = HostRecord(
-                    ipAddress: record.ipAddress,
-                    hostnames: uniqueHostnames,
-                    comment: record.comment,
-                    lineNumber: record.lineNumber,
-                    source: record.source
-                )
-                emittedRecords.append(emittedRecord)
-                lines.append(format(emittedRecord))
             }
 
             lines.append("")

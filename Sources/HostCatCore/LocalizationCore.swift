@@ -26,6 +26,8 @@ public enum LC {
     // MARK: - Write Errors
     public static var writeErrorFileImmutable: String { localize("write.error.file_immutable") }
     public static var writeErrorHashMismatch: String { localize("write.error.hash_mismatch") }
+    public static var unappliedHosts: String { localize("status.unapplied_hosts") }
+    public static var dnsRefreshUnconfirmed: String { localize("status.dns_refresh_unconfirmed") }
     public static func writeErrorContentValidationFailed(_ detail: String) -> String {
         String(format: localize("write.error.content_validation_failed"), detail)
     }

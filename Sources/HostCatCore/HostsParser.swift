@@ -63,16 +63,44 @@ public struct HostRecord: Equatable, Sendable {
     }
 }
 
+/// 保留原始行，供合并时写回注释和空行。
+public struct HostsDocumentLine: Equatable, Sendable {
+    public enum Kind: Equatable, Sendable {
+        case blank
+        case comment
+        case record(HostRecord)
+    }
+
+    public var rawLine: String
+    public var kind: Kind
+
+    public init(rawLine: String, kind: Kind) {
+        self.rawLine = rawLine
+        self.kind = kind
+    }
+}
+
 public struct HostsParser: Sendable {
     public init() {}
 
     public func parse(_ content: String) throws -> [HostRecord] {
-        var records: [HostRecord] = []
+        try parseDocument(content).compactMap { line in
+            guard case let .record(record) = line.kind else { return nil }
+            return record
+        }
+    }
+
+    /// 按原文逐行解析。注释行和空行会保留，记录行才做语法校验。
+    public func parseDocument(_ content: String) throws -> [HostsDocumentLine] {
+        var document: [HostsDocumentLine] = []
         let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
 
         for (offset, rawLine) in lines.enumerated() {
             let lineNumber = offset + 1
-            let line = String(rawLine)
+            var line = String(rawLine)
+            if line.hasSuffix("\r") {
+                line.removeLast()
+            }
             let split = line.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
             let body = String(split.first ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             let comment = split.count > 1
@@ -80,6 +108,10 @@ public struct HostsParser: Sendable {
                 : nil
 
             guard !body.isEmpty else {
+                let kind: HostsDocumentLine.Kind = line.trimmingCharacters(in: .whitespaces).isEmpty
+                    ? .blank
+                    : .comment
+                document.append(HostsDocumentLine(rawLine: line, kind: kind))
                 continue
             }
 
@@ -104,17 +136,22 @@ public struct HostsParser: Sendable {
                 throw HostsParseError.invalidHostname(lineNumber: lineNumber, value: hostname)
             }
 
-            records.append(
-                HostRecord(
-                    ipAddress: ipAddress,
-                    hostnames: hostnames,
-                    comment: comment?.isEmpty == true ? nil : comment,
-                    lineNumber: lineNumber
+            document.append(
+                HostsDocumentLine(
+                    rawLine: line,
+                    kind: .record(
+                        HostRecord(
+                            ipAddress: ipAddress,
+                            hostnames: hostnames,
+                            comment: comment?.isEmpty == true ? nil : comment,
+                            lineNumber: lineNumber
+                        )
+                    )
                 )
             )
         }
 
-        return records
+        return document
     }
 
     public func validate(_ content: String) -> [HostsParseError] {

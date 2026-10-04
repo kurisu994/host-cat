@@ -2,9 +2,10 @@ import Foundation
 
 public struct HostHelperWriteResult: Equatable, Sendable {
     public var finalHostsHash: String
-    public var didRefreshDNS: Bool
+    /// true 已刷新，false 刷新失败，nil 表示这次写入没有尝试刷新。
+    public var didRefreshDNS: Bool?
 
-    public init(finalHostsHash: String, didRefreshDNS: Bool) {
+    public init(finalHostsHash: String, didRefreshDNS: Bool? = true) {
         self.finalHostsHash = finalHostsHash
         self.didRefreshDNS = didRefreshDNS
     }
@@ -30,6 +31,8 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
     case fileImmutable
     /// Helper returned a response that could not be parsed.
     case unexpectedReply(String)
+    /// Helper 拒绝了这次写入（路径不对，或非强制写入缺少 hash）。
+    case writeRejected(String)
 
     public var errorDescription: String? {
         switch self {
@@ -51,13 +54,19 @@ public enum HostHelperClientError: Error, Equatable, LocalizedError, Sendable {
             LC.writeErrorFileImmutable
         case let .unexpectedReply(detail):
             LC.helperUnexpectedReply(detail)
+        case let .writeRejected(reason):
+            reason
         }
     }
 }
 
 /// Protocol for the Helper client; the main app communicates with the Helper through this protocol.
 public protocol HostHelperClient: Sendable {
-    func writeHosts(_ contents: String, expectedCurrentHostsHash: String?) async throws -> HostHelperWriteResult
+    func writeHosts(
+        _ contents: String,
+        expectedCurrentHostsHash: String?,
+        force: Bool
+    ) async throws -> HostHelperWriteResult
 }
 
 // MARK: - XPC Protocol
@@ -68,6 +77,7 @@ public protocol HostHelperClient: Sendable {
     func writeHosts(
         _ contents: NSString,
         expectedCurrentHostsHash: NSString?,
+        force: Bool,
         localizationIdentifier: NSString,
         withReply reply: @escaping (NSDictionary) -> Void
     )

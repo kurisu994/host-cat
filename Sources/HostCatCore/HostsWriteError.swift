@@ -43,6 +43,9 @@ public enum WriteErrorDetail: Equatable, Sendable, ExpressibleByStringInterpolat
     static func missingSystemEntry(ip: String, hostname: String) -> Self {
         .localized(key: "detail.missing_system_entry", arguments: [ip, hostname])
     }
+    static func contentTooLarge(bytes: Int) -> Self {
+        .localized(key: "detail.content_too_large", arguments: [String(bytes)])
+    }
     static func dnsLaunchFailed(path: String, reason: String) -> Self {
         .localized(key: "detail.dns_launch_failed", arguments: [path, reason])
     }
@@ -57,6 +60,10 @@ public enum HostsWriteError: Error, Equatable, LocalizedError, Sendable {
     case fileImmutable
     /// expectedCurrentHostsHash does not match the current file hash, indicating the hosts file was modified outside HostCat.
     case hashMismatch
+    /// 非强制写入却没有带上当前文件 hash。
+    case missingExpectedHash
+    /// /etc/hosts 的真实路径不是允许的 /private/etc/hosts。
+    case refusedHostsPath
     /// Content validation failed (empty content, missing required system entries, or incomplete management block markers).
     case contentValidationFailed(WriteErrorDetail)
     /// mkstemp failed to create a temporary file.
@@ -81,6 +88,10 @@ public enum HostsWriteError: Error, Equatable, LocalizedError, Sendable {
             LC.localizedString("write.error.file_immutable", language: language)
         case .hashMismatch:
             LC.localizedString("write.error.hash_mismatch", language: language)
+        case .missingExpectedHash:
+            LC.localizedString("write.error.missing_expected_hash", language: language)
+        case .refusedHostsPath:
+            LC.localizedString("write.error.refused_hosts_path", language: language)
         case let .contentValidationFailed(detail):
             String(
                 format: LC.localizedString("write.error.content_validation_failed", language: language),

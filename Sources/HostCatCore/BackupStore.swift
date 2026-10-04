@@ -23,7 +23,7 @@ public enum BackupStoreError: Error, Equatable, LocalizedError, Sendable {
 public struct BackupStore: Sendable {
     public static let backupFilePrefix = "hosts_"
     public static let backupFileExtension = "bak"
-    public static let defaultMaxBackups = 3
+    public static let defaultMaxBackups = 20
 
     public var backupDirectory: URL
     public var maxBackups: Int
