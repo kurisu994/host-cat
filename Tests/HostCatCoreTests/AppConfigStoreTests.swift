@@ -186,6 +186,35 @@ final class AppConfigStoreTests: XCTestCase {
         XCTAssertEqual(try decodeConfig(at: configURL), original)
     }
 
+    /// 配置存在但读不了时，加载失败后要把原文件挪开保留，后续保存不能覆盖它。
+    func testUnreadableConfigIsMovedAsideBeforeFallback() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configURL = directory.appendingPathComponent("config.json")
+        let store = AppConfigStore(configURL: configURL)
+        let original = AppConfig.initial(defaultHosts: "10.0.0.1 keep.test\n")
+        try store.save(original)
+        XCTAssertEqual(chmod(configURL.path, 0o000), 0)
+
+        XCTAssertThrowsError(try store.load(defaultHosts: "127.0.0.1 localhost\n"))
+        let preservedURL = try XCTUnwrap(try store.quarantineUnloadableConfig())
+        try store.save(AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n"))
+
+        XCTAssertEqual(chmod(preservedURL.path, 0o600), 0)
+        XCTAssertEqual(try decodeConfig(at: preservedURL), original)
+        XCTAssertTrue(preservedURL.lastPathComponent.hasPrefix("config.json.unreadable."))
+    }
+
+    func testQuarantineReturnsNilWhenConfigIsMissing() throws {
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = AppConfigStore(configURL: directory.appendingPathComponent("config.json"))
+
+        XCTAssertNil(try store.quarantineUnloadableConfig())
+    }
+
     private func makeTemporaryDirectory() throws -> URL {
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("HostCatCoreTests-\(UUID().uuidString)", isDirectory: true)

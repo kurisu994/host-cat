@@ -338,6 +338,65 @@ final class MenuBarViewModelTests: XCTestCase {
         XCTAssertEqual(writes.count, 1, "重试时应当再调用一次 helper")
     }
 
+    /// 第一次写入还在途中时再触发一次写入：被取代的那次成功结果也要记进配置，
+    /// 第二次写入不能因为快照里的旧 hash 误报外部修改。
+    func testOverlappingAppliesDoNotReportExternalModification() async throws {
+        let helper = FakeHostHelperClient()
+        await helper.setDiskHash("disk-0")
+        await helper.setDelayNanoseconds(200_000_000)
+        let coordinator = HostWriteCoordinator(helperClient: helper, backupStore: nil, debounceInterval: .milliseconds(1))
+        let storeURL = makeStoreURL()
+        defer { try? FileManager.default.removeItem(at: storeURL) }
+        let viewModel = MenuBarViewModel(
+            config: AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n", currentHostsHash: "disk-0"),
+            coordinator: coordinator,
+            configStore: AppConfigStore(configURL: storeURL)
+        )
+
+        let firstTask = Task { await viewModel.applyImmediately() }
+        try await Task.sleep(nanoseconds: 50_000_000)
+        viewModel.config.defaultNode.content = "127.0.0.1 localhost\n10.0.0.1 second.test\n"
+        viewModel.scheduleApply()
+
+        let first = await firstTask.value
+        XCTAssertTrue(first.success)
+        XCTAssertEqual(viewModel.config.state.lastAppliedHostsHash, first.appliedHash, "被新请求取代的成功写入也要记录 hash")
+
+        await waitForApplyToFinish(viewModel)
+        XCTAssertFalse(viewModel.showExternalModificationAlert)
+        XCTAssertNil(viewModel.applyError)
+        let hashes = await helper.expectedHashes
+        XCTAssertEqual(hashes, ["disk-0", first.appliedHash])
+    }
+
+    /// 写入成功但 DNS 未确认刷新：不能按「失败」通知，单独发警告事件。
+    func testDNSRefreshUnconfirmedEmitsWarningInsteadOfFailure() async {
+        let helper = FakeHostHelperClient()
+        await helper.setDidRefreshDNS(false)
+        let (viewModel, events, cleanup) = makeViewModelCollectingEvents(helper: helper)
+        defer { cleanup() }
+
+        let result = await viewModel.applyImmediately()
+
+        XCTAssertTrue(result.success)
+        XCTAssertEqual(events.values, [.appliedWithWarning(LC.dnsRefreshUnconfirmed)])
+        XCTAssertEqual(viewModel.applyError, LC.dnsRefreshUnconfirmed)
+    }
+
+    /// 默认节点恒激活，切换它不改配置，也不该触发一次写入。
+    func testTogglingDefaultNodeDoesNotScheduleWrite() async {
+        let helper = FakeHostHelperClient()
+        let (viewModel, _, cleanup) = makeViewModelCollectingEvents(helper: helper)
+        defer { cleanup() }
+
+        viewModel.toggleNode(id: viewModel.config.defaultNode.id, inGroup: nil)
+
+        XCTAssertFalse(viewModel.isApplying)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        let writes = await helper.writtenContents
+        XCTAssertEqual(writes.count, 0)
+    }
+
     private func waitForApplyToFinish(
         _ viewModel: MenuBarViewModel,
         timeoutNanoseconds: UInt64 = 1_000_000_000

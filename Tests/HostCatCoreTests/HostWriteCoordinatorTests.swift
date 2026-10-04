@@ -362,6 +362,30 @@ final class HostWriteCoordinatorTests: XCTestCase {
         XCTAssertEqual(flags, [true])
     }
 
+    /// 第二次请求的快照在第一次写入完成前生成，state 里还是旧 hash；
+    /// coordinator 应以自己最近一次成功写入的 hash 作为预期值，不能误报外部修改。
+    func testStaleSnapshotUsesLatestAppliedHashAsExpectedHash() async {
+        let fakeClient = FakeHostHelperClient()
+        await fakeClient.setDiskHash("disk-0")
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        var first = makeConfig(defaultContent: "127.0.0.1 localhost\n")
+        first.state.lastAppliedHostsHash = "disk-0"
+        var second = first
+        second.defaultNode.content = "127.0.0.1 localhost\n10.0.0.1 second.test\n"
+
+        let firstResult = await coordinator.applyImmediately(config: first)
+        let secondResult = await coordinator.applyImmediately(config: second)
+
+        XCTAssertTrue(firstResult.success)
+        XCTAssertTrue(secondResult.success, "实际状态: \(secondResult.status)")
+        let hashes = await fakeClient.expectedHashes
+        XCTAssertEqual(hashes, ["disk-0", firstResult.appliedHash])
+    }
+
     func testTimeoutIsSuccessWhenDiskAlreadyMatches() async throws {
         let config = makeConfig(defaultContent: "127.0.0.1 localhost\n")
         let merged = try HostsMerger().merge(config)

@@ -38,6 +38,9 @@
 - `HostWriteCoordinator.scheduleApply` / `applyImmediately` 返回 `ApplyResult`（不再是 `(ApplyResult, AppConfig?)` 元组）。失败时草稿保留在 UI 层（已通过 `MenuBarViewModel.persistDraftConfig()` 持久化），不要再从 coordinator 拉取快照覆盖 UI。如需读取 actor 内部上次成功快照，访问 `lastSuccessfulConfigSnapshot` 属性即可。
 - `HelperService` 仅接受已解析的 `localizationIdentifier`（`en` / `zh-Hans`）；主应用须先调用 `AppLanguage.effectiveLocalizationIdentifier()` 解析后再通过 XPC 传递。
 - 编辑器「放弃」按钮快捷键为 ⇧⌘Z（避让 macOS 标准 ⌘Z 单步撤销），调整按钮或新增类似破坏性操作时遵循同一约定。
+- Helper 打包有三处缺一不可：launchd plist 的 `BundleProgram`、Helper target 的 `CREATE_INFOPLIST_SECTION_IN_BINARY: YES`（否则签名标识和 Team ID 都对不上，XPC 双向校验失败）、rpath `@executable_path/../../Frameworks`（否则加载不到 `HostCatCore.framework`）。改 `project.yml` 后用 `codesign -dv` 和 `otool -l` 检查 Helper 产物。
+- `HostWriteCoordinator` 的 expected hash 优先使用 actor 内 `lastAppliedHash`，不要改回只读配置快照，否则连续切换节点会误报外部修改。
+- Helper 能回复的写入失败一律归为写入错误（`writeRejected` / `unexpectedReply`），只有连接层面的错误才映射到 `.helperUnavailable`。
 
 ## 模块边界
 

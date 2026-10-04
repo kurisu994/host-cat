@@ -2,15 +2,24 @@
 
 > 每次会话结束前由 AI 主动更新此文件。
 
-最后更新：2026-10-03
+最后更新：2026-10-04
 
 ## 当前状态
 
-- **分支**：main（`d44b372` 已推送；随后的写入可靠性调整尚未提交）
+- **分支**：main（`77f3e6d` 之后的全项目审查修复尚未提交）
 - **版本**：1.0.0（pre-release，尚未打 tag）
 - **阶段进度**：阶段 1 + 阶段 2 完成。阶段 3 里不依赖开发者账号的增强项已做完：任务 15、20、21、23、24。发布链路（任务 16 Sparkle、任务 17 CI、任务 14 打 tag）等有开发者账号再做。Sentry 与 iCloud 继续后置。
 
 ## 最近一次重要变更
+
+**2026-10-04 全项目代码审查与修复（未提交）**
+
+1. Helper 打包：launchd plist 补 `BundleProgram` / `AssociatedBundleIdentifiers`；Helper 开 `CREATE_INFOPLIST_SECTION_IN_BINARY`（签名标识变为 `com.hostcat.helper`，能读到 Team ID）；rpath 加 `@executable_path/../../Frameworks`；App 与 Helper 的 Release 开 Hardened Runtime。Debug 产物已验证 `__info_plist`、签名标识、dyld 加载路径，**真实签名包的注册 → 审批 → 写入还没做 smoke test**。
+2. 误报外部修改：coordinator 的 expected hash 优先用本会话最近一次成功写入的 hash；ViewModel 记录被取代批次的成功结果。
+3. XPC：Helper 回复的 `writeFailed` 归为 `writeRejected`（不再弹 Helper 引导），未知错误码归 `unexpectedReply`；连接回调按代际号只处理自己那条连接。
+4. 备份按文件名里的纪元纳秒排序和显示；日志插值统一 `privacy: .public`；配置损坏/读取失败时提示用户，读不了的原文件挪到 `config.json.unreadable.*`。
+5. 编辑器切换节点前询问未应用修改；主机名只收 ASCII；全局快捷键必须含 ⌘/⌥/⌃；DNS 未确认改发 `appliedWithWarning` 通知；默认节点切换不再触发写入。
+6. 验证：`swift test`（XCTest 193 + Swift Testing 27）全过，`swift build`、`xcodegen generate`、`xcodebuild build` 通过。
 
 **2026-10-03 1.x 增强：导入导出、通知、诊断多语言、大文件与可访问性**
 
@@ -44,6 +53,10 @@
 ## 活跃文件
 
 近期接触：
+- `project.yml` / `Sources/HostCatPrivilegedHelper/com.hostcat.helper.plist` — Helper 打包修复
+- `Sources/HostCatCore/{HostWriteCoordinator,MenuBarViewModel,BackupStore,AppConfigStore,HostsParser}.swift` — 审查修复
+- `Sources/HostCatHelperClient/XPCHostHelperClient.swift` — 错误分类与连接代际
+- `Sources/HostCatApp/EditorView.swift` — 切换节点保护、拖拽复位
 - `project.yml` / `HostCat.xcodeproj` — Xcode 26.6、XcodeGen 2.46.0 基线与生成工程
 - `CHANGELOG.md` / `memory-bank/techContext.md` — 同步工具链版本事实
 - `Sources/HostCatApp/Shortcut.swift` / `CarbonHotKeyMonitor.swift` / `ShortcutRecorderView.swift` — 自实现快捷键三件套（新增）
@@ -58,6 +71,9 @@
 
 | 决策 | 时间 | 原因 |
 |------|------|------|
+| expected hash 优先取 coordinator 最近一次成功写入的 hash | 2026-10-04 | 配置快照可能早于上一批写入完成，用快照会把自己刚写的内容当成外部修改 |
+| Hardened Runtime 只在 Release 开启 | 2026-10-04 | 公证必须开；Debug 是 ad-hoc 签名，开启后会触发库校验失败 |
+| 主机名只接受 ASCII | 2026-10-04 | hosts 不做 IDN 转换，非 ASCII 主机名永远解析不到，应写 punycode |
 | XcodeGen 最低版本对齐到 2.46.0 | 2026-09-01 | 与官方最新稳定版及当前开发环境一致，避免不同版本生成工程产生漂移 |
 | 自实现快捷键替代 KeyboardShortcuts 三方包 | 2026-06-18 | 维持「零三方依赖」承诺；KeyboardShortcuts 内部也是包 Carbon，自实现成本可控（~250 行） |
 | 用 Carbon `RegisterEventHotKey` 而非 `NSEvent.addGlobalMonitor` | 2026-06-18 | 前者是 Apple 官方稳定 API（10.3 起），不需要"输入监控/辅助功能"授权；后者要授权弹窗，体验差 |
@@ -71,6 +87,8 @@
 | XPC reply 与 timeout 竞争时以首次完成为准 | 2026-06-16 | 避免成功写入后 timeout task 迟到造成假错误日志和无意义断连 |
 
 ## 下一步
+
+0. **用真实 Developer ID 签名包做一次 Helper smoke test**：注册 → 系统设置审批 → 切换节点写入 → 检查 `/etc/hosts` 与 DNS 刷新。
 
 等有 Apple Developer 账号后：
 1. **任务 17** GitHub Actions CI/CD 发布流水线

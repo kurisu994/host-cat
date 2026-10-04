@@ -97,6 +97,17 @@ final class HostsParserTests: XCTestCase {
         XCTAssertEqual(records[0].hostnames, ["my_host.local"])
     }
 
+    /// hosts 文件不做 IDN 转换，非 ASCII 主机名系统解析器永远匹配不到，必须写成 punycode。
+    func testRejectsNonASCIIHostname() {
+        let errors = HostsParser().validate("127.0.0.1 中文.test café.local\n")
+
+        XCTAssertEqual(errors, [
+            .invalidHostname(lineNumber: 1, value: "中文.test"),
+            .invalidHostname(lineNumber: 1, value: "café.local")
+        ])
+        XCTAssertNoThrow(try HostsParser().parse("127.0.0.1 xn--fiq228c.test\n"))
+    }
+
     func testTracksLineNumbers() throws {
         let content = """
             # comment

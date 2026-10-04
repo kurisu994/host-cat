@@ -172,13 +172,15 @@ public actor HostWriteCoordinator {
         let writePlan: WritePlan
         do {
             let merged = try merger.merge(config)
+            // 配置快照可能在上一次写入完成前生成，state 里的 hash 会落后于磁盘；
+            // 本会话内成功写入过时以 coordinator 自己记录的 hash 为准。
             let expectedHash = force
                 ? nil
-                : config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
+                : lastAppliedHash ?? config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
             writePlan = (merged, expectedHash)
-            logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount))")
+            logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount), privacy: .public)")
         } catch let HostMergeError.conflicts(conflicts) {
-            logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
+            logger.warning("\(LC.logMergeConflicts(count: conflicts.count), privacy: .public)")
             return ApplyResult(
                 success: false,
                 conflicts: conflicts,
@@ -186,7 +188,7 @@ public actor HostWriteCoordinator {
             )
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error("\(LC.logMergeFailed(message))")
+            logger.error("\(LC.logMergeFailed(message), privacy: .public)")
             return ApplyResult(
                 success: false,
                 errorMessage: message,
@@ -200,10 +202,10 @@ public actor HostWriteCoordinator {
                 let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
                 let currentHostsText = HostsImporter().importHostsWithFallback(data: currentHostsData).decodedContent
                 _ = try backupStore.createBackup(content: currentHostsText)
-                logger.info("\(LC.logBackupCreated("pre-write"))")
+                logger.info("\(LC.logBackupCreated("pre-write"), privacy: .public)")
             } catch {
                 let message = "\(LC.logBackupFailed(error.localizedDescription))"
-                logger.error("\(message)")
+                logger.error("\(message, privacy: .public)")
                 return ApplyResult(
                     success: false,
                     errorMessage: message,
@@ -220,7 +222,7 @@ public actor HostWriteCoordinator {
                 force: force
             )
 
-            logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))))")
+            logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))), privacy: .public)")
             return successResult(
                 config: config,
                 hash: result.finalHostsHash,
@@ -241,7 +243,7 @@ public actor HostWriteCoordinator {
 
             // 5. Write failed: 草稿已在 UI 层持久化，hosts 保持未应用状态。
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error("\(LC.logWriteFailed(message))")
+            logger.error("\(LC.logWriteFailed(message), privacy: .public)")
             return ApplyResult(
                 success: false,
                 errorMessage: message,

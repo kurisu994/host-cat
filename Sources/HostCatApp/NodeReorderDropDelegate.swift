@@ -23,6 +23,9 @@ struct NodeReorderDropDelegate: DropDelegate {
                 toOffset: toIndex > fromIndex ? toIndex + 1 : toIndex
             )
         }
+        // 配置在拖动途中就已改变；拖到列表外松手时 performDrop 不会触发，
+        // 所以每次重排都排一次防抖写入，保证界面顺序和落盘配置一致。
+        viewModel.scheduleApply()
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
@@ -31,7 +34,6 @@ struct NodeReorderDropDelegate: DropDelegate {
 
     func performDrop(info: DropInfo) -> Bool {
         draggingNodeID = nil
-        viewModel.scheduleApply()
         return true
     }
 

@@ -27,9 +27,9 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
         }
         super.init()
         if let resolvedHostsPath {
-            logger.info("HelperService 初始化, hostsPath=\(resolvedHostsPath)")
+            logger.info("HelperService 初始化, hostsPath=\(resolvedHostsPath, privacy: .public)")
         } else {
-            logger.error("拒绝初始化写入路径：/etc/hosts 不是 \(Self.allowedHostsPath)")
+            logger.error("拒绝初始化写入路径：/etc/hosts 不是 \(Self.allowedHostsPath, privacy: .public)")
         }
     }
 
@@ -52,11 +52,11 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
         case AppLanguage.simplifiedChinese.rawValue:
             language = .simplifiedChinese
         default:
-            logger.warning("Unexpected localizationIdentifier '\(rawLanguage)', falling back to zh-Hans")
+            logger.warning("Unexpected localizationIdentifier '\(rawLanguage, privacy: .public)', falling back to zh-Hans")
             language = .simplifiedChinese
         }
 
-        logger.info("收到写入请求, 内容长度=\(content.count), force=\(force), expectedHash=\(expectedHash?.prefix(8) ?? "nil")")
+        logger.info("收到写入请求, 内容长度=\(content.count, privacy: .public), force=\(force, privacy: .public), expectedHash=\(expectedHash?.prefix(8) ?? "nil", privacy: .public)")
 
         guard let resolvedHostsPath else {
             replyFailure(HostsWriteError.refusedHostsPath, code: "invalidHostsPath", language: language, reply: reply)
@@ -83,7 +83,7 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
                 "dnsRefreshError": outcome.dnsRefreshError ?? ""
             ]
 
-            logger.info("写入成功, hash=\(outcome.finalHash.prefix(8))..., dns=\(outcome.dnsRefreshSuccess)")
+            logger.info("写入成功, hash=\(outcome.finalHash.prefix(8), privacy: .public)..., dns=\(outcome.dnsRefreshSuccess, privacy: .public)")
             reply(result)
         } catch {
             let errorMessage = (error as? HostsWriteError)?.description(in: language)
@@ -120,7 +120,7 @@ final class HelperService: NSObject, HostCatHelperXPCProtocol {
         code: String,
         reply: @escaping (NSDictionary) -> Void
     ) {
-        logger.error("写入失败: \(message)")
+        logger.error("写入失败: \(message, privacy: .public)")
         reply([
             "success": false,
             "errorCode": code,

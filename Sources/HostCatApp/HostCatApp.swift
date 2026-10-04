@@ -16,7 +16,7 @@ struct HostCatApplication: App {
         _shortcutStore = StateObject(wrappedValue: ShortcutStore.shared)
 
         let importedHosts = Self.readImportedDefaultHosts()
-        let config = Self.loadInitialConfig(importResult: importedHosts)
+        let (config, startupNotice) = Self.loadInitialConfig(importResult: importedHosts)
 
         #if DEBUG
         // Development: use PreviewHostHelperClient to bypass Helper registration,
@@ -30,6 +30,9 @@ struct HostCatApplication: App {
         let model = MenuBarViewModel(config: config, coordinator: coordinator)
         model.applyEventHandler = { NotificationService.shared.handle($0) }
         model.noteStartupDrift(diskHash: importedHosts.currentHostsHash)
+        if let startupNotice {
+            model.noteStartupNotice(startupNotice)
+        }
         _viewModel = StateObject(wrappedValue: model)
     }
 
@@ -100,19 +103,27 @@ struct HostCatApplication: App {
 
     """
 
-    private static func loadInitialConfig(importResult: HostsImportResult) -> AppConfig {
+    /// 加载配置；配置被重置或加载失败时同时返回给用户的提示。
+    private static func loadInitialConfig(importResult: HostsImportResult) -> (config: AppConfig, notice: String?) {
         let store = AppConfigStore()
 
         do {
-            return try store.load(
-                defaultHosts: importResult.safeDefaultNodeContent,
-                currentHostsHash: importResult.currentHostsHash
-            ).config
-        } catch {
-            return AppConfig.initial(
+            let result = try store.load(
                 defaultHosts: importResult.safeDefaultNodeContent,
                 currentHostsHash: importResult.currentHostsHash
             )
+            if case let .recoveredDefault(reason) = result.status {
+                return (result.config, LC.configRecovered(reason.localizedDescription))
+            }
+            return (result.config, nil)
+        } catch {
+            // 原文件读不了时先挪开保留，否则之后的保存会直接覆盖用户原有配置。
+            let preservedURL = try? store.quarantineUnloadableConfig()
+            let config = AppConfig.initial(
+                defaultHosts: importResult.safeDefaultNodeContent,
+                currentHostsHash: importResult.currentHostsHash
+            )
+            return (config, LC.configLoadFailed(error.localizedDescription, preservedPath: preservedURL?.path))
         }
     }
 

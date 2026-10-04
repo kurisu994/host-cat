@@ -12,7 +12,7 @@
 - **【写入诊断多语言收敛】** 新增 `WriteErrorDetail`：`HostsWriteError` 的底层细节不再硬编码英文，而是携带「key + 参数」，在 `description(in:)` 里按主应用经 XPC 传来的语言翻译（覆盖 chmod/chown/rename/fsync、内容校验、DNS 刷新等 15 条）；`strerror` 与命令名等系统原文保留以便排障。
 - **【通知中心集成】** 新增 `NotificationService`（`UserNotifications`）与 Core 层 `ApplyNotificationEvent` / `NotificationPreferences`：`MenuBarViewModel.applyEventHandler` 在写入成功、失败（含冲突、Helper 不可用）和检测到外部修改时广播事件，App 层按偏好转成系统通知；写入成功通知默认关闭，失败与外部修改默认开启；授权在用户首次需要时懒请求，被系统拒绝时设置页提示并可跳转系统通知设置；点击通知弹出菜单栏菜单。设置页新增「通知」卡片，三个开关即时生效。
 - **【配置导入导出】** 编辑器工具栏新增「更多」菜单，支持导出 / 导入 `config.json`：新增 `ConfigTransferService`（纯逻辑、可单测），导出时清除 `state`（hash 与应用时间）避免换机后误判外部修改；导入先校验格式与 `configVersion`（经 `migrate` 迁移入口），再由用户选择「合并」（按分组名 / 节点名匹配，同名节点仅更新内容并保留本机激活状态，新增节点默认不启用，默认节点不变）或「替换」（覆盖默认节点内容与全部分组）；设置与本机 state 始终保留。
-- **【全局快捷键】** 新增「打开菜单栏」全局快捷键，零三方依赖：`CarbonHotKeyMonitor` 基于 Carbon `RegisterEventHotKey` 实现全局监听（Apple 官方稳定 API，10.3 起可用，不需要"输入监控"或"辅助功能"等系统授权）；`ShortcutRecorderView` 是原生 `NSViewRepresentable` 录制框，按下任意带 modifier 的组合键即写入并立即重注册、Esc 取消、清除按钮解绑；`ShortcutStore` 把绑定以 JSON 持久化到 `UserDefaults`，启动时自动恢复；触发回调时通过遍历 `NSStatusBarWindow` 找到 MenuBarExtra 状态项 button 并模拟点击弹出菜单。默认未绑定，在设置页 → 快捷键中录入。
+- **【全局快捷键】** 新增「打开菜单栏」全局快捷键，零三方依赖：`CarbonHotKeyMonitor` 基于 Carbon `RegisterEventHotKey` 实现全局监听（Apple 官方稳定 API，10.3 起可用，不需要"输入监控"或"辅助功能"等系统授权）；`ShortcutRecorderView` 是原生 `NSViewRepresentable` 录制框，按下带 ⌘/⌥/⌃ 的组合键即写入并立即重注册、Esc 取消、清除按钮解绑；`ShortcutStore` 把绑定以 JSON 持久化到 `UserDefaults`，启动时自动恢复；触发回调时通过遍历 `NSStatusBarWindow` 找到 MenuBarExtra 状态项 button 并模拟点击弹出菜单。默认未绑定，在设置页 → 快捷键中录入。
 - **【隐私政策与首启摘要】** 新增仓库根目录 `PRIVACY.md`（中英合并），覆盖不联网/不收集、本地存储范围、Privileged Helper 边界、Sparkle 联网预告与第三方组件；首次启动通过 `HostCatAppDelegate` 弹出 `WelcomeView` 隐私摘要窗口（四条要点 + 「查看完整隐私政策」按钮），关闭后写入 `UserDefaults` 键 `HostCat.privacyWelcomeShown` 不再弹出；PRIVACY.md 同步打包进 app bundle，按钮通过 `NSWorkspace.open` 调用系统默认编辑器查看完整文本。
 - **【字符串目录迁移】** 将 App 与 Core 的本地化资源从 `*.lproj/*.strings` 迁移到 `Localizable.xcstrings` / `LocalizableCore.xcstrings` 字符串目录（Xcode 15+ 推荐格式），统一中英文翻译管理；构建期 Xcode 和 SwiftPM 都会自动生成 `*.lproj/*.strings`，运行时 `AppLanguage.localizedBundle(in:)` 取值路径不变。
 - **【DMG 安装体验】** 准备了精美的 macOS 科技感暗色调拖拽安装背景图 `scripts/dmg-background.png`；编写了 `scripts/create-dmg.sh` 脚本，基于 AppleScript 精准配置 DMG 挂载后的 Finder 窗口尺寸、背景图布局、应用图标与 Applications 快捷方式位置；升级了 `scripts/build-release.sh` 以在构建发布版本时自动调用该脚本生成高品质的 DMG 镜像。
@@ -76,12 +76,24 @@
 
 ### Changed
 
+- 主机名只接受 ASCII：`中文.test`、`café.local` 这类 hosts 解析器永远匹配不到的写法会被标为语法错误，国际化域名需写成 punycode（`xn--`）。
+- 全局快捷键必须包含 ⌘/⌥/⌃ 之一；只带 ⇧ 的组合会拦截全系统的大写输入，录制时拒绝，旧版本存下的此类快捷键启动时丢弃。
 - 将 Xcode 工程生成基线更新到 Xcode 26.6 与 XcodeGen 2.46.0，保持生成工具版本和当前开发环境一致。
 - 放大菜单栏悬停时的合成 Hosts 预览窗口，便于浏览较长的预览内容。
 - 将 Helper 安装入口收敛到设置页，并在菜单栏提供统一的“设置”入口。
 
 ### Fixed
 
+- **【Helper 打包】** 修复 Release 包里 Helper 无法启动和通过签名校验的问题：launchd plist 补上 `BundleProgram` 与 `AssociatedBundleIdentifiers`；Helper 开启 `CREATE_INFOPLIST_SECTION_IN_BINARY`，签名标识变为 `com.hostcat.helper`，运行时也能读到 `HostCatTeamIdentifier`；rpath 增加 `@executable_path/../../Frameworks`，Helper 能从 `Contents/Frameworks` 加载 `HostCatCore`；App 与 Helper 的 Release 配置开启 Hardened Runtime 以满足公证要求。
+- **【误报外部修改】** 第一次写入还在进行时再切换节点，第二次写入会拿快照里的旧 hash 去比对，被误判为「hosts 被外部修改」。现在 coordinator 优先使用本会话最近一次成功写入的 hash，被取代批次的成功结果也会记进配置。
+- **【错误分类】** Helper 返回的写入失败（如缺少 `::1 localhost` 等系统条目、rename 失败）不再被当成「Helper 不可用」而弹出安装/重试引导，改为显示 Helper 给出的具体原因；未知错误码归为异常回复。
+- **【XPC 连接】** 连接回调按连接代际区分：旧连接的中断/失效回调晚到时，不再让新连接上的请求失败，也不再把新连接一起关掉。
+- **【备份清理】** 备份按文件名中的纪元纳秒排序，而不是本地时间串；跨时区或夏令时回拨后，清理不会再把刚建的备份当成最旧的删掉，备份列表的时间显示也随之准确。
+- **【诊断日志】** 日志中的错误原因、hash 前缀、节点名等字符串插值标注为公开，Release 包导出的诊断日志不再全是 `<private>`。
+- **【配置恢复提示】** 配置文件损坏被重置时在菜单和编辑器状态栏提示用户；配置读取失败时先把原文件挪到 `config.json.unreadable.*` 保留，避免后续保存覆盖。
+- **【编辑器】** 有未应用修改时切换节点会先询问「先应用 / 放弃 / 取消」，不再静默丢弃编辑；重命名当前节点后标题同步更新；拖拽节点拖到列表外松手后不再一直半透明，拖动中的重排也会写入配置。
+- 合成预览的冲突列表在同一域名出现多处冲突时不再出现重复 ID；语法高亮改用 UTF-16 偏移，行内含 emoji 时颜色不再错位；切换默认节点不再触发一次无意义的写入。
+- 写入成功但 DNS 未确认刷新时，系统通知改为「hosts 已写入，但有警告」，不再显示成「hosts 应用失败」（仍受「写入失败时通知」开关控制）。
 - 写入更保守：Helper 只接受 `/private/etc/hosts`，非强制写入必须带当前文件 hash，超过 1 MB 的内容会被拒绝。外部修改不再靠错误文案识别。启动时会标出「还没写入」或「外面改过」。XPC 超时但磁盘已经是本次内容时按成功记，并提示 DNS 可能没刷新。合并进系统文件时保留注释和空行。自动备份默认保留 20 份。
 - 修复编辑器可用性：节点行里的按钮会抢走点击导致无法选中；删除当前节点或分组后编辑区仍显示已删除内容；切换节点时错误行号会短暂标在新内容上；搜索状态下拖动分组会按过滤后的下标打乱真实顺序。导入导出前若有未应用修改会先询问，替换结果不再误报成「新增分组」，导入确认和结果提示不再互相吃掉。macOS 列表行上的点击手势不会触发选中，名称区域改为按钮，打开编辑器时直接进入默认节点；节点重命名改到右键菜单。打开节点时调整文本滚动会重入布局并触发独占访问崩溃，同步布局期间忽略这次重入。
 - 修复 `XPCHostHelperClient` 成功收到 XPC reply 后 timeout task 仍会继续记录假超时并断开连接的问题；重复完成同一 request 现在会被忽略。

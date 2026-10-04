@@ -28,6 +28,17 @@ public enum LC {
     public static var writeErrorHashMismatch: String { localize("write.error.hash_mismatch") }
     public static var unappliedHosts: String { localize("status.unapplied_hosts") }
     public static var dnsRefreshUnconfirmed: String { localize("status.dns_refresh_unconfirmed") }
+    /// 配置文件损坏被重置为默认配置时的提示。
+    public static func configRecovered(_ reason: String) -> String {
+        String(format: localize("status.config_recovered"), reason)
+    }
+    /// 配置加载失败、本次改用默认配置时的提示；原文件被挪开保留时附上新路径。
+    public static func configLoadFailed(_ reason: String, preservedPath: String?) -> String {
+        guard let preservedPath else {
+            return String(format: localize("status.config_load_failed"), reason)
+        }
+        return String(format: localize("status.config_load_failed_preserved"), reason, preservedPath)
+    }
     public static func writeErrorContentValidationFailed(_ detail: String) -> String {
         String(format: localize("write.error.content_validation_failed"), detail)
     }

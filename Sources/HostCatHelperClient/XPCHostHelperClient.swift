@@ -12,6 +12,8 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     private let replyTimeoutNanoseconds: UInt64
 
     private var connection: NSXPCConnection?
+    /// 每新建一条连接加一。连接回调和超时只处理自己那一代，旧连接的回调晚到时不会误伤新连接。
+    private var connectionGeneration: UInt64 = 0
     private let pendingReplies = XPCHostHelperPendingReplies<PendingReply>()
     private let lock = NSLock()
     private let logger = Logger(subsystem: "com.hostcat.app", category: "XPCHostHelperClient")
@@ -37,31 +39,33 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
 
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let pending = PendingReply(continuation: continuation)
+                let (connection, generation) = currentConnection()
+                let pending = PendingReply(continuation: continuation, connectionGeneration: generation)
                 registerPendingReply(pending, id: requestID)
-                logger.debug("XPC write request registered: \(requestID.uuidString)")
+                logger.debug("XPC write request registered: \(requestID.uuidString, privacy: .public)")
 
                 guard !Task.isCancelled else {
                     if completePendingReply(requestID, with: .failure(CancellationError())) {
-                        logger.warning("XPC write request cancelled before proxy lookup: \(requestID.uuidString)")
+                        logger.warning("XPC write request cancelled before proxy lookup: \(requestID.uuidString, privacy: .public)")
                     }
                     return
                 }
 
-                let proxy: HostCatHelperXPCProtocol
-                do {
-                    proxy = try getProxy { [weak self, logger] error in
-                        let didComplete = self?.completePendingReply(
-                            requestID,
-                            with: .failure(HostHelperClientError.unavailable(error.localizedDescription))
-                        ) ?? false
-                        if didComplete {
-                            logger.error("XPC remote object error: \(error.localizedDescription)")
-                            self?.invalidateConnection()
-                        }
+                let remoteObject = connection.remoteObjectProxyWithErrorHandler { [weak self, logger] error in
+                    let didComplete = self?.completePendingReply(
+                        requestID,
+                        with: .failure(HostHelperClientError.unavailable(error.localizedDescription))
+                    ) ?? false
+                    if didComplete {
+                        logger.error("XPC remote object error: \(error.localizedDescription, privacy: .public)")
+                        self?.invalidateConnection(generation: generation)
                     }
-                } catch {
-                    completePendingReply(requestID, with: .failure(error))
+                }
+                guard let proxy = remoteObject as? HostCatHelperXPCProtocol else {
+                    completePendingReply(
+                        requestID,
+                        with: .failure(HostHelperClientError.unavailable(LC.helperProxyUnavailable))
+                    )
                     return
                 }
 
@@ -78,8 +82,8 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                     ) == true else {
                         return
                     }
-                    logger.error("XPC write request timed out: \(requestID.uuidString)")
-                    self?.invalidateConnection()
+                    logger.error("XPC write request timed out: \(requestID.uuidString, privacy: .public)")
+                    self?.invalidateConnection(generation: generation)
                 }
 
                 proxy.writeHosts(
@@ -91,11 +95,11 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
                     do {
                         let result = try Self.parseReply(resultDict, logger: logger)
                         if self?.completePendingReply(requestID, with: .success(result)) == true {
-                            logger.info("XPC write request completed: \(requestID.uuidString)")
+                            logger.info("XPC write request completed: \(requestID.uuidString, privacy: .public)")
                         }
                     } catch {
                         if self?.completePendingReply(requestID, with: .failure(error)) == true {
-                            logger.error("XPC write request failed while parsing reply: \(error.localizedDescription)")
+                            logger.error("XPC write request failed while parsing reply: \(error.localizedDescription, privacy: .public)")
                         }
                     }
                 }
@@ -103,39 +107,30 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         } onCancel: { [weak self] in
             guard let self else { return }
             if self.completePendingReply(requestID, with: .failure(CancellationError())) {
-                self.logger.warning("XPC write request cancelled: \(requestID.uuidString)")
+                self.logger.warning("XPC write request cancelled: \(requestID.uuidString, privacy: .public)")
             }
         }
     }
 
     // MARK: - Connection Management
 
-    /// Gets or creates an XPC proxy.
-    private func getProxy(errorHandler: @escaping (Error) -> Void) throws -> HostCatHelperXPCProtocol {
+    /// 取当前连接，没有就新建；同时返回该连接的代际号。
+    private func currentConnection() -> (NSXPCConnection, UInt64) {
         lock.lock()
         defer { lock.unlock() }
 
-        if let existing = connection {
-            // Attempt to reuse an existing connection.
-            guard let proxy = existing.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-                throw HostHelperClientError.unavailable(LC.helperProxyUnavailable)
-            }
-            return proxy
+        if let connection {
+            return (connection, connectionGeneration)
         }
 
-        // Create a new connection.
-        let newConnection = createConnection()
+        connectionGeneration += 1
+        let newConnection = createConnection(generation: connectionGeneration)
         connection = newConnection
-
-        guard let proxy = newConnection.remoteObjectProxyWithErrorHandler(errorHandler) as? HostCatHelperXPCProtocol else {
-            throw HostHelperClientError.unavailable(LC.helperProxyUnavailable)
-        }
-
-        return proxy
+        return (newConnection, connectionGeneration)
     }
 
     /// Creates an NSXPCConnection.
-    private func createConnection() -> NSXPCConnection {
+    private func createConnection(generation: UInt64) -> NSXPCConnection {
         let conn = NSXPCConnection(machServiceName: machServiceName, options: .privileged)
         conn.remoteObjectInterface = NSXPCInterface(with: HostCatHelperXPCProtocol.self)
 
@@ -143,28 +138,32 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         conn.setCodeSigningRequirement(helperRequirement)
 
         conn.interruptionHandler = { [weak self, logger] in
-            logger.warning("XPC connection interrupted")
-            self?.failAllPendingReplies(with: HostHelperClientError.connectionInterrupted)
-            self?.invalidateConnection()
+            logger.warning("XPC connection interrupted, generation=\(generation)")
+            self?.failPendingReplies(generation: generation, with: HostHelperClientError.connectionInterrupted)
+            self?.invalidateConnection(generation: generation)
         }
 
         conn.invalidationHandler = { [weak self, logger] in
-            logger.warning("XPC connection invalidated")
-            self?.failAllPendingReplies(with: HostHelperClientError.connectionInvalidated)
-            self?.invalidateConnection()
+            logger.warning("XPC connection invalidated, generation=\(generation)")
+            self?.failPendingReplies(generation: generation, with: HostHelperClientError.connectionInvalidated)
+            self?.invalidateConnection(generation: generation)
         }
 
         conn.resume()
-        logger.info("XPC connection established: \(self.machServiceName)")
+        logger.info("XPC connection established: \(self.machServiceName, privacy: .public), generation=\(generation)")
         return conn
     }
 
-    /// Invalidates the existing connection.
-    private func invalidateConnection() {
+    /// 只失效仍是当前代际的连接；已被替换的旧连接不再影响新连接。
+    private func invalidateConnection(generation: UInt64) {
         lock.lock()
-        defer { lock.unlock() }
-        connection?.invalidate()
+        guard generation == connectionGeneration, let current = connection else {
+            lock.unlock()
+            return
+        }
         connection = nil
+        lock.unlock()
+        current.invalidate()
     }
 
     private func registerPendingReply(_ pending: PendingReply, id: UUID) {
@@ -181,8 +180,9 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
         return true
     }
 
-    private func failAllPendingReplies(with error: Error) {
-        for reply in pendingReplies.removeAll() {
+    /// 只让挂在这条连接上的请求失败。
+    private func failPendingReplies(generation: UInt64, with error: Error) {
+        for reply in pendingReplies.removeAll(where: { $0.connectionGeneration == generation }) {
             reply.resume(with: .failure(error))
         }
     }
@@ -190,7 +190,7 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
     // MARK: - Reply Parsing
 
     /// Parses the NSDictionary returned by the Helper.
-    private static func parseReply(
+    static func parseReply(
         _ dict: NSDictionary,
         logger: Logger
     ) throws -> HostHelperWriteResult {
@@ -206,9 +206,9 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             let dnsError = dict["dnsRefreshError"] as? String
 
             if let dnsError, !dnsError.isEmpty {
-                logger.warning("Write succeeded but DNS refresh failed: \(dnsError)")
+                logger.warning("Write succeeded but DNS refresh failed: \(dnsError, privacy: .public)")
             }
-            logger.info("Helper write reply success, finalHash=\(String(finalHash.prefix(8)))..., didRefreshDNS=\(didRefreshDNS)")
+            logger.info("Helper write reply success, finalHash=\(String(finalHash.prefix(8)), privacy: .public)..., didRefreshDNS=\(didRefreshDNS)")
 
             return HostHelperWriteResult(
                 finalHostsHash: finalHash,
@@ -218,26 +218,30 @@ public final class XPCHostHelperClient: HostHelperClient, @unchecked Sendable {
             let errorCode = dict["errorCode"] as? String ?? "unknown"
             let errorMessage = dict["errorMessage"] as? String ?? LC.errorUnknown
 
-            logger.error("Helper returned error: code=\(errorCode), message=\(errorMessage)")
+            logger.error("Helper returned error: code=\(errorCode, privacy: .public), message=\(errorMessage, privacy: .public)")
 
+            // Helper 能回复说明连接本身正常：写入失败按写入错误上报，
+            // 不能归成「Helper 不可用」，否则 UI 会引导用户去重装 Helper。
             switch errorCode {
             case "hashMismatch":
                 throw HostHelperClientError.hashMismatch
             case "fileImmutable":
                 throw HostHelperClientError.fileImmutable
-            case "hashRequired", "invalidHostsPath":
+            case "hashRequired", "invalidHostsPath", "writeFailed":
                 throw HostHelperClientError.writeRejected(errorMessage)
             default:
-                throw HostHelperClientError.unavailable(errorMessage)
+                throw HostHelperClientError.unexpectedReply(errorMessage)
             }
         }
     }
 
     private final class PendingReply: @unchecked Sendable {
         private let continuation: CheckedContinuation<HostHelperWriteResult, Error>
+        let connectionGeneration: UInt64
 
-        init(continuation: CheckedContinuation<HostHelperWriteResult, Error>) {
+        init(continuation: CheckedContinuation<HostHelperWriteResult, Error>, connectionGeneration: UInt64) {
             self.continuation = continuation
+            self.connectionGeneration = connectionGeneration
         }
 
         func resume(with result: Result<HostHelperWriteResult, Error>) {
@@ -270,10 +274,14 @@ final class XPCHostHelperPendingReplies<Value>: @unchecked Sendable {
     }
 
     func removeAll() -> [Value] {
+        removeAll(where: { _ in true })
+    }
+
+    /// 取出并移除满足条件的 pending 请求。
+    func removeAll(where shouldRemove: (Value) -> Bool) -> [Value] {
         lock.lock()
         defer { lock.unlock() }
-        let pending = Array(pendingByID.values)
-        pendingByID.removeAll()
-        return pending
+        let matchedIDs = pendingByID.filter { shouldRemove($0.value) }.map(\.key)
+        return matchedIDs.compactMap { pendingByID.removeValue(forKey: $0) }
     }
 }

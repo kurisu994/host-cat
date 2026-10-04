@@ -43,6 +43,10 @@ final class NotificationService: NSObject {
                 content.title = L.notificationApplyFailedTitle
                 content.body = message
                 content.sound = .default
+            case let .appliedWithWarning(message):
+                content.title = L.notificationApplyWarningTitle
+                content.body = message
+                content.sound = .default
             case .externalModification:
                 content.title = L.notificationExternalModificationTitle
                 content.body = L.notificationExternalModificationBody

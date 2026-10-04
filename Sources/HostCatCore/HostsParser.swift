@@ -214,8 +214,10 @@ public struct HostsParser: Sendable {
                 return false
             }
 
+            // hosts 不做 IDN 转换，只接受 ASCII；国际化域名需写成 punycode（xn--）。
             return label.unicodeScalars.allSatisfy { scalar in
-                CharacterSet.alphanumerics.contains(scalar) || scalar == "-" || scalar == "_"
+                scalar.isASCII
+                    && (CharacterSet.alphanumerics.contains(scalar) || scalar == "-" || scalar == "_")
             }
         }
     }

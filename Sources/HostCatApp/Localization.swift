@@ -73,6 +73,7 @@ enum L {
     static var editorApplyTooltip: String { localize("editor.apply_tooltip") }
     static var editorDiscard: String { localize("editor.discard") }
     static var editorDiscardTooltip: String { localize("editor.discard_tooltip") }
+    static var editorSwitchUnsavedMessage: String { localize("editor.switch_unsaved.message") }
     static var editorPreview: String { localize("editor.preview") }
     static var editorPreviewTooltip: String { localize("editor.preview_tooltip") }
     static var editorErrors: String { localize("editor.errors") }
@@ -312,6 +313,7 @@ enum L {
     static var notificationApplySuccessTitle: String { localize("notification.apply_success.title") }
     static var notificationApplySuccessBody: String { localize("notification.apply_success.body") }
     static var notificationApplyFailedTitle: String { localize("notification.apply_failed.title") }
+    static var notificationApplyWarningTitle: String { localize("notification.apply_warning.title") }
     static var notificationExternalModificationTitle: String { localize("notification.external_modification.title") }
     static var notificationExternalModificationBody: String { localize("notification.external_modification.body") }
     static var settingsNotifications: String { localize("settings.notifications") }

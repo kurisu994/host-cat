@@ -1479,6 +1479,57 @@
           }
         }
       }
+    },
+    "status.config_recovered": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The config file could not be parsed (%@) and was reset to defaults. The original file was kept in the config folder."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件无法解析（%@），已重置为默认配置；原文件已另存在配置目录中。"
+          }
+        }
+      }
+    },
+    "status.config_load_failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to load the config (%@). Using defaults for now."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置加载失败（%@），本次使用默认配置。"
+          }
+        }
+      }
+    },
+    "status.config_load_failed_preserved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to load the config (%1$@). Using defaults for now; the original file was moved to %2$@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置加载失败（%1$@），本次使用默认配置；原文件已移到 %2$@。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

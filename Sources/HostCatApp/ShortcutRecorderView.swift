@@ -5,7 +5,7 @@ import SwiftUI
 /// SwiftUI 中嵌入的快捷键录制框。
 ///
 /// 视觉：圆角矩形 + 居中显示当前快捷键 / placeholder，已绑定时尾部出现清除按钮。
-/// 交互：单击进入录制态（边框高亮）→ 按下任意带 modifier 的组合键即写入；Esc 取消。
+/// 交互：单击进入录制态（边框高亮）→ 按下带 ⌘/⌥/⌃ 的组合键即写入；Esc 取消。
 struct ShortcutRecorderView: NSViewRepresentable {
     @Binding var shortcut: Shortcut?
     /// 当 placeholder 文案需要随系统语言切换时由外部传入；NSView 拿不到 SwiftUI 环境。
@@ -132,7 +132,7 @@ final class ShortcutRecorderNSView: NSView {
             window?.makeFirstResponder(nil)
             return
         }
-        // 必须带 modifier，否则发出系统提示音并继续等待
+        // 必须带 ⌘/⌥/⌃，否则发出系统提示音并继续等待
         guard let newShortcut = Shortcut(event: event) else {
             NSSound.beep()
             return

@@ -27,6 +27,8 @@ struct EditorView: View {
     @State private var searchText: String = ""
     /// 语法校验防抖任务。大文件下逐键全量校验会卡住主线程。
     @State private var validationTask: Task<Void, Never>?
+    /// 当前节点有未应用修改时请求切换到的目标节点，等用户决定后再切换。
+    @State private var pendingNodeSwitch: PendingNodeSwitch?
 
     /// 搜索是否激活。
     private var isSearching: Bool { !searchText.isEmpty }
@@ -63,7 +65,7 @@ struct EditorView: View {
         NavigationSplitView {
             VStack(spacing: 0) {
                 // Left: groups and node tree
-                List(selection: $selectedNodeID) {
+                List(selection: nodeSelectionBinding) {
                     if showDefaultNode {
                         // Default node
                         Section(L.sidebarDefault) {
@@ -72,7 +74,7 @@ struct EditorView: View {
                                 isActive: viewModel.config.defaultNode.isActive,
                                 isDefault: true,
                                 isSelected: selectedNodeID == viewModel.config.defaultNode.id,
-                                onSelect: { selectedNodeID = viewModel.config.defaultNode.id }
+                                onSelect: { requestNodeSelection(viewModel.config.defaultNode.id) }
                             )
                             .tag(viewModel.config.defaultNode.id)
                         }
@@ -120,10 +122,10 @@ struct EditorView: View {
                                         isDefault: false,
                                         isSelected: selectedNodeID == node.id,
                                         onToggleActive: {
-                                            selectedNodeID = node.id
+                                            requestNodeSelection(node.id)
                                             viewModel.toggleNode(id: node.id, inGroup: group.id)
                                         },
-                                        onSelect: { selectedNodeID = node.id }
+                                        onSelect: { requestNodeSelection(node.id) }
                                     )
                                     .tag(node.id)
                                     .contextMenu {
@@ -140,6 +142,7 @@ struct EditorView: View {
                                     .opacity(draggingNodeID == node.id ? 0.4 : 1.0)
                                     .onDrag {
                                         draggingNodeID = node.id
+                                        resetDraggingWhenMouseReleased()
                                         return NSItemProvider(object: node.id.uuidString as NSString)
                                     }
                                     .onDrop(
@@ -178,6 +181,30 @@ struct EditorView: View {
                 }
                 .onChange(of: selectedNodeID) { _, newID in
                     loadNodeContent(id: newID)
+                }
+                .alert(
+                    L.transferUnsavedTitle,
+                    isPresented: Binding(
+                        get: { pendingNodeSwitch != nil },
+                        set: { if !$0 { pendingNodeSwitch = nil } }
+                    ),
+                    presenting: pendingNodeSwitch
+                ) { pending in
+                    Button(L.transferUnsavedApply) {
+                        saveCurrentNode()
+                        selectedNodeID = pending.targetNodeID
+                        pendingNodeSwitch = nil
+                    }
+                    Button(L.transferUnsavedDiscard, role: .destructive) {
+                        // 切换后 onChange 会重新载入目标节点内容，当前未应用的修改随之丢弃。
+                        selectedNodeID = pending.targetNodeID
+                        pendingNodeSwitch = nil
+                    }
+                    Button(L.dialogCancel, role: .cancel) {
+                        pendingNodeSwitch = nil
+                    }
+                } message: { _ in
+                    Text(L.editorSwitchUnsavedMessage)
                 }
 
                 Divider()
@@ -344,6 +371,9 @@ struct EditorView: View {
                               let (groupID, nodeID) = editingNodeToRename else { return }
                         let service = mutationService
                         service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
+                        if nodeID == selectedNodeID {
+                            editingName = renameNodeNewName
+                        }
                         viewModel.scheduleApply()
                         renameNodeNewName = ""
                         editingNodeToRename = nil
@@ -351,6 +381,37 @@ struct EditorView: View {
                     }
                 )
             }
+        }
+    }
+
+    /// 列表选择走这里拦一道，用户点击切换时先检查未应用的修改。
+    private var nodeSelectionBinding: Binding<UUID?> {
+        Binding(
+            get: { selectedNodeID },
+            set: { requestNodeSelection($0) }
+        )
+    }
+
+    /// 切换选中节点；当前节点有未应用修改时先询问，避免静默丢失编辑。
+    private func requestNodeSelection(_ nodeID: UUID?) {
+        guard nodeID != selectedNodeID else { return }
+        guard hasUnsavedEdits else {
+            selectedNodeID = nodeID
+            return
+        }
+        // 有修改时点空白处取消选中直接忽略，不丢编辑。
+        guard let nodeID else { return }
+        pendingNodeSwitch = PendingNodeSwitch(targetNodeID: nodeID)
+    }
+
+    /// SwiftUI 没有拖拽结束回调：拖到列表外松手时 performDrop 不会触发，
+    /// 这里轮询鼠标左键，松开后复位拖拽状态，避免节点一直半透明。
+    private func resetDraggingWhenMouseReleased() {
+        Task { @MainActor in
+            repeat {
+                try? await Task.sleep(for: .milliseconds(100))
+            } while NSEvent.pressedMouseButtons & 1 != 0
+            draggingNodeID = nil
         }
     }
 
@@ -480,6 +541,12 @@ struct EditorView: View {
         viewModel.config.groups.move(fromOffsets: source, toOffset: destination)
         viewModel.scheduleApply()
     }
+}
+
+/// 等待用户确认的节点切换请求。
+private struct PendingNodeSwitch: Identifiable {
+    let id = UUID()
+    let targetNodeID: UUID
 }
 
 private struct EditorToolbar: View {

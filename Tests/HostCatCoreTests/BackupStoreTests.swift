@@ -106,6 +106,27 @@ final class BackupStoreTests: XCTestCase {
         XCTAssertTrue(backupNames.contains(backup3.lastPathComponent))
     }
 
+    /// 模拟跨时区或夏令时回拨：旧备份的本地时间串比新备份「更晚」，但排序 token 更早。
+    /// 清理时必须按 token 判断新旧，不能把刚建的备份当成最旧的删掉。
+    func testCleanupKeepsNewestBackupWhenLocalTimestampGoesBackwards() throws {
+        let store = BackupStore(backupDirectory: tempDir, maxBackups: 2)
+        let oldest = tempDir.appendingPathComponent("hosts_2099-01-01_120000_00000000000000000001_aaaaaaaa.bak")
+        let older = tempDir.appendingPathComponent("hosts_2099-01-01_130000_00000000000000000002_bbbbbbbb.bak")
+        try "oldest".write(to: oldest, atomically: true, encoding: .utf8)
+        try "older".write(to: older, atomically: true, encoding: .utf8)
+
+        let newest = try store.createBackup(content: "newest")
+
+        let names = store.listBackups().map(\.lastPathComponent)
+        XCTAssertEqual(names, [newest.lastPathComponent, older.lastPathComponent])
+    }
+
+    func testExtractDateUsesOrderingToken() {
+        let url = tempDir.appendingPathComponent("hosts_2099-01-01_120000_01000000000000000000_aaaaaaaa.bak")
+
+        XCTAssertEqual(BackupStore.extractDate(from: url), Date(timeIntervalSince1970: 1_000_000_000))
+    }
+
     func testRapidBackupsUseUniqueNames() throws {
         let store = BackupStore(backupDirectory: tempDir, maxBackups: 5)
 

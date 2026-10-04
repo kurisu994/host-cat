@@ -117,7 +117,8 @@ struct ConflictBanner: View {
                     .foregroundStyle(.secondary)
             }
 
-            ForEach(conflicts, id: \.hostname) { conflict in
+            // 同一个域名可能在多个节点间冲突，hostname 不唯一，按位置区分。
+            ForEach(Array(conflicts.enumerated()), id: \.offset) { _, conflict in
                 ConflictRow(conflict: conflict) {
                     onNavigate(conflict)
                 }

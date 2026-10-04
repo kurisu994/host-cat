@@ -35,10 +35,10 @@ public final class HelperRegistrationManager: ObservableObject {
         do {
             try helperService.register()
             refreshHelperStatus()
-            logger.info("Helper registered successfully, current status: \(String(describing: self.helperStatus))")
+            logger.info("Helper registered successfully, current status: \(String(describing: self.helperStatus), privacy: .public)")
         } catch {
             lastError = LC.helperRegisterFailed(error.localizedDescription)
-            logger.error("Helper registration failed: \(error.localizedDescription)")
+            logger.error("Helper registration failed: \(error.localizedDescription, privacy: .public)")
             refreshHelperStatus()
         }
     }
@@ -46,7 +46,7 @@ public final class HelperRegistrationManager: ObservableObject {
     /// Refreshes the Helper registration status.
     public func refreshHelperStatus() {
         helperStatus = helperService.status
-        logger.debug("Helper status: \(String(describing: self.helperStatus))")
+        logger.debug("Helper status: \(String(describing: self.helperStatus), privacy: .public)")
     }
 
     /// Opens System Settings to guide the user through approval.
@@ -103,7 +103,7 @@ public final class HelperRegistrationManager: ObservableObject {
             }
         } catch {
             lastError = LC.launchAtLoginFailed(error.localizedDescription)
-            logger.error("Launch at login setting failed: \(error.localizedDescription)")
+            logger.error("Launch at login setting failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

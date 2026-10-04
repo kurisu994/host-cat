@@ -258,7 +258,7 @@ public struct HostsFileWriter: Sendable {
                 do {
                     try fileOps.removeFile(at: temp)
                 } catch {
-                    logger.warning("Failed to clean up temp file: \(error.localizedDescription)")
+                    logger.warning("Failed to clean up temp file: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
@@ -267,7 +267,7 @@ public struct HostsFileWriter: Sendable {
         let flags = try fileOps.fileFlags(at: targetPath)
         let immutableMask: UInt32 = UInt32(UF_IMMUTABLE) | UInt32(SF_IMMUTABLE)
         if flags & immutableMask != 0 {
-            logger.error("hosts file has immutable flags set: \(flags)")
+            logger.error("hosts file has immutable flags set: \(flags, privacy: .public)")
             throw HostsWriteError.fileImmutable
         }
 
@@ -277,7 +277,7 @@ public struct HostsFileWriter: Sendable {
         let currentHash = HostsHash.sha256Hex(currentContent)
 
         if let expectedHash, !expectedHash.isEmpty, currentHash != expectedHash {
-            logger.warning("hash mismatch: expected=\(expectedHash.prefix(8))..., current=\(currentHash.prefix(8))...")
+            logger.warning("hash mismatch: expected=\(expectedHash.prefix(8), privacy: .public)..., current=\(currentHash.prefix(8), privacy: .public)...")
             throw HostsWriteError.hashMismatch
         }
 
@@ -287,7 +287,7 @@ public struct HostsFileWriter: Sendable {
         // 4. Create temp file via mkstemp
         let (fd, createdTempPath) = try fileOps.createTempFile(in: directory, template: ".hosts.hostcat.XXXXXX")
         tempPath = createdTempPath
-        logger.debug("Created temp file: \(createdTempPath)")
+        logger.debug("Created temp file: \(createdTempPath, privacy: .public)")
 
         // 5. Write content + fsync
         let contentData = Data(content.utf8)
@@ -309,7 +309,7 @@ public struct HostsFileWriter: Sendable {
         let latestContent = String(data: latestData, encoding: .utf8) ?? String(data: latestData, encoding: .isoLatin1) ?? ""
         let latestHash = HostsHash.sha256Hex(latestContent)
         if latestHash != currentHash {
-            logger.warning("hash changed during write preparation: initial=\(currentHash.prefix(8))..., latest=\(latestHash.prefix(8))...")
+            logger.warning("hash changed during write preparation: initial=\(currentHash.prefix(8), privacy: .public)..., latest=\(latestHash.prefix(8), privacy: .public)...")
             throw HostsWriteError.hashMismatch
         }
 
@@ -323,7 +323,7 @@ public struct HostsFileWriter: Sendable {
         // Compute final hash
         let finalHash = HostsHash.sha256Hex(content)
 
-        logger.info("Write successful, hash: \(finalHash.prefix(8))...")
+        logger.info("Write successful, hash: \(finalHash.prefix(8), privacy: .public)...")
 
         // 10. DNS cache refresh
         var dnsSuccess = true
@@ -335,7 +335,7 @@ public struct HostsFileWriter: Sendable {
             } catch {
                 dnsSuccess = false
                 dnsError = error.localizedDescription
-                logger.warning("DNS cache refresh failed: \(error.localizedDescription)")
+                logger.warning("DNS cache refresh failed: \(error.localizedDescription, privacy: .public)")
                 // DNS refresh failure does not roll back hosts, but the error is recorded.
             }
         }

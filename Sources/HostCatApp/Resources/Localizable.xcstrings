@@ -4317,6 +4317,40 @@
           }
         }
       }
+    },
+    "notification.apply_warning.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hosts applied with a warning"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "hosts 已写入，但有警告"
+          }
+        }
+      }
+    },
+    "editor.switch_unsaved.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This node has edits that are not applied yet. Switching now would lose them."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当前节点的修改还没应用，直接切换会丢失这些修改。"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

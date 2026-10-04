@@ -6,6 +6,8 @@ public enum ApplyNotificationEvent: Equatable, Sendable {
     case applied
     /// 写入失败（含冲突、Helper 不可用等），附带可展示的原因。
     case failed(String)
+    /// hosts 已写入，但有需要用户留意的问题（如 DNS 未确认刷新），附带说明。
+    case appliedWithWarning(String)
     /// 检测到 /etc/hosts 被外部修改。
     case externalModification
 }
@@ -53,7 +55,7 @@ public struct NotificationPreferences: Equatable, Sendable {
     public func shouldNotify(for event: ApplyNotificationEvent) -> Bool {
         switch event {
         case .applied: notifyOnSuccess
-        case .failed: notifyOnFailure
+        case .failed, .appliedWithWarning: notifyOnFailure
         case .externalModification: notifyOnExternalModification
         }
     }
