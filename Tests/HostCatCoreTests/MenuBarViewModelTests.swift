@@ -31,7 +31,8 @@ final class MenuBarViewModelTests: XCTestCase {
 
     func testFailedApplyWithRollbackSnapshotStillKeepsEditedDraftConfig() async throws {
         let helper = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(1))
+        // 草稿测试只操作临时配置，避免触发用户备份的保留策略。
+        let coordinator = HostWriteCoordinator(helperClient: helper, backupStore: nil, debounceInterval: .milliseconds(1))
         let storeURL = makeStoreURL()
         defer { try? FileManager.default.removeItem(at: storeURL) }
         let viewModel = MenuBarViewModel(
@@ -57,7 +58,7 @@ final class MenuBarViewModelTests: XCTestCase {
     func testScheduledFailedApplyPersistsDraftConfig() async throws {
         let helper = FakeHostHelperClient()
         await helper.setShouldSucceed(false)
-        let coordinator = HostWriteCoordinator(helperClient: helper, debounceInterval: .milliseconds(1))
+        let coordinator = HostWriteCoordinator(helperClient: helper, backupStore: nil, debounceInterval: .milliseconds(1))
         let storeURL = makeStoreURL()
         defer { try? FileManager.default.removeItem(at: storeURL) }
         var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n")

@@ -112,7 +112,8 @@ final class HostWriteCoordinatorTests: XCTestCase {
         let fakeClient = FakeHostHelperClient()
         // 模拟写入耗时 300ms
         await fakeClient.setDelayNanoseconds(300_000_000)
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient, debounceInterval: .milliseconds(50))
+        // 状态测试不使用真实 hosts 或用户备份目录。
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil, debounceInterval: .milliseconds(50))
         let config1 = makeConfig(defaultContent: "127.0.0.1 localhost")
         let config2 = makeConfig(defaultContent: "127.0.0.1 localhost\n10.0.0.1 test.com")
 
@@ -136,7 +137,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testHashMismatchPreventsOverwrite() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
         var config = makeConfig()
         config.state.lastAppliedHostsHash = "mismatched_hash"
 
@@ -151,7 +152,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     func testConflictDetectionPreventsApply() async {
         let fakeClient = FakeHostHelperClient()
-        let coordinator = HostWriteCoordinator(helperClient: fakeClient)
+        let coordinator = HostWriteCoordinator(helperClient: fakeClient, backupStore: nil)
 
         let node1 = HostNode(name: "N1", content: "10.0.0.1 example.com", isActive: true)
         let node2 = HostNode(name: "N2", content: "10.0.0.2 example.com", isActive: true)

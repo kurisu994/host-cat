@@ -104,7 +104,8 @@ public struct HostsMerger: Sendable {
 
                 for hostname in record.hostnames {
                     let key = "\(hostname.lowercased())\u{0}\(addressFamily(of: record.ipAddress))"
-                    if let existing = firstSeen[key], existing.ipAddress != incoming.ipAddress {
+                    if let existing = firstSeen[key],
+                       HostsParser.addressComparisonKey(existing.ipAddress) != HostsParser.addressComparisonKey(incoming.ipAddress) {
                         conflicts.append(
                             HostConflict(hostname: hostname, existing: existing, incoming: incoming)
                         )
@@ -139,8 +140,9 @@ public struct HostsMerger: Sendable {
             }
 
             for record in context.records {
+                let addressKey = HostsParser.addressComparisonKey(record.ipAddress)
                 let uniqueHostnames = record.hostnames.filter { hostname in
-                    let key = "\(record.ipAddress)\u{0}\(hostname.lowercased())"
+                    let key = "\(addressKey)\u{0}\(hostname.lowercased())"
                     if seenEntryKeys.contains(key) {
                         duplicateCount += 1
                         return false

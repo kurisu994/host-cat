@@ -68,7 +68,7 @@ public struct HostsParser: Sendable {
 
     public func parse(_ content: String) throws -> [HostRecord] {
         var records: [HostRecord] = []
-        let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
+        let lines = Self.lines(in: content)
 
         for (offset, rawLine) in lines.enumerated() {
             let lineNumber = offset + 1
@@ -119,7 +119,7 @@ public struct HostsParser: Sendable {
 
     public func validate(_ content: String) -> [HostsParseError] {
         var errors: [HostsParseError] = []
-        let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
+        let lines = Self.lines(in: content)
 
         for (offset, rawLine) in lines.enumerated() {
             let lineNumber = offset + 1
@@ -156,6 +156,24 @@ public struct HostsParser: Sendable {
         }
 
         return errors
+    }
+
+    /// 同时识别 LF 和 CRLF，保留空行以维持错误行号；Swift 将 CRLF 视为单个 Character。
+    static func lines(in content: String) -> [Substring] {
+        content.split(omittingEmptySubsequences: false) { $0 == "\n" || $0 == "\r\n" }
+    }
+
+    /// 为已解析的 IP 生成按地址值比较的键，不改变记录中用于显示和输出的原文。
+    static func addressComparisonKey(_ value: String) -> String {
+        if let address = IPv4Address(value) {
+            return "ipv4:\(address.rawValue.base64EncodedString())"
+        }
+        if let address = IPv6Address(value) {
+            // 相同字节但不同作用域的 link-local 地址不能互相去重。
+            let scope = address.interface.map { "%\($0.index)" } ?? ""
+            return "ipv6:\(address.rawValue.base64EncodedString())\(scope)"
+        }
+        return value
     }
 
     private func isValidIPAddress(_ value: String) -> Bool {

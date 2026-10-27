@@ -187,8 +187,9 @@ public struct HostsContentValidator: Sendable {
         }
 
         for required in Self.requiredSystemEntries {
+            let requiredAddressKey = HostsParser.addressComparisonKey(required.ipAddress)
             let containsEntry = records.contains { record in
-                record.ipAddress == required.ipAddress
+                HostsParser.addressComparisonKey(record.ipAddress) == requiredAddressKey
                     && record.hostnames.contains { $0.lowercased() == required.hostname }
             }
             guard containsEntry else {

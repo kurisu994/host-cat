@@ -30,6 +30,38 @@ final class ValidatorParityTests: XCTestCase {
         """
     }
 
+    /// CRLF 写入文本仍须完整解析系统条目和附加记录。
+    func testCRLFContentPassesBothValidators() throws {
+        let content = makeValidWriteContent(extra: "10.0.0.1 api.test")
+            .replacingOccurrences(of: "\n", with: "\r\n")
+        XCTAssertTrue(parser.validate(content).isEmpty)
+        XCTAssertEqual(try parser.parse(content).count, 4)
+        XCTAssertNoThrow(try writeValidator.validate(content))
+    }
+
+    /// 展开或补零的 IPv6 loopback 与 ::1 等价，不能误报缺少系统条目。
+    func testEquivalentIPv6LoopbackSatisfiesRequiredSystemEntry() {
+        for loopback in ["0:0:0:0:0:0:0:1", "0000:0000:0000:0000:0000:0000:0000:0001", "::0001"] {
+            let content = makeValidWriteContent().replacingOccurrences(of: "::1 localhost", with: "\(loopback) localhost")
+            XCTAssertTrue(parser.validate(content).isEmpty)
+            XCTAssertNoThrow(try writeValidator.validate(content))
+        }
+    }
+
+    /// 带作用域的 loopback 不能代替不限定接口的系统默认 ::1。
+    func testScopedLoopbackDoesNotSatisfyUnscopedSystemEntry() {
+        let content = makeValidWriteContent().replacingOccurrences(of: "::1 localhost", with: "::1%lo0 localhost")
+        XCTAssertTrue(parser.validate(content).isEmpty)
+        XCTAssertThrowsError(try writeValidator.validate(content))
+    }
+
+    /// 合法但非 loopback 的地址不能代替必备的 ::1。
+    func testDifferentIPv6AddressDoesNotSatisfyRequiredSystemEntry() {
+        let content = makeValidWriteContent().replacingOccurrences(of: "::1 localhost", with: "::2 localhost")
+        XCTAssertTrue(parser.validate(content).isEmpty)
+        XCTAssertThrowsError(try writeValidator.validate(content))
+    }
+
     // MARK: - parse 通过的内容也能通过写入校验
 
     func testValidContentPassesBothValidators() throws {

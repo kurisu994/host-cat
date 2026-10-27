@@ -2,6 +2,28 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsImporterTests: XCTestCase {
+    /// 识别 CRLF／混合换行区块，同时保留原文 hash，不因分行规范化误报外部修改。
+    func testCRLFBlockPreservesManagedRecordsAndOriginalHash() throws {
+        let lfContent = "127.0.0.1 localhost\n# --- HostCat Begin (v1) ---\n# imported\n10.0.0.1 api.test\n# --- HostCat End ---\n::1 localhost\n"
+        let contents = [
+            lfContent.replacingOccurrences(of: "\n", with: "\r\n"),
+            lfContent.replacingOccurrences(of: "# imported\n", with: "# imported\r\n")
+        ]
+
+        for content in contents {
+            let result = HostsImporter().importHosts(content)
+            XCTAssertTrue(result.hasHostCatBlock)
+            XCTAssertEqual(result.blockVersion, .v1)
+            XCTAssertTrue(result.isBlockValid)
+            XCTAssertFalse(result.defaultNodeContent.contains("api.test"))
+            XCTAssertFalse(result.safeDefaultNodeContent.contains(HostsImporter.beginMarkerPrefix))
+            XCTAssertFalse(result.safeDefaultNodeContent.contains(HostsImporter.endMarker))
+            XCTAssertEqual(try HostsParser().parse(result.safeDefaultNodeContent).count, 3)
+            XCTAssertEqual(result.decodedContent, content)
+            XCTAssertEqual(result.currentHostsHash, HostsHash.sha256Hex(content))
+        }
+    }
+
     func testImportResultIncludesDecodedContentAndCurrentHash() {
         let content = "127.0.0.1 localhost\n::1 localhost\n"
 

@@ -1,5 +1,11 @@
 # progress.md
 
+> 2026-10-27 审查澄清：下方历史“完成”表示实现进度，不代表正式签名／公证／真实 Helper 已验收。当前发布阻塞与测试证据见 [正式使用前审查报告](../docs/audits/2026-10-27-release-readiness.md)，后续以该报告和 TODO 顶部修复清单为准。
+
+## 本轮审查后修复
+
+- 2026-10-27：完成 R08（CRLF 数据保全）、R12（IPv6 地址值／作用域比较）、R17（备份错误独立展示）。新增 12 项回归，SwiftPM 共 177 项通过；SwiftPM 与未签名 Xcode Debug App 构建通过。R17 尚待 UI 人工验收，其余发布与写入状态阻塞仍在。
+
 ## 版本发布历史
 
 | 版本 | 日期 | 状态 | 备注 |
@@ -116,6 +122,7 @@
 |------|---------|------|
 | 2026-05-21 | 完整 4 阶段 autoplan | `~/.gstack/projects/kurisu994-host-cat/kurisu-main-autoplan-review-20260521.md` |
 | 2026-06-08 | 定向增量审查（5/22-5/27 变更） | `~/.gstack/projects/kurisu994-host-cat/kurisu-main-incremental-review-20260608-142535.md` |
+| 2026-10-27 | 正式使用前全仓静态审查、构建及隔离回归 | `docs/audits/2026-10-27-release-readiness.md`（生产阻塞待修复，测试隔离已修复） |
 
 ## 测试演进
 

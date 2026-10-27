@@ -44,7 +44,7 @@ public struct HostsImporter: Sendable {
     public init() {}
 
     public func importHosts(_ content: String) -> HostsImportResult {
-        let lines = content.split(separator: "\n", omittingEmptySubsequences: false)
+        let lines = HostsParser.lines(in: content)
         let currentHostsHash = HostsHash.sha256Hex(content)
 
         func makeResult(
@@ -185,8 +185,7 @@ public struct HostsImporter: Sendable {
     }
 
     private func stripHostCatMarkers(from content: String) -> String {
-        content
-            .split(separator: "\n", omittingEmptySubsequences: false)
+        HostsParser.lines(in: content)
             .filter { line in
                 let trimmed = line.trimmingCharacters(in: .whitespaces)
                 let isBeginMarker = trimmed.hasPrefix(Self.beginMarkerPrefix)

@@ -93,11 +93,6 @@ struct BackupRestoreView: View {
                     Divider()
 
                     HStack {
-                        if let error = errorMessage {
-                            Label(error, systemImage: "exclamationmark.triangle")
-                                .foregroundStyle(.red)
-                                .font(.caption)
-                        }
                         Spacer()
                         Button(L.backupRestoreThis) {
                             restoreBackup()
@@ -117,6 +112,14 @@ struct BackupRestoreView: View {
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
+                }
+
+                if let error = errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(12)
                 }
             }
             .frame(minWidth: 400, idealWidth: 500)

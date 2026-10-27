@@ -4,6 +4,8 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 
 当前仓库已完成阶段 2（真实写入版）：通过 `xcodegen` 迁移为 Xcode 工程，实现了 `SMAppService` Helper 注册、Privileged Helper 真实安全写入、XPC 通信、备份恢复、外部修改检测、DNS 刷新、简体中文/英文界面、hosts 编辑器语法高亮与行号、多行错误实时收集和完整的菜单栏交互，支持签名导出和 DMG 打包。
 
+> **正式使用前状态（2026-10-27）：** 当前 177 项测试与未签名 Debug 构建通过，已修复 CRLF 映射丢失、IPv6 等价误判和备份错误提示，但 Helper 打包／启动及写入状态问题仍未解决，尚不建议直接用于日常 hosts 管理。功能已实现不等于正式链路已验收，详见[审查报告与账号后验收清单](docs/audits/2026-10-27-release-readiness.md)。
+
 ## 当前能力
 
 - SwiftPM 包结构保留核心库和测试，最低平台为 macOS 14。

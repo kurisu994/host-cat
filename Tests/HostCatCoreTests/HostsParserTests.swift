@@ -2,6 +2,38 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsParserTests: XCTestCase {
+    /// LF、CRLF 和混合换行均应保留记录、注释及真实行号。
+    func testParsesLFAndCRLFWithoutLosingRecordsOrLineNumbers() throws {
+        let lines = ["# imported", "", "10.0.0.1 api.test # development", "2001:db8::1 ipv6.test", ""]
+        let contents = [
+            lines.joined(separator: "\n"),
+            lines.joined(separator: "\r\n"),
+            "# imported\r\n\n10.0.0.1 api.test # development\r\n2001:db8::1 ipv6.test\n"
+        ]
+
+        for content in contents {
+            let records = try HostsParser().parse(content)
+            XCTAssertEqual(records.map(\.hostnames), [["api.test"], ["ipv6.test"]])
+            XCTAssertEqual(records.map(\.lineNumber), [3, 4])
+            XCTAssertEqual(records.first?.comment, "development")
+            XCTAssertTrue(HostsParser().validate(content).isEmpty)
+        }
+    }
+
+    /// 注释后的 CRLF 错误行不能被忽略，编辑器和抛错解析须定位一致。
+    func testValidateMixedLineEndingsPreservesErrorLineNumbers() {
+        let content = "# imported\r\n\n999.0.0.1 bad.test\r\n10.0.0.1 good.test\n::1\r\n"
+        let expected: [HostsParseError] = [
+            .invalidIPAddress(lineNumber: 3, value: "999.0.0.1"),
+            .missingHostname(lineNumber: 5)
+        ]
+
+        XCTAssertEqual(HostsParser().validate(content), expected)
+        XCTAssertThrowsError(try HostsParser().parse(content)) { error in
+            XCTAssertEqual(error as? HostsParseError, expected.first)
+        }
+    }
+
     func testParsesIPv4LineWithAliasesAndTrailingComment() throws {
         let records = try HostsParser().parse("127.0.0.1 localhost local.test # development\n")
 

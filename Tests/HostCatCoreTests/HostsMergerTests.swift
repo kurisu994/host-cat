@@ -2,6 +2,65 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsMergerTests: XCTestCase {
+    /// CRLF 激活节点不能在最终写入校验通过的同时丢失映射。
+    func testCRLFActiveNodeSurvivesMergeAndWriteValidation() throws {
+        var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n255.255.255.255 broadcasthost\n::1 localhost\n")
+        config.groups = [HostGroup(name: "项目", nodes: [
+            HostNode(name: "Windows", content: "# imported\r\n10.0.0.1 api.test\r\n", isActive: true)
+        ])]
+
+        let merged = try HostsMerger().merge(config)
+        XCTAssertTrue(merged.text.contains("10.0.0.1 api.test"))
+        XCTAssertEqual(merged.records.count, 4)
+        XCTAssertNoThrow(try HostsContentValidator().validate(merged.text))
+    }
+
+    /// 相同 IPv6 的大小写、压缩和展开形式应去重，输出仍保留首条地址原文。
+    func testEquivalentIPv6FormsAreDeduplicatedWithoutRewritingAddress() throws {
+        let original = "2001:0DB8:0:0:0:0:0:1"
+        var config = AppConfig.initial(defaultHosts: "\(original) api.test\n")
+        config.groups = [HostGroup(name: "项目", nodes: [
+            HostNode(name: "压缩", content: "2001:db8::1 API.TEST alias.test\n", isActive: true),
+            HostNode(name: "展开", content: "2001:0db8:0000:0000:0000:0000:0000:0001 api.test\n", isActive: true)
+        ])]
+
+        let merged = try HostsMerger().merge(config)
+        XCTAssertEqual(merged.duplicateCount, 2)
+        XCTAssertEqual(merged.records.count, 2)
+        XCTAssertEqual(merged.records.first?.ipAddress, original)
+        XCTAssertEqual(merged.records.last?.hostnames, ["alias.test"])
+    }
+
+    /// 地址规范化不能放过真正不同的 IPv6 映射冲突。
+    func testDifferentIPv6AddressesStillConflict() {
+        let config = AppConfig.initial(defaultHosts: "2001:db8::1 api.test\n2001:db8::2 api.test\n")
+        XCTAssertThrowsError(try HostsMerger().merge(config)) { error in
+            guard case HostMergeError.conflicts(let conflicts) = error else {
+                return XCTFail("应报告 IPv6 冲突，实际：\(error)")
+            }
+            XCTAssertEqual(conflicts.count, 1)
+        }
+    }
+
+    /// 原始地址字节相同不代表作用域相同，不能把带接口的地址与无作用域地址合并。
+    func testScopedAndUnscopedIPv6RemainDifferentAddresses() {
+        let config = AppConfig.initial(defaultHosts: "fe80::1%lo0 api.test\nfe80::1 api.test\n")
+        XCTAssertThrowsError(try HostsMerger().merge(config)) { error in
+            guard case HostMergeError.conflicts(let conflicts) = error else {
+                return XCTFail("应报告作用域不同的 IPv6 冲突，实际：\(error)")
+            }
+            XCTAssertEqual(conflicts.count, 1)
+        }
+    }
+
+    /// IPv4 与 IPv4-mapped IPv6 不属于同一地址族，不能相互去重或冲突。
+    func testIPv4AndMappedIPv6RemainSeparateAddressFamilies() throws {
+        let config = AppConfig.initial(defaultHosts: "127.0.0.1 api.test\n::ffff:127.0.0.1 api.test\n")
+        let merged = try HostsMerger().merge(config)
+        XCTAssertEqual(merged.records.count, 2)
+        XCTAssertEqual(merged.duplicateCount, 0)
+    }
+
     func testDefaultNodeAlwaysParticipatesAndDuplicateEntriesAreCollapsed() throws {
         let config = AppConfig(
             configVersion: 1,
