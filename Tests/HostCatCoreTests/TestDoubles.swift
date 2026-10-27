@@ -9,14 +9,27 @@ actor FakeHostHelperClient: HostHelperClient {
     var simulatedError: Error?
     var writtenContents: [String] = []
     var expectedHashes: [String?] = []
+    var forceFlags: [Bool] = []
     var delayNanoseconds: UInt64 = 0
+    /// 设置后模拟真实 Helper：非强制写入的 expected hash 必须等于磁盘 hash，成功后磁盘 hash 更新为新内容。
+    var diskHash: String?
+    var didRefreshDNS: Bool? = true
 
-    func writeHosts(_ contents: String, expectedCurrentHostsHash: String?) async throws -> HostHelperWriteResult {
+    func writeHosts(
+        _ contents: String,
+        expectedCurrentHostsHash: String?,
+        force: Bool
+    ) async throws -> HostHelperWriteResult {
+        expectedHashes.append(expectedCurrentHostsHash)
+        forceFlags.append(force)
+
         if delayNanoseconds > 0 {
             try await Task.sleep(nanoseconds: delayNanoseconds)
         }
 
-        expectedHashes.append(expectedCurrentHostsHash)
+        if let diskHash, !force, expectedCurrentHostsHash != diskHash {
+            throw HostHelperClientError.hashMismatch
+        }
 
         if !shouldSucceed {
             if let error = simulatedError {
@@ -29,9 +42,13 @@ actor FakeHostHelperClient: HostHelperClient {
         }
 
         writtenContents.append(contents)
+        let finalHash = HostsHash.sha256Hex(contents)
+        if diskHash != nil {
+            diskHash = finalHash
+        }
         return HostHelperWriteResult(
-            finalHostsHash: HostsHash.sha256Hex(contents),
-            didRefreshDNS: true
+            finalHostsHash: finalHash,
+            didRefreshDNS: didRefreshDNS
         )
     }
 }
@@ -47,6 +64,14 @@ extension FakeHostHelperClient {
 
     func setDelayNanoseconds(_ value: UInt64) async {
         delayNanoseconds = value
+    }
+
+    func setDiskHash(_ value: String?) async {
+        diskHash = value
+    }
+
+    func setDidRefreshDNS(_ value: Bool?) async {
+        didRefreshDNS = value
     }
 }
 
@@ -178,7 +203,7 @@ struct StubDNSRefresher: DNSRefreshing, Sendable {
 
     func refreshDNSCache() throws {
         if !shouldSucceed {
-            throw HostsWriteError.dnsRefreshFailed(errorMessage)
+            throw HostsWriteError.dnsRefreshFailed(.raw(errorMessage))
         }
     }
 }

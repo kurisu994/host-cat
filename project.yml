@@ -96,6 +96,10 @@ targets:
         INFOPLIST_KEY_LSUIElement: true
         # 关闭沙盒（直接分发）
         ENABLE_APP_SANDBOX: false
+      configs:
+        Release:
+          # 公证要求开启 Hardened Runtime；Debug 用本地 ad-hoc 签名，开启后会触发库校验失败。
+          ENABLE_HARDENED_RUNTIME: true
     postCompileScripts: []
     preBuildScripts: []
     postBuildScripts:
@@ -133,7 +137,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.hostcat.helper
         PRODUCT_NAME: HostCatPrivilegedHelper
         INFOPLIST_FILE: Sources/HostCatPrivilegedHelper/Info.plist
+        # 命令行工具默认不嵌入 Info.plist：不嵌入时签名标识会退化成文件名，
+        # Bundle.main 也读不到 HostCatTeamIdentifier，XPC 双向签名校验都会失败。
+        CREATE_INFOPLIST_SECTION_IN_BINARY: true
+        # Helper 位于 Contents/Library/HelperTools/，需回到 Contents/Frameworks 加载 HostCatCore。
+        LD_RUNPATH_SEARCH_PATHS:
+          - "$(inherited)"
+          - "@executable_path/../../Frameworks"
         SKIP_INSTALL: true
+      configs:
+        Release:
+          # 公证要求开启 Hardened Runtime；Debug 用本地 ad-hoc 签名，开启后会触发库校验失败。
+          ENABLE_HARDENED_RUNTIME: true
 
   # HostCatCoreTests - 核心逻辑单元测试
   HostCatCoreTests:

@@ -118,6 +118,8 @@ struct HostsSyntaxHighlighter {
     }
 
     /// Highlights a data line: IP in blue, hostname in green, trailing comment in gray.
+    ///
+    /// 偏移量一律用 UTF-16 单位，与 NSRange 一致；行里有 emoji 等非 BMP 字符时颜色不会错位。
     private static func highlightDataLine(
         _ line: String,
         lineRange: NSRange,
@@ -126,18 +128,18 @@ struct HostsSyntaxHighlighter {
         let nsLine = line as NSString
 
         // Find trailing comment.
-        var bodyPart = line
-        if let commentStart = findCommentStart(in: line) {
+        var bodyLength = nsLine.length
+        if let commentStart = findCommentStart(in: nsLine) {
             let commentNSRange = NSRange(
                 location: lineRange.location + commentStart,
                 length: nsLine.length - commentStart
             )
             textStorage.addAttribute(.foregroundColor, value: Colors.comment, range: commentNSRange)
-            bodyPart = String(line.prefix(commentStart))
+            bodyLength = commentStart
         }
 
         // Split into tokens.
-        let tokens = tokenize(bodyPart)
+        let tokens = tokenize(nsLine, length: bodyLength)
         guard let firstToken = tokens.first else { return }
 
         // First token is the IP.
@@ -157,11 +159,11 @@ struct HostsSyntaxHighlighter {
         }
     }
 
-    /// Finds the start position of a `#` comment in a line (ignoring special characters that may appear in IP addresses).
-    private static func findCommentStart(in line: String) -> Int? {
+    /// Finds the UTF-16 offset of a `#` comment in a line.
+    private static func findCommentStart(in line: NSString) -> Int? {
         // In hosts format, `#` always starts a comment; there is no escaping.
-        guard let range = line.range(of: "#") else { return nil }
-        return line.distance(from: line.startIndex, to: range.lowerBound)
+        let range = line.range(of: "#")
+        return range.location == NSNotFound ? nil : range.location
     }
 
     /// Token position information.
@@ -170,31 +172,28 @@ struct HostsSyntaxHighlighter {
         let length: Int
     }
 
-    /// Splits text into whitespace-separated tokens, recording each token's offset in the original text.
-    private static func tokenize(_ text: String) -> [Token] {
+    /// Splits the first `length` UTF-16 units into space/tab separated tokens.
+    private static func tokenize(_ text: NSString, length: Int) -> [Token] {
+        let space: unichar = 0x20
+        let tab: unichar = 0x09
         var tokens: [Token] = []
-        var index = text.startIndex
-        let end = text.endIndex
+        var index = 0
 
-        while index < end {
+        while index < length {
             // Skip whitespace.
-            while index < end && (text[index] == " " || text[index] == "\t") {
-                index = text.index(after: index)
+            while index < length, text.character(at: index) == space || text.character(at: index) == tab {
+                index += 1
             }
 
-            guard index < end else { break }
-
-            // Record token start.
-            let tokenStart = index
+            guard index < length else { break }
 
             // Read non-whitespace characters.
-            while index < end && text[index] != " " && text[index] != "\t" {
-                index = text.index(after: index)
+            let tokenStart = index
+            while index < length, text.character(at: index) != space, text.character(at: index) != tab {
+                index += 1
             }
 
-            let offset = text.distance(from: text.startIndex, to: tokenStart)
-            let length = text.distance(from: tokenStart, to: index)
-            tokens.append(Token(offset: offset, length: length))
+            tokens.append(Token(offset: tokenStart, length: index - tokenStart))
         }
 
         return tokens

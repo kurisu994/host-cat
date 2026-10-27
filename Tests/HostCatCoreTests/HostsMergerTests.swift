@@ -2,6 +2,26 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsMergerTests: XCTestCase {
+    /// 合并双方实现后，原文保全与 IPv6 去重须共存，输出记录也不能丢失节点来源。
+    func testDocumentPreservationAndIPv6DeduplicationKeepRecordSources() throws {
+        var config = AppConfig.initial(defaultHosts: "# 默认注释\r\n\r\n2001:0DB8::1\tapi.test  # 首条\r\n")
+        config.groups = [HostGroup(name: "项目", nodes: [
+            HostNode(name: "开发", content: "# 节点注释\r\n\r\n2001:db8:0:0:0:0:0:1 API.TEST alias.test # 别名\r\n10.0.0.1\tother.test  # 原格式\r\n", isActive: true)
+        ])]
+
+        let merged = try HostsMerger().merge(config)
+        XCTAssertTrue(merged.text.contains("# 默认注释\n\n2001:0DB8::1\tapi.test  # 首条\n"))
+        XCTAssertTrue(merged.text.contains("# 节点注释\n\n2001:db8:0:0:0:0:0:1 alias.test # 别名\n"))
+        XCTAssertTrue(merged.text.contains("10.0.0.1\tother.test  # 原格式\n"))
+        XCTAssertEqual(merged.duplicateCount, 1)
+        XCTAssertEqual(merged.records.map(\.hostnames), [["api.test"], ["alias.test"], ["other.test"]])
+        XCTAssertEqual(merged.records.map(\.source), [
+            HostRecordSource(nodeName: config.defaultNode.name),
+            HostRecordSource(groupName: "项目", nodeName: "开发"),
+            HostRecordSource(groupName: "项目", nodeName: "开发")
+        ])
+    }
+
     /// CRLF 激活节点不能在最终写入校验通过的同时丢失映射。
     func testCRLFActiveNodeSurvivesMergeAndWriteValidation() throws {
         var config = AppConfig.initial(defaultHosts: "127.0.0.1 localhost\n255.255.255.255 broadcasthost\n::1 localhost\n")
@@ -243,5 +263,25 @@ final class HostsMergerTests: XCTestCase {
         XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.8 injected-group.test"))
         XCTAssertFalse(merged.text.components(separatedBy: .newlines).contains("10.0.0.7 injected-node.test"))
         XCTAssertTrue(merged.text.contains("10.0.0.2 api.test"))
+    }
+
+    func testCommentsAndBlankLinesAreKept() throws {
+        let config = AppConfig(
+            configVersion: 1,
+            defaultNode: HostNode(
+                name: "默认",
+                content: "# 只在本机使用\n\n127.0.0.1 localhost\n",
+                isActive: true
+            ),
+            groups: [],
+            settings: AppSettings(launchAtLogin: false),
+            state: AppStateMetadata()
+        )
+
+        let merged = try HostsMerger().merge(config)
+
+        XCTAssertTrue(merged.text.contains("# 只在本机使用"))
+        XCTAssertTrue(merged.text.contains("127.0.0.1 localhost"))
+        XCTAssertEqual(merged.records.count, 1)
     }
 }

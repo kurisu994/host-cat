@@ -68,7 +68,7 @@ public struct AppConfigStore: Sendable {
             logger.info("Config file missing; creating default config at \(self.configURL.path, privacy: .private)")
             let config = AppConfig.initial(defaultHosts: defaultHosts, currentHostsHash: currentHostsHash)
             try save(config)
-            logger.info("Default config created, groups=\(config.groups.count), defaultNodeActive=\(config.defaultNode.isActive)")
+            logger.info("Default config created, groups=\(config.groups.count, privacy: .public), defaultNodeActive=\(config.defaultNode.isActive, privacy: .public)")
             return AppConfigLoadResult(config: config, status: .createdDefault)
         }
 
@@ -88,7 +88,7 @@ public struct AppConfigStore: Sendable {
         }
 
         guard decodedConfig.configVersion == Self.currentConfigVersion else {
-            logger.warning("Unsupported config version \(decodedConfig.configVersion); expected \(Self.currentConfigVersion)")
+            logger.warning("Unsupported config version \(decodedConfig.configVersion, privacy: .public); expected \(Self.currentConfigVersion, privacy: .public)")
             try preserveRecoverableConfig(reason: "unsupported")
             return try recoverDefault(
                 defaultHosts: defaultHosts,
@@ -105,7 +105,7 @@ public struct AppConfigStore: Sendable {
             logger.info("Backfilled external hosts hash for first existing config load")
         }
 
-        logger.info("Config loaded, groups=\(loadedConfig.groups.count), configVersion=\(loadedConfig.configVersion)")
+        logger.info("Config loaded, groups=\(loadedConfig.groups.count, privacy: .public), configVersion=\(loadedConfig.configVersion, privacy: .public)")
         return AppConfigLoadResult(config: loadedConfig, status: .loadedExisting)
     }
 
@@ -141,6 +141,19 @@ public struct AppConfigStore: Sendable {
         }
     }
 
+    /// 配置文件存在却加载失败时，把它挪到同目录另存，避免随后的保存覆盖用户原有配置。
+    /// 返回保留后的文件 URL；配置文件不存在时返回 nil。
+    public func quarantineUnloadableConfig() throws -> URL? {
+        guard FileManager.default.fileExists(atPath: configURL.path) else {
+            return nil
+        }
+
+        let preservedURL = preservedConfigURL(reason: "unreadable")
+        try FileManager.default.moveItem(at: configURL, to: preservedURL)
+        logger.warning("Moved unloadable config aside: \(preservedURL.lastPathComponent, privacy: .public)")
+        return preservedURL
+    }
+
     private func recoverDefault(
         defaultHosts: String,
         currentHostsHash: String?,
@@ -157,12 +170,15 @@ public struct AppConfigStore: Sendable {
             return
         }
 
-        let parentURL = configURL.deletingLastPathComponent()
-        let preservedURL = parentURL.appendingPathComponent(
+        try FileManager.default.copyItem(at: configURL, to: preservedConfigURL(reason: reason))
+    }
+
+    /// 另存配置的文件名：`config.json.<原因>.<时间>.<UUID>`。
+    private func preservedConfigURL(reason: String) -> URL {
+        configURL.deletingLastPathComponent().appendingPathComponent(
             "\(configURL.lastPathComponent).\(reason).\(timestampForPreservedConfig()).\(UUID().uuidString)",
             isDirectory: false
         )
-        try FileManager.default.copyItem(at: configURL, to: preservedURL)
     }
 
     private func timestampForPreservedConfig() -> String {

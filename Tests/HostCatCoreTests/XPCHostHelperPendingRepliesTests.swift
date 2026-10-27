@@ -24,4 +24,20 @@ final class XPCHostHelperPendingRepliesTests: XCTestCase {
         XCTAssertNil(pendingReplies.complete(id: firstID))
         XCTAssertNil(pendingReplies.complete(id: secondID))
     }
+
+    /// 旧连接失效时只能让挂在它上面的请求失败，新连接上的请求要保留。
+    func testRemoveAllWhereOnlyDrainsMatchingReplies() {
+        let pendingReplies = XPCHostHelperPendingReplies<(generation: Int, name: String)>()
+        let oldID = UUID()
+        let newID = UUID()
+
+        pendingReplies.register((1, "old"), id: oldID)
+        pendingReplies.register((2, "new"), id: newID)
+
+        let removed = pendingReplies.removeAll(where: { $0.generation == 1 })
+
+        XCTAssertEqual(removed.map(\.name), ["old"])
+        XCTAssertNil(pendingReplies.complete(id: oldID))
+        XCTAssertEqual(pendingReplies.complete(id: newID)?.name, "new")
+    }
 }

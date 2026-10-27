@@ -6,20 +6,41 @@
 
 ## 当前状态
 
-- **分支**：main（本轮审查基线 `f476c03`；包含正式使用前审查报告、测试隔离与三项明确逻辑修复。提交前发现远端新增 4 个提交至 `525673f`，尚未整合；当前审查结论与验证结果不覆盖这些远端改动）
+- **分支**：main（整合本地 `6c04908` 与远端 `525673f`；原审查基线为 `f476c03`，历史发现需结合报告中的合并后状态阅读）
 - **版本**：1.0.0（pre-release，尚未打 tag）
-- **阶段进度**：阶段 1 + 阶段 2 完成；阶段 3 进行中（任务 14 版本号管理 / 任务 18 全局快捷键 / 任务 19 搜索过滤 / 任务 22 结构化日志最小集 / 任务 25 隐私政策 / 任务 26 DMG + landing page 已完成）
+- **阶段进度**：阶段 1 + 阶段 2 完成。阶段 3 里不依赖开发者账号的增强项已做完：任务 15、20、21、23、24。发布链路（任务 16 Sparkle、任务 17 CI、任务 14 打 tag）等有开发者账号再做。Sentry 与 iCloud 继续后置。
 
 ## 当前审查结论
 
-2026-10-27 完成分模块静态审查、SwiftPM／Xcode 各 165 项测试、Debug 构建及未签名 Release archive；发现正式使用阻塞。结果、复现和验收清单统一保存在 `docs/audits/2026-10-27-release-readiness.md`，不要以历史“阶段 2 完成”推断真实 Helper／签名／公证已验收。
+2026-10-27 基于 `f476c03` 完成分模块静态审查、SwiftPM／Xcode 各 165 项测试、Debug 构建及未签名 Release archive；发现正式使用阻塞。现已合入远端 `525673f`，历史结论应结合报告的合并后状态阅读。结果、复现和验收清单统一保存在 `docs/audits/2026-10-27-release-readiness.md`，不要以历史“阶段 2 完成”推断真实 Helper／签名／公证已验收。
 
 - 首轮审查仅在两份测试中五处显式设置 `backupStore: nil`（T01）。首轮测试曾创建并轮转真实用户备份，可能清理旧备份，已告知用户；修复后用户目录复验未变，真实 hosts 始终未变。
 - 用户随后授权直接处理明确问题，已修复 R08（LF／CRLF 分行）、R12（IPv6 按地址值与接口作用域比较）、R17（无预览时备份错误可见）；新增 12 项测试，SwiftPM 共 177 项通过，SwiftPM 与未签名 Xcode Debug App 构建通过。R17 尚待 UI 人工验收。
 - 隔离审查用例保存在 `docs/audits/2026-10-27/`，10 项中 8 项暴露缺陷、2 项对照／万条映射测试通过；不在默认测试 target 中。
-- 当前优先修复 Helper 产物链、写入队列／恢复意图和编辑草稿安全。写入状态机与安全边界方案需先确认，不能自动取消 hash 保护来掩盖错误。
+- 合并远端后保留 `parseDocument` 原文／注释／空行及本地 CRLF／IPv6 处理，修复输出记录来源丢失并增加 2 项整合回归；补齐新增测试的备份与超时读盘隔离。234 项测试、SwiftPM 构建、XcodeGen 和未签名 Xcode Debug App 构建通过，真实 hosts 与用户备份未变。
+- 远端已补 R01–R05、R13、R15 的实现；Helper 路径、rpath 和嵌入 plist 已做 Debug 产物检查，Release Hardened Runtime 设置已核对。R09、R10、R14 仅部分缓解；R06、R07、R11、R16、R18–R21 仍开放。真实签名／系统审批不等同于静态构建检查。
+- 当前优先处理写入队列／恢复意图和退出／编辑草稿安全。写入状态机与安全边界方案需先确认，不能自动取消 hash 保护来掩盖错误。
 
 ## 最近一次重要变更
+
+**2026-10-04 全项目代码审查与修复（远端提交 `525673f`）**
+
+1. Helper 打包：launchd plist 补 `BundleProgram` / `AssociatedBundleIdentifiers`；Helper 开 `CREATE_INFOPLIST_SECTION_IN_BINARY`（签名标识变为 `com.hostcat.helper`，能读到 Team ID）；rpath 加 `@executable_path/../../Frameworks`；App 与 Helper 的 Release 开 Hardened Runtime。Debug 产物已验证 `__info_plist`、签名标识、dyld 加载路径，**真实签名包的注册 → 审批 → 写入还没做 smoke test**。
+2. 误报外部修改：coordinator 的 expected hash 优先用本会话最近一次成功写入的 hash；ViewModel 记录被取代批次的成功结果。
+3. XPC：Helper 回复的 `writeFailed` 归为 `writeRejected`（不再弹 Helper 引导），未知错误码归 `unexpectedReply`；连接回调按代际号只处理自己那条连接。
+4. 备份按文件名里的纪元纳秒排序和显示；日志插值统一 `privacy: .public`；配置损坏/读取失败时提示用户，读不了的原文件挪到 `config.json.unreadable.*`。
+5. 编辑器切换节点前询问未应用修改；主机名只收 ASCII；全局快捷键必须含 ⌘/⌥/⌃；DNS 未确认改发 `appliedWithWarning` 通知；默认节点切换不再触发写入。
+6. 验证：`swift test`（XCTest 193 + Swift Testing 27）全过，`swift build`、`xcodegen generate`、`xcodebuild build` 通过。
+
+**2026-10-03 1.x 增强：导入导出、通知、诊断多语言、大文件与可访问性**
+
+1. `ConfigTransferService`：导出清掉 `state`；导入支持合并（按分组名/节点名，新增节点默认不启用，默认节点不动）和替换。入口在编辑器工具栏「更多」。
+2. `NotificationService` + `NotificationPreferences`：成功通知默认关，失败和外部修改默认开。点击通知弹出菜单栏。
+3. `WriteErrorDetail` 把写入诊断从硬编码英文改成按 XPC 传入语言翻译，`strerror` 原文保留。
+4. `LargeHostsPerformanceTests` 覆盖 6000 行。编辑器校验 debounce 200ms；高亮和文档宽度避免重复全量计算。
+5. 侧边栏 `List(selection:)`，启用/折叠改为按钮，补 VoiceOver 标签。
+6. 可用性修复：节点名称用按钮选中（列表点击手势在 macOS 上不触发）；打开编辑器直接进入默认节点。选中节点会创建文本视图，滚动通知重入布局曾导致独占访问崩溃，同步布局期间已忽略重入。调试包实测：编辑器打开即显示默认节点全文，进程不崩溃。
+7. 写入可靠性：Helper 只写 `/private/etc/hosts`；非强制写入必须带 hash；内容上限 1 MB；`ApplyStatus.hashMismatch` 不再比较文案；启动时做 hash 对账；XPC 超时后用磁盘内容对账；DNS 未确认时提示；合并保留注释和空行；备份默认 20 份。单选仍按项目约定保持多选，没有做回界面。
 
 **2026-09-01 对齐 Xcode / XcodeGen 工具链基线**
 
@@ -43,6 +64,10 @@
 ## 活跃文件
 
 近期接触：
+- `project.yml` / `Sources/HostCatPrivilegedHelper/com.hostcat.helper.plist` — Helper 打包修复
+- `Sources/HostCatCore/{HostWriteCoordinator,MenuBarViewModel,BackupStore,AppConfigStore,HostsParser}.swift` — 审查修复
+- `Sources/HostCatHelperClient/XPCHostHelperClient.swift` — 错误分类与连接代际
+- `Sources/HostCatApp/EditorView.swift` — 切换节点保护、拖拽复位
 - `project.yml` / `HostCat.xcodeproj` — Xcode 26.6、XcodeGen 2.46.0 基线与生成工程
 - `CHANGELOG.md` / `memory-bank/techContext.md` — 同步工具链版本事实
 - `Sources/HostCatApp/Shortcut.swift` / `CarbonHotKeyMonitor.swift` / `ShortcutRecorderView.swift` — 自实现快捷键三件套（新增）
@@ -57,6 +82,9 @@
 
 | 决策 | 时间 | 原因 |
 |------|------|------|
+| expected hash 优先取 coordinator 最近一次成功写入的 hash | 2026-10-04 | 配置快照可能早于上一批写入完成，用快照会把自己刚写的内容当成外部修改 |
+| Hardened Runtime 只在 Release 开启 | 2026-10-04 | 公证必须开；Debug 是 ad-hoc 签名，开启后会触发库校验失败 |
+| 主机名只接受 ASCII | 2026-10-04 | hosts 不做 IDN 转换，非 ASCII 主机名永远解析不到，应写 punycode |
 | XcodeGen 最低版本对齐到 2.46.0 | 2026-09-01 | 与官方最新稳定版及当前开发环境一致，避免不同版本生成工程产生漂移 |
 | 自实现快捷键替代 KeyboardShortcuts 三方包 | 2026-06-18 | 维持「零三方依赖」承诺；KeyboardShortcuts 内部也是包 Carbon，自实现成本可控（~250 行） |
 | 用 Carbon `RegisterEventHotKey` 而非 `NSEvent.addGlobalMonitor` | 2026-06-18 | 前者是 Apple 官方稳定 API（10.3 起），不需要"输入监控/辅助功能"授权；后者要授权弹窗，体验差 |
@@ -71,11 +99,13 @@
 
 ## 下一步
 
-优先处理 `TODO.md` 顶部的正式使用前审查修复清单，再按报告完成签名后的隔离验收。涉及写入状态机及安全边界的后续方案尚待用户确认；Sparkle／CI/CD 可后置，不是个人自用的首要门槛。首次 tag 应在发布验收通过后创建。
+优先处理 `TODO.md` 顶部仍开放的正式使用前审查问题，再按报告完成隔离验收；不要把历史基线问题与已合入的远端修复混淆。涉及写入状态机及安全边界的后续方案仍需确认。
+
+获得 Apple Developer 账号后，在明确授权的专用测试机／VM 用 Developer ID 签名包验证 Helper 注册 → 系统审批 → 写入／恢复 → DNS 刷新，并完成公证、Gatekeeper 与升级／卸载验收；普通开发测试不写宿主 hosts。任务 17 CI/CD、任务 16 Sparkle 可后置，任务 14 首次 tag 应在发布验收通过后创建。
 
 ## 阻塞
 
-- 除 T01、R08、R12、R17 外，其余审查问题尚未修复，尤其 Helper 产物配置与写入数据完整性问题。
+- 部分写入队列、恢复重试和数据完整性问题仍需处理，具体以审查报告的合并后状态为准。
 - 用户尚未取得开发者账号，Developer ID 签名、公证及系统级真实 Helper 验收未执行。
 - 原生 UI、macOS 14 最低系统及升级／卸载场景尚未实测。
 

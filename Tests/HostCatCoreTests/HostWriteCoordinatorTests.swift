@@ -299,12 +299,17 @@ final class HostWriteCoordinatorTests: XCTestCase {
 
     /// `hashMismatch` / `fileImmutable` 等真实写入错误必须仍走 `.writeFailed`，
     /// 不能被新的 helper 引导路径吞掉。
-    func testWriteErrorStillReportsWriteFailed() async {
+    func testWriteErrorStillReportsWriteFailed() async throws {
+        // 超时后的读盘对账也使用临时文件，避免测试依赖宿主 hosts 内容。
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let hostsURL = directory.appendingPathComponent("hosts")
+        try Data().write(to: hostsURL)
         let writeErrors: [HostHelperClientError] = [
-            .hashMismatch,
             .fileImmutable,
             .requestTimedOut,
             .unexpectedReply("missing finalHash"),
+            .writeRejected("缺少 hash"),
         ]
 
         for error in writeErrors {
@@ -314,6 +319,7 @@ final class HostWriteCoordinatorTests: XCTestCase {
             let coordinator = HostWriteCoordinator(
                 helperClient: fakeClient,
                 backupStore: nil,
+                hostsPath: hostsURL.path,
                 debounceInterval: .milliseconds(1)
             )
 
@@ -326,6 +332,90 @@ final class HostWriteCoordinatorTests: XCTestCase {
                 XCTFail("\(error) 应保持 .writeFailed，实际: \(result.status)")
             }
         }
+    }
+
+    func testHashMismatchUsesDedicatedStatus() async {
+        let fakeClient = FakeHostHelperClient()
+        await fakeClient.setShouldSucceed(false)
+        await fakeClient.setSimulatedError(HostHelperClientError.hashMismatch)
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+
+        let result = await coordinator.scheduleApply(config: makeConfig())
+
+        XCTAssertFalse(result.success)
+        XCTAssertEqual(result.status, .hashMismatch)
+    }
+
+    func testForceWriteOmitsExpectedHash() async {
+        let fakeClient = FakeHostHelperClient()
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        var config = makeConfig()
+        config.state.lastAppliedHostsHash = "old-hash"
+
+        let result = await coordinator.applyImmediately(config: config, force: true)
+
+        XCTAssertTrue(result.success)
+        let hashes = await fakeClient.expectedHashes
+        let flags = await fakeClient.forceFlags
+        XCTAssertEqual(hashes, [nil])
+        XCTAssertEqual(flags, [true])
+    }
+
+    /// 第二次请求的快照在第一次写入完成前生成，state 里还是旧 hash；
+    /// coordinator 应以自己最近一次成功写入的 hash 作为预期值，不能误报外部修改。
+    func testStaleSnapshotUsesLatestAppliedHashAsExpectedHash() async {
+        let fakeClient = FakeHostHelperClient()
+        await fakeClient.setDiskHash("disk-0")
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            debounceInterval: .milliseconds(1)
+        )
+        var first = makeConfig(defaultContent: "127.0.0.1 localhost\n")
+        first.state.lastAppliedHostsHash = "disk-0"
+        var second = first
+        second.defaultNode.content = "127.0.0.1 localhost\n10.0.0.1 second.test\n"
+
+        let firstResult = await coordinator.applyImmediately(config: first)
+        let secondResult = await coordinator.applyImmediately(config: second)
+
+        XCTAssertTrue(firstResult.success)
+        XCTAssertTrue(secondResult.success, "实际状态: \(secondResult.status)")
+        let hashes = await fakeClient.expectedHashes
+        XCTAssertEqual(hashes, ["disk-0", firstResult.appliedHash])
+    }
+
+    func testTimeoutIsSuccessWhenDiskAlreadyMatches() async throws {
+        let config = makeConfig(defaultContent: "127.0.0.1 localhost\n")
+        let merged = try HostsMerger().merge(config)
+        let directory = try makeTemporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let hostsURL = directory.appendingPathComponent("hosts")
+        try merged.text.write(to: hostsURL, atomically: true, encoding: .utf8)
+
+        let fakeClient = FakeHostHelperClient()
+        await fakeClient.setShouldSucceed(false)
+        await fakeClient.setSimulatedError(HostHelperClientError.requestTimedOut)
+        let coordinator = HostWriteCoordinator(
+            helperClient: fakeClient,
+            backupStore: nil,
+            hostsPath: hostsURL.path,
+            debounceInterval: .milliseconds(1)
+        )
+
+        let result = await coordinator.scheduleApply(config: config)
+
+        XCTAssertTrue(result.success)
+        XCTAssertEqual(result.didRefreshDNS, false)
+        XCTAssertEqual(result.appliedHash, HostsHash.sha256Hex(merged.text))
     }
 
     private func makeTemporaryDirectory() throws -> URL {

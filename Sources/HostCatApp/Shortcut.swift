@@ -12,19 +12,26 @@ struct Shortcut: Codable, Equatable, Sendable {
 
     /// 从用户在录制框中按下的 `NSEvent` 构造快捷键。
     ///
-    /// 必须包含至少一个 modifier（⌘/⌥/⌃/⇧），否则返回 nil —— 单字母快捷键会跟正常输入冲突。
+    /// 必须包含 ⌘/⌥/⌃ 之一，否则返回 nil：单字母会跟正常输入冲突，
+    /// 只带 ⇧ 的组合（如 ⇧A）注册成全局热键后，全系统都打不出对应的大写字母。
     init?(event: NSEvent) {
         let cocoaFlags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        let carbon = Shortcut.carbonModifiers(from: cocoaFlags)
-        guard carbon != 0 else { return nil }
-
-        self.keyCode = UInt32(event.keyCode)
-        self.carbonModifiers = carbon
+        self.init(
+            keyCode: UInt32(event.keyCode),
+            carbonModifiers: Shortcut.carbonModifiers(from: cocoaFlags)
+        )
+        guard isUsableAsGlobalHotKey else { return nil }
     }
 
     init(keyCode: UInt32, carbonModifiers: UInt32) {
         self.keyCode = keyCode
         self.carbonModifiers = carbonModifiers
+    }
+
+    /// 是否包含 ⌘/⌥/⌃ 之一，可以安全注册为全局热键。
+    var isUsableAsGlobalHotKey: Bool {
+        let requiredModifiers = UInt32(cmdKey) | UInt32(optionKey) | UInt32(controlKey)
+        return carbonModifiers & requiredModifiers != 0
     }
 
     /// 把 Cocoa `NSEvent.ModifierFlags` 转成 Carbon `RegisterEventHotKey` 需要的 mask。

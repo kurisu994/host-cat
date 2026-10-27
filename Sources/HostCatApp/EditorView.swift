@@ -25,6 +25,10 @@ struct EditorView: View {
     @State private var draggingNodeID: UUID?
     @State private var collapsedGroupIDs: Set<UUID> = []
     @State private var searchText: String = ""
+    /// 语法校验防抖任务。大文件下逐键全量校验会卡住主线程。
+    @State private var validationTask: Task<Void, Never>?
+    /// 当前节点有未应用修改时请求切换到的目标节点，等用户决定后再切换。
+    @State private var pendingNodeSwitch: PendingNodeSwitch?
 
     /// 搜索是否激活。
     private var isSearching: Bool { !searchText.isEmpty }
@@ -61,7 +65,7 @@ struct EditorView: View {
         NavigationSplitView {
             VStack(spacing: 0) {
                 // Left: groups and node tree
-                List {
+                List(selection: nodeSelectionBinding) {
                     if showDefaultNode {
                         // Default node
                         Section(L.sidebarDefault) {
@@ -69,12 +73,10 @@ struct EditorView: View {
                                 name: viewModel.config.defaultNode.name,
                                 isActive: viewModel.config.defaultNode.isActive,
                                 isDefault: true,
-                                isSelected: selectedNodeID == viewModel.config.defaultNode.id
+                                isSelected: selectedNodeID == viewModel.config.defaultNode.id,
+                                onSelect: { requestNodeSelection(viewModel.config.defaultNode.id) }
                             )
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                selectedNodeID = viewModel.config.defaultNode.id
-                            }
+                            .tag(viewModel.config.defaultNode.id)
                         }
                     }
 
@@ -120,19 +122,18 @@ struct EditorView: View {
                                         isDefault: false,
                                         isSelected: selectedNodeID == node.id,
                                         onToggleActive: {
+                                            requestNodeSelection(node.id)
                                             viewModel.toggleNode(id: node.id, inGroup: group.id)
-                                        }
+                                        },
+                                        onSelect: { requestNodeSelection(node.id) }
                                     )
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        selectedNodeID = node.id
-                                    }
-                                    .onTapGesture(count: 2) {
-                                        editingNodeToRename = (group.id, node.id)
-                                        renameNodeNewName = node.name
-                                        showRenameNodeDialog = true
-                                    }
+                                    .tag(node.id)
                                     .contextMenu {
+                                        Button(L.sidebarRenameNode) {
+                                            editingNodeToRename = (group.id, node.id)
+                                            renameNodeNewName = node.name
+                                            showRenameNodeDialog = true
+                                        }
                                         Button(L.sidebarDeleteNode) {
                                             nodeToDelete = (group.id, node.id)
                                             showDeleteConfirmation = true
@@ -141,6 +142,7 @@ struct EditorView: View {
                                     .opacity(draggingNodeID == node.id ? 0.4 : 1.0)
                                     .onDrag {
                                         draggingNodeID = node.id
+                                        resetDraggingWhenMouseReleased()
                                         return NSItemProvider(object: node.id.uuidString as NSString)
                                     }
                                     .onDrop(
@@ -163,13 +165,46 @@ struct EditorView: View {
                         }
                     }
                     .onMove { source, destination in
+                        // 搜索结果的下标不是完整分组列表，按它排序会把真实顺序打乱。
+                        guard !isSearching else { return }
                         moveGroups(from: source, to: destination)
                     }
                 }
                 .listStyle(.sidebar)
                 .searchable(text: $searchText, prompt: L.sidebarSearchPlaceholder)
+                .onAppear {
+                    // 打开编辑器就进入默认节点，避免停在「请选择节点」。
+                    if selectedNodeID == nil {
+                        selectedNodeID = viewModel.config.defaultNode.id
+                    }
+                    loadNodeContent(id: selectedNodeID)
+                }
                 .onChange(of: selectedNodeID) { _, newID in
                     loadNodeContent(id: newID)
+                }
+                .alert(
+                    L.transferUnsavedTitle,
+                    isPresented: Binding(
+                        get: { pendingNodeSwitch != nil },
+                        set: { if !$0 { pendingNodeSwitch = nil } }
+                    ),
+                    presenting: pendingNodeSwitch
+                ) { pending in
+                    Button(L.transferUnsavedApply) {
+                        saveCurrentNode()
+                        selectedNodeID = pending.targetNodeID
+                        pendingNodeSwitch = nil
+                    }
+                    Button(L.transferUnsavedDiscard, role: .destructive) {
+                        // 切换后 onChange 会重新载入目标节点内容，当前未应用的修改随之丢弃。
+                        selectedNodeID = pending.targetNodeID
+                        pendingNodeSwitch = nil
+                    }
+                    Button(L.dialogCancel, role: .cancel) {
+                        pendingNodeSwitch = nil
+                    }
+                } message: { _ in
+                    Text(L.editorSwitchUnsavedMessage)
                 }
 
                 Divider()
@@ -185,8 +220,10 @@ struct EditorView: View {
             if let nodeID = selectedNodeID {
                 VStack(alignment: .leading, spacing: 0) {
                     EditorToolbar(
+                        viewModel: viewModel,
                         title: editingName,
                         hasUnsavedEdits: hasUnsavedEdits,
+                        onImported: refreshAfterImport,
                         onApply: saveCurrentNode,
                         onRevert: {
                             reloadContent(id: nodeID)
@@ -198,7 +235,7 @@ struct EditorView: View {
                     HostsTextView(text: $editingContent, errorLines: errorLines)
                         .frame(minWidth: 400, minHeight: 300)
                         .onChange(of: editingContent) { _, newValue in
-                            validateContent(newValue)
+                            scheduleValidation(newValue)
                         }
 
                     // Status bar
@@ -242,6 +279,9 @@ struct EditorView: View {
         .alert(L.dialogDeleteNodeTitle, isPresented: $showDeleteConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let (groupID, nodeID) = nodeToDelete {
+                    if selectedNodeID == nodeID {
+                        selectedNodeID = nil
+                    }
                     let service = mutationService
                     service.removeNode(id: nodeID, fromGroup: groupID, in: &viewModel.config)
                     viewModel.scheduleApply()
@@ -257,6 +297,10 @@ struct EditorView: View {
         .alert(L.dialogDeleteGroupTitle, isPresented: $showDeleteGroupConfirmation) {
             Button(L.dialogDelete, role: .destructive) {
                 if let groupID = groupToDelete {
+                    if let selectedNodeID,
+                       viewModel.config.groups.first(where: { $0.id == groupID })?.nodes.contains(where: { $0.id == selectedNodeID }) == true {
+                        self.selectedNodeID = nil
+                    }
                     let service = mutationService
                     service.removeGroup(id: groupID, from: &viewModel.config)
                     viewModel.scheduleApply()
@@ -327,6 +371,9 @@ struct EditorView: View {
                               let (groupID, nodeID) = editingNodeToRename else { return }
                         let service = mutationService
                         service.renameNode(id: nodeID, to: renameNodeNewName, inGroup: groupID, in: &viewModel.config)
+                        if nodeID == selectedNodeID {
+                            editingName = renameNodeNewName
+                        }
                         viewModel.scheduleApply()
                         renameNodeNewName = ""
                         editingNodeToRename = nil
@@ -337,16 +384,59 @@ struct EditorView: View {
         }
     }
 
+    /// 列表选择走这里拦一道，用户点击切换时先检查未应用的修改。
+    private var nodeSelectionBinding: Binding<UUID?> {
+        Binding(
+            get: { selectedNodeID },
+            set: { requestNodeSelection($0) }
+        )
+    }
+
+    /// 切换选中节点；当前节点有未应用修改时先询问，避免静默丢失编辑。
+    private func requestNodeSelection(_ nodeID: UUID?) {
+        guard nodeID != selectedNodeID else { return }
+        guard hasUnsavedEdits else {
+            selectedNodeID = nodeID
+            return
+        }
+        // 有修改时点空白处取消选中直接忽略，不丢编辑。
+        guard let nodeID else { return }
+        pendingNodeSwitch = PendingNodeSwitch(targetNodeID: nodeID)
+    }
+
+    /// SwiftUI 没有拖拽结束回调：拖到列表外松手时 performDrop 不会触发，
+    /// 这里轮询鼠标左键，松开后复位拖拽状态，避免节点一直半透明。
+    private func resetDraggingWhenMouseReleased() {
+        Task { @MainActor in
+            repeat {
+                try? await Task.sleep(for: .milliseconds(100))
+            } while NSEvent.pressedMouseButtons & 1 != 0
+            draggingNodeID = nil
+        }
+    }
+
+    /// 导入配置后，选中节点可能已被替换或不存在，需重新同步编辑区。
+    private func refreshAfterImport() {
+        if let id = selectedNodeID, currentNodeContent(id: id) == nil {
+            selectedNodeID = nil
+        } else {
+            loadNodeContent(id: selectedNodeID)
+        }
+    }
+
     private func loadNodeContent(id: UUID?) {
+        validationTask?.cancel()
         guard let id = id else {
             editingContent = ""
             editingName = ""
+            validateContent("")
             return
         }
 
         if id == viewModel.config.defaultNode.id {
             editingContent = viewModel.config.defaultNode.content
             editingName = viewModel.config.defaultNode.name
+            validateContent(editingContent)
             return
         }
 
@@ -354,9 +444,14 @@ struct EditorView: View {
             if let node = group.nodes.first(where: { $0.id == id }) {
                 editingContent = node.content
                 editingName = node.name
+                validateContent(editingContent)
                 return
             }
         }
+
+        editingContent = ""
+        editingName = ""
+        validateContent("")
     }
 
     private var hasUnsavedEdits: Bool {
@@ -414,6 +509,16 @@ struct EditorView: View {
         viewModel.scheduleApply()
     }
 
+    /// 停止输入约 200ms 后再做全量语法校验，避免超大 hosts 逐键卡顿。
+    private func scheduleValidation(_ content: String) {
+        validationTask?.cancel()
+        validationTask = Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            validateContent(content)
+        }
+    }
+
     /// Validates edited content and extracts all error line numbers.
     private func validateContent(_ content: String) {
         let parser = HostsParser()
@@ -438,11 +543,19 @@ struct EditorView: View {
     }
 }
 
+/// 等待用户确认的节点切换请求。
+private struct PendingNodeSwitch: Identifiable {
+    let id = UUID()
+    let targetNodeID: UUID
+}
+
 private struct EditorToolbar: View {
     private static let titleLeadingInset: CGFloat = 56
 
+    @ObservedObject var viewModel: MenuBarViewModel
     let title: String
     let hasUnsavedEdits: Bool
+    let onImported: () -> Void
     let onApply: () -> Void
     let onRevert: () -> Void
 
@@ -456,6 +569,14 @@ private struct EditorToolbar: View {
 
             Spacer(minLength: 16)
 
+            ConfigTransferMenu(
+                viewModel: viewModel,
+                hasUnsavedEdits: hasUnsavedEdits,
+                onApplyEdits: onApply,
+                onDiscardEdits: onRevert,
+                onImported: onImported
+            )
+
             Button {
                 onRevert()
             } label: {
@@ -465,6 +586,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut("z", modifiers: [.command, .shift])
             .help(L.editorDiscardTooltip)
+            .accessibilityHint(L.editorDiscardTooltip)
             .disabled(!hasUnsavedEdits)
 
             Button {
@@ -476,6 +598,7 @@ private struct EditorToolbar: View {
             .controlSize(.regular)
             .keyboardShortcut(.return, modifiers: .command)
             .help(L.editorApplyTooltip)
+            .accessibilityHint(L.editorApplyTooltip)
             .disabled(!hasUnsavedEdits)
         }
         .padding(.leading, Self.titleLeadingInset)

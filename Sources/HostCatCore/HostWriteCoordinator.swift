@@ -10,6 +10,8 @@ public enum ApplyStatus: Equatable, Sendable {
     case conflicts([HostConflict])
     case writeFailed(String)
     case mergeFailed(String)
+    /// 磁盘上的 hosts 与预期 hash 不一致，需要用户决定是否覆盖。
+    case hashMismatch
     /// Helper 不可用（未注册、未审批或 XPC 连接断开），UI 应当引导用户去注册/启用 Helper。
     case helperUnavailable(String)
 }
@@ -21,6 +23,8 @@ public struct ApplyResult: Equatable, Sendable {
     public var conflicts: [HostConflict]?
     public var errorMessage: String?
     public var status: ApplyStatus
+    /// 仅成功时有意义。false 表示文件已写入但 DNS 没确认刷新。
+    public var didRefreshDNS: Bool?
 
     public init(
         success: Bool,
@@ -28,7 +32,8 @@ public struct ApplyResult: Equatable, Sendable {
         appliedAt: Date? = nil,
         conflicts: [HostConflict]? = nil,
         errorMessage: String? = nil,
-        status: ApplyStatus = .success
+        status: ApplyStatus = .success,
+        didRefreshDNS: Bool? = nil
     ) {
         self.success = success
         self.appliedHash = appliedHash
@@ -36,6 +41,7 @@ public struct ApplyResult: Equatable, Sendable {
         self.conflicts = conflicts
         self.errorMessage = errorMessage
         self.status = status
+        self.didRefreshDNS = didRefreshDNS
     }
 }
 
@@ -166,13 +172,15 @@ public actor HostWriteCoordinator {
         let writePlan: WritePlan
         do {
             let merged = try merger.merge(config)
+            // 配置快照可能在上一次写入完成前生成，state 里的 hash 会落后于磁盘；
+            // 本会话内成功写入过时以 coordinator 自己记录的 hash 为准。
             let expectedHash = force
                 ? nil
-                : config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
+                : lastAppliedHash ?? config.state.lastAppliedHostsHash ?? config.state.lastExternalHostsHash
             writePlan = (merged, expectedHash)
-            logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount))")
+            logger.info("\(LC.logMergeSuccess(records: merged.records.count, duplicates: merged.duplicateCount), privacy: .public)")
         } catch let HostMergeError.conflicts(conflicts) {
-            logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
+            logger.warning("\(LC.logMergeConflicts(count: conflicts.count), privacy: .public)")
             return ApplyResult(
                 success: false,
                 conflicts: conflicts,
@@ -180,7 +188,7 @@ public actor HostWriteCoordinator {
             )
         } catch {
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error("\(LC.logMergeFailed(message))")
+            logger.error("\(LC.logMergeFailed(message), privacy: .public)")
             return ApplyResult(
                 success: false,
                 errorMessage: message,
@@ -194,10 +202,10 @@ public actor HostWriteCoordinator {
                 let currentHostsData = try Data(contentsOf: URL(fileURLWithPath: hostsPath))
                 let currentHostsText = HostsImporter().importHostsWithFallback(data: currentHostsData).decodedContent
                 _ = try backupStore.createBackup(content: currentHostsText)
-                logger.info("\(LC.logBackupCreated("pre-write"))")
+                logger.info("\(LC.logBackupCreated("pre-write"), privacy: .public)")
             } catch {
                 let message = "\(LC.logBackupFailed(error.localizedDescription))"
-                logger.error("\(message)")
+                logger.error("\(message, privacy: .public)")
                 return ApplyResult(
                     success: false,
                     errorMessage: message,
@@ -210,57 +218,103 @@ public actor HostWriteCoordinator {
         do {
             let result = try await helperClient.writeHosts(
                 writePlan.merged.text,
-                expectedCurrentHostsHash: writePlan.expectedHash
+                expectedCurrentHostsHash: writePlan.expectedHash,
+                force: force
             )
 
-            // 4. Write succeeded: update state
-            let appliedAt = Date()
-            var appliedConfig = config
-            appliedConfig.state.lastAppliedHostsHash = result.finalHostsHash
-            appliedConfig.state.lastAppliedAt = appliedAt
-
-            lastAppliedHash = result.finalHostsHash
-            lastAppliedAt = appliedAt
-            lastSuccessfulConfigSnapshot = appliedConfig
-
-            logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))))")
-
-            return ApplyResult(
-                success: true,
-                appliedHash: result.finalHostsHash,
-                appliedAt: appliedAt,
-                status: .success
+            logger.info("\(LC.logWriteSuccess(hashPrefix: String(result.finalHostsHash.prefix(8))), privacy: .public)")
+            return successResult(
+                config: config,
+                hash: result.finalHostsHash,
+                didRefreshDNS: result.didRefreshDNS
             )
         } catch {
+            // 超时后 Helper 可能已经写完。磁盘内容和本次合成一致时按成功记，避免下次被误判成外部修改。
+            if let helperError = error as? HostHelperClientError,
+               case .requestTimedOut = helperError,
+               await diskContains(writePlan.merged.text) {
+                logger.warning("XPC 超时，但磁盘内容已与本次写入一致，按成功处理")
+                return successResult(
+                    config: config,
+                    hash: HostsHash.sha256Hex(writePlan.merged.text),
+                    didRefreshDNS: false
+                )
+            }
+
             // 5. Write failed: 草稿已在 UI 层持久化，hosts 保持未应用状态。
-            // `lastSuccessfulConfigSnapshot` 仍保留供服务层判定真实 hosts 内容，
-            // 但 UI 不再用它覆盖用户正在编辑的草稿。
             let message = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-            logger.error("\(LC.logWriteFailed(message))")
-            let status: ApplyStatus = Self.isHelperUnavailable(error)
-                ? .helperUnavailable(message)
-                : .writeFailed(message)
+            logger.error("\(LC.logWriteFailed(message), privacy: .public)")
             return ApplyResult(
                 success: false,
                 errorMessage: message,
-                status: status
+                status: Self.status(for: error, message: message)
             )
         }
     }
 
-    /// 判断 helper client 抛出的错误是否属于「Helper 整体不可用」类，
-    /// 用于驱动 UI 进入辅助注册引导，而不是直接显示一段红色错误。
-    private static func isHelperUnavailable(_ error: Error) -> Bool {
-        guard let helperError = error as? HostHelperClientError else { return false }
+    private func successResult(config: AppConfig, hash: String, didRefreshDNS: Bool?) -> ApplyResult {
+        let appliedAt = Date()
+        var appliedConfig = config
+        appliedConfig.state.lastAppliedHostsHash = hash
+        appliedConfig.state.lastAppliedAt = appliedAt
+        lastAppliedHash = hash
+        lastAppliedAt = appliedAt
+        lastSuccessfulConfigSnapshot = appliedConfig
+        return ApplyResult(
+            success: true,
+            appliedHash: hash,
+            appliedAt: appliedAt,
+            status: .success,
+            didRefreshDNS: didRefreshDNS
+        )
+    }
+
+    /// 短暂重读几次，覆盖「超时瞬间写入刚好完成」的窗口。
+    private func diskContains(_ content: String) async -> Bool {
+        let expected = HostsHash.sha256Hex(content)
+        for attempt in 0..<4 {
+            if attempt > 0 {
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            guard let data = try? Data(contentsOf: URL(fileURLWithPath: hostsPath)) else {
+                continue
+            }
+            if HostsHash.sha256Hex(Self.decodeHostsData(data)) == expected {
+                return true
+            }
+        }
+        return false
+    }
+
+    private static func decodeHostsData(_ data: Data) -> String {
+        if let text = String(data: data, encoding: .utf8) {
+            return text
+        }
+        if let text = String(data: data, encoding: .isoLatin1) {
+            return text
+        }
+        return ""
+    }
+
+    private static func status(for error: Error, message: String) -> ApplyStatus {
+        guard let helperError = error as? HostHelperClientError else {
+            return .writeFailed(message)
+        }
         switch helperError {
         case .unavailable,
              .helperNotRegistered,
              .helperNotApproved,
              .connectionInterrupted,
              .connectionInvalidated:
-            return true
-        case .hashMismatch, .fileImmutable, .requestTimedOut, .unexpectedReply:
-            return false
+            return .helperUnavailable(message)
+        case .hashMismatch:
+            return .hashMismatch
+        case .fileImmutable,
+             .requestTimedOut,
+             .unexpectedReply,
+             .writeRejected:
+            return .writeFailed(message)
         }
     }
+
 }

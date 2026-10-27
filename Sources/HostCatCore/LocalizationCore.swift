@@ -26,6 +26,19 @@ public enum LC {
     // MARK: - Write Errors
     public static var writeErrorFileImmutable: String { localize("write.error.file_immutable") }
     public static var writeErrorHashMismatch: String { localize("write.error.hash_mismatch") }
+    public static var unappliedHosts: String { localize("status.unapplied_hosts") }
+    public static var dnsRefreshUnconfirmed: String { localize("status.dns_refresh_unconfirmed") }
+    /// 配置文件损坏被重置为默认配置时的提示。
+    public static func configRecovered(_ reason: String) -> String {
+        String(format: localize("status.config_recovered"), reason)
+    }
+    /// 配置加载失败、本次改用默认配置时的提示；原文件被挪开保留时附上新路径。
+    public static func configLoadFailed(_ reason: String, preservedPath: String?) -> String {
+        guard let preservedPath else {
+            return String(format: localize("status.config_load_failed"), reason)
+        }
+        return String(format: localize("status.config_load_failed_preserved"), reason, preservedPath)
+    }
     public static func writeErrorContentValidationFailed(_ detail: String) -> String {
         String(format: localize("write.error.content_validation_failed"), detail)
     }
@@ -58,6 +71,9 @@ public enum LC {
         String(format: localize("config.error.atomic_replace_failed"), errno)
     }
     public static var configErrorInvalidJSON: String { localize("config.error.invalid_json") }
+
+    // MARK: - Config Transfer
+    public static var transferErrorInvalidFormat: String { localize("transfer.error.invalid_format") }
 
     // MARK: - Recovery Reasons
     public static var recoveryInvalidJSON: String { localize("recovery.invalid_json") }
@@ -169,6 +185,11 @@ public enum LC {
     }
 
     // MARK: - Resource Resolution
+
+    /// 按指定语言取格式串并代入参数，供携带结构化参数的错误在展示时再翻译。
+    static func localizedFormat(_ key: String, arguments: [String], language: AppLanguage) -> String {
+        String(format: localizedString(key, language: language), arguments: arguments)
+    }
 
     static func localizedString(
         _ key: String,

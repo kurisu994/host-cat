@@ -62,6 +62,9 @@ public final class MenuBarViewModel: ObservableObject {
     /// 引导完成后调用 `retryApplyAfterHelperRecovery()` 重新触发写入。
     @Published public var helperRecoveryPrompt: HelperRecoveryPrompt?
 
+    /// 写入流程结果事件回调，App 层据此发送系统通知；Core 不依赖 UserNotifications。
+    public var applyEventHandler: (@MainActor (ApplyNotificationEvent) -> Void)?
+
     private let mutationService = ConfigMutationService()
     private let coordinator: HostWriteCoordinator
     private let configStore: AppConfigStore
@@ -111,11 +114,11 @@ public final class MenuBarViewModel: ObservableObject {
     public func toggleNode(id: UUID, inGroup groupID: UUID?) {
         if let groupID = groupID {
             guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-                logger.warning("Attempted to toggle non-existent group: \(groupID.uuidString)")
+                logger.warning("Attempted to toggle non-existent group: \(groupID.uuidString, privacy: .public)")
                 return
             }
             guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-                logger.warning("Attempted to toggle non-existent node: \(id.uuidString)")
+                logger.warning("Attempted to toggle non-existent node: \(id.uuidString, privacy: .public)")
                 return
             }
             let currentActive = config.groups[groupIndex].nodes[nodeIndex].isActive
@@ -126,10 +129,11 @@ public final class MenuBarViewModel: ObservableObject {
                 inGroup: groupID,
                 in: &config
             )
-            logger.info("Node \(nodeName) toggled to \(!currentActive)")
+            logger.info("Node \(nodeName, privacy: .public) toggled to \(!currentActive, privacy: .public)")
         } else {
-            // Default node cannot be deactivated
+            // 默认节点恒激活，配置没有变化，不触发写入。
             logger.debug("Default node toggle ignored")
+            return
         }
 
         // Trigger debounced write
@@ -152,6 +156,7 @@ public final class MenuBarViewModel: ObservableObject {
 
             let result = await coordinator.scheduleApply(config: config)
             guard isCurrentApplyGeneration(generation) else {
+                recordSupersededSuccess(result)
                 return
             }
             isApplying = false
@@ -178,6 +183,7 @@ public final class MenuBarViewModel: ObservableObject {
         let result = await coordinator.applyImmediately(config: config)
 
         guard isCurrentApplyGeneration(generation) else {
+            recordSupersededSuccess(result)
             return result
         }
         isApplying = false
@@ -205,6 +211,7 @@ public final class MenuBarViewModel: ObservableObject {
         let result = await coordinator.applyImmediately(config: restoredConfig)
 
         guard isCurrentApplyGeneration(generation) else {
+            recordSupersededSuccess(result)
             return result
         }
         isApplying = false
@@ -232,6 +239,7 @@ public final class MenuBarViewModel: ObservableObject {
 
             let result = await coordinator.scheduleApply(config: config, force: true)
             guard isCurrentApplyGeneration(generation) else {
+                recordSupersededSuccess(result)
                 return
             }
             isApplying = false
@@ -244,45 +252,99 @@ public final class MenuBarViewModel: ObservableObject {
         failureLogPrefix: String
     ) {
         if !result.success {
-            logger.warning("\(failureLogPrefix), keeping current config draft, hosts not applied")
+            logger.warning("\(failureLogPrefix, privacy: .public), keeping current config draft, hosts not applied")
         }
 
         if result.success {
-            if let hash = result.appliedHash {
-                config.state.lastAppliedHostsHash = hash
-            }
-            if let at = result.appliedAt {
-                config.state.lastAppliedAt = at
-            }
-            do {
-                try configStore.save(config)
-                logger.info("\(LC.logConfigPersistSuccess)")
-            } catch {
-                logger.error("\(LC.logConfigPersistFailed(error.localizedDescription))")
+            if let error = recordAppliedState(result) {
                 applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             }
             updateMergedPreview()
+            if result.didRefreshDNS == false {
+                // 文件已写入，只是 DNS 没确认刷新：提示用户留意，但不能当成写入失败。
+                let message = LC.dnsRefreshUnconfirmed
+                applyError = message
+                applyEventHandler?(.appliedWithWarning(message))
+            } else {
+                applyEventHandler?(.applied)
+            }
+        } else if case .hashMismatch = result.status {
+            showExternalModificationAlert = true
+            applyError = LC.externalModificationDetected
+            applyEventHandler?(.externalModification)
+            logger.warning("\(LC.logExternalModification, privacy: .public)")
         } else if let conflicts = result.conflicts {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
-            logger.warning("\(LC.logMergeConflicts(count: conflicts.count))")
+            applyEventHandler?(.failed(LC.conflictsDetected(conflicts.count)))
+            logger.warning("\(LC.logMergeConflicts(count: conflicts.count), privacy: .public)")
         } else if let errorMessage = result.errorMessage {
             // Distinguish helper-unavailable / external-modification / other write errors.
             if case .helperUnavailable(let msg) = result.status {
                 // Helper 没就绪，不再用纯文字 banner，而是抛给 UI 的辅助注册流程。
                 helperRecoveryPrompt = HelperRecoveryPrompt(errorMessage: msg)
                 applyError = nil
-                logger.warning("Helper unavailable: \(msg)")
-            } else if case .writeFailed(let msg) = result.status,
-                      msg == HostHelperClientError.hashMismatch.localizedDescription {
-                showExternalModificationAlert = true
-                applyError = LC.externalModificationDetected
-                logger.warning("\(LC.logExternalModification)")
+                applyEventHandler?(.failed(LC.hostsNotApplied(msg)))
+                logger.warning("Helper unavailable: \(msg, privacy: .public)")
             } else {
                 applyError = LC.hostsNotApplied(errorMessage)
-                logger.error("\(LC.logApplyFailed(failureLogPrefix, errorMessage))")
+                applyEventHandler?(.failed(LC.hostsNotApplied(errorMessage)))
+                logger.error("\(LC.logApplyFailed(failureLogPrefix, errorMessage), privacy: .public)")
             }
         }
+    }
+
+    /// 把成功写入的 hash 和时间记进配置并落盘；保存失败时返回错误。
+    private func recordAppliedState(_ result: ApplyResult) -> Error? {
+        if let hash = result.appliedHash {
+            config.state.lastAppliedHostsHash = hash
+        }
+        if let at = result.appliedAt {
+            config.state.lastAppliedAt = at
+        }
+        do {
+            try configStore.save(config)
+            logger.info("\(LC.logConfigPersistSuccess, privacy: .public)")
+            return nil
+        } catch {
+            logger.error("\(LC.logConfigPersistFailed(error.localizedDescription), privacy: .public)")
+            return error
+        }
+    }
+
+    /// 被新请求取代的写入如果成功了，磁盘已经是它的内容，仍要记下 hash；
+    /// 否则配置里留着旧 hash，下次启动或下次写入会误判成外部修改。
+    private func recordSupersededSuccess(_ result: ApplyResult) {
+        guard result.success else { return }
+        // 更新的写入已经先记录过时不要回退。
+        if let current = config.state.lastAppliedAt,
+           let appliedAt = result.appliedAt,
+           appliedAt < current {
+            return
+        }
+        _ = recordAppliedState(result)
+    }
+
+    // MARK: - Config Import / Export
+
+    /// 导出当前配置（已清除本机 state）。
+    public func exportConfigData() throws -> Data {
+        try ConfigTransferService().exportData(config)
+    }
+
+    /// 解析导入文件，校验失败时抛出 `ConfigTransferError`，不改动当前配置。
+    public func decodeImportedConfig(_ data: Data) throws -> AppConfig {
+        try ConfigTransferService().decode(data)
+    }
+
+    /// 按所选模式应用导入配置，并触发一次延迟写入。
+    @discardableResult
+    public func importConfig(_ imported: AppConfig, mode: ConfigImportMode) -> ConfigImportSummary {
+        let result = ConfigTransferService().apply(imported, to: config, mode: mode)
+        config = result.config
+        logger.info("Config imported, mode=\(String(describing: mode), privacy: .public), addedGroups=\(result.summary.addedGroups, privacy: .public), addedNodes=\(result.summary.addedNodes, privacy: .public), updatedNodes=\(result.summary.updatedNodes, privacy: .public)")
+        scheduleApply()
+        return result.summary
     }
 
     // MARK: - Helper Recovery
@@ -302,10 +364,10 @@ public final class MenuBarViewModel: ObservableObject {
     private func persistDraftConfig() -> Bool {
         do {
             try configStore.save(config)
-            logger.info("\(LC.logDraftPersistSuccess)")
+            logger.info("\(LC.logDraftPersistSuccess, privacy: .public)")
             return true
         } catch {
-            logger.error("\(LC.logDraftPersistFailed(error.localizedDescription))")
+            logger.error("\(LC.logDraftPersistFailed(error.localizedDescription), privacy: .public)")
             applyError = LC.configSaveFailed + ": \(error.localizedDescription)"
             return false
         }
@@ -332,18 +394,43 @@ public final class MenuBarViewModel: ObservableObject {
             let merged = try HostsMerger().merge(config)
             lastMergedText = merged.text
             lastDuplicateCount = merged.duplicateCount
-            logger.debug("\(LC.logMergePreview(merged.records.count, merged.duplicateCount))")
+            logger.debug("\(LC.logMergePreview(merged.records.count, merged.duplicateCount), privacy: .public)")
         } catch let HostMergeError.conflicts(conflicts) {
             lastConflicts = conflicts
             applyError = LC.conflictsDetected(conflicts.count)
-            logger.warning("\(LC.logPreviewConflicts(conflicts.count))")
+            logger.warning("\(LC.logPreviewConflicts(conflicts.count), privacy: .public)")
         } catch {
             applyError = error.localizedDescription
-            logger.error("\(LC.logPreviewMergeFailed(error.localizedDescription))")
+            logger.error("\(LC.logPreviewMergeFailed(error.localizedDescription), privacy: .public)")
         }
     }
 
     public func clearError() {
         applyError = nil
+    }
+
+    /// 启动时配置被重置或加载失败，在菜单和编辑器状态栏提示用户，避免分组「凭空消失」。
+    public func noteStartupNotice(_ message: String) {
+        applyError = message
+        logger.warning("Startup notice: \(message, privacy: .public)")
+    }
+
+    /// 启动时对照磁盘 hash，标出还没写入，或被外面改过。
+    public func noteStartupDrift(diskHash: String) {
+        let mergedText = (try? HostsMerger().merge(config))?.text
+        switch HostsDriftChecker.evaluate(
+            diskHash: diskHash,
+            lastAppliedHostsHash: config.state.lastAppliedHostsHash,
+            lastExternalHostsHash: config.state.lastExternalHostsHash,
+            mergedText: mergedText
+        ) {
+        case .inSync:
+            break
+        case .unapplied:
+            applyError = LC.unappliedHosts
+        case .externallyModified:
+            showExternalModificationAlert = true
+            applyError = LC.externalModificationDetected
+        }
     }
 }

@@ -2,6 +2,24 @@ import XCTest
 @testable import HostCatCore
 
 final class HostsParserTests: XCTestCase {
+    /// 文档解析同时保留 CRLF 文件的原始行内容、注释、空行及记录行号。
+    func testCRLFDocumentPreservesRawLinesAndKinds() throws {
+        let lines = ["# 注释 😀", "", "\t2001:0DB8::1\tapi.test  # note  ", "", ""]
+        for separator in ["\n", "\r\n"] {
+            let document = try HostsParser().parseDocument(lines.joined(separator: separator))
+            XCTAssertEqual(document.map(\.rawLine), lines)
+            XCTAssertEqual(document.first?.kind, .comment)
+            XCTAssertEqual(document.dropFirst().first?.kind, .blank)
+            guard document.count == lines.count, case let .record(record) = document[2].kind else {
+                XCTFail("第三行应保留为映射记录")
+                continue
+            }
+            XCTAssertEqual(record.ipAddress, "2001:0DB8::1")
+            XCTAssertEqual(record.lineNumber, 3)
+            XCTAssertEqual(record.comment, "note")
+        }
+    }
+
     /// LF、CRLF 和混合换行均应保留记录、注释及真实行号。
     func testParsesLFAndCRLFWithoutLosingRecordsOrLineNumbers() throws {
         let lines = ["# imported", "", "10.0.0.1 api.test # development", "2001:db8::1 ipv6.test", ""]
@@ -127,6 +145,17 @@ final class HostsParserTests: XCTestCase {
 
         XCTAssertEqual(records.count, 1)
         XCTAssertEqual(records[0].hostnames, ["my_host.local"])
+    }
+
+    /// hosts 文件不做 IDN 转换，非 ASCII 主机名系统解析器永远匹配不到，必须写成 punycode。
+    func testRejectsNonASCIIHostname() {
+        let errors = HostsParser().validate("127.0.0.1 中文.test café.local\n")
+
+        XCTAssertEqual(errors, [
+            .invalidHostname(lineNumber: 1, value: "中文.test"),
+            .invalidHostname(lineNumber: 1, value: "café.local")
+        ])
+        XCTAssertNoThrow(try HostsParser().parse("127.0.0.1 xn--fiq228c.test\n"))
     }
 
     func testTracksLineNumbers() throws {

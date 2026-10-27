@@ -55,7 +55,13 @@ final class ShortcutStore: ObservableObject {
     private static func load() -> Shortcut? {
         guard let data = UserDefaults.standard.data(forKey: userDefaultsKey) else { return nil }
         do {
-            return try JSONDecoder().decode(Shortcut.self, from: data)
+            let shortcut = try JSONDecoder().decode(Shortcut.self, from: data)
+            // 旧版本允许只带 ⇧ 的组合，会拦截全局输入，读到时直接丢弃。
+            guard shortcut.isUsableAsGlobalHotKey else {
+                Self.logger.warning("丢弃不安全的已持久化快捷键：\(shortcut.displayString, privacy: .public)")
+                return nil
+            }
+            return shortcut
         } catch {
             Self.logger.warning("读取已持久化快捷键失败：\(error.localizedDescription, privacy: .public)")
             return nil

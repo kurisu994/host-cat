@@ -22,7 +22,7 @@ public struct ConfigMutationService: Sendable {
     public func addGroup(named name: String, to config: inout AppConfig) {
         let group = HostGroup(name: name, isSingleSelect: false, nodes: [])
         config.groups.append(group)
-        logger.info("Added group: \(name)")
+        logger.info("Added group: \(name, privacy: .public)")
     }
 
     @discardableResult
@@ -30,29 +30,29 @@ public struct ConfigMutationService: Sendable {
         let originalCount = config.groups.count
         config.groups.removeAll { $0.id == id }
         guard config.groups.count < originalCount else {
-            logger.warning("Failed to remove group, ID not found: \(id.uuidString)")
+            logger.warning("Failed to remove group, ID not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
-        logger.info("Removed group: \(id.uuidString)")
+        logger.info("Removed group: \(id.uuidString, privacy: .public)")
         return .success
     }
 
     @discardableResult
     public func renameGroup(id: UUID, to name: String, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to rename group, ID not found: \(id.uuidString)")
+            logger.warning("Failed to rename group, ID not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
         let oldName = config.groups[index].name
         config.groups[index].name = name
-        logger.info("Group renamed: \(oldName) -> \(name)")
+        logger.info("Group renamed: \(oldName, privacy: .public) -> \(name, privacy: .public)")
         return .success
     }
 
     @discardableResult
     public func moveGroup(id: UUID, direction: MoveDirection, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to move group, ID not found: \(id.uuidString)")
+            logger.warning("Failed to move group, ID not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
         let targetIndex: Int
@@ -72,20 +72,20 @@ public struct ConfigMutationService: Sendable {
         }
         config.groups.swapAt(index, targetIndex)
         let movedGroupName = config.groups[targetIndex].name
-        logger.info("Group moved: \(movedGroupName)")
+        logger.info("Group moved: \(movedGroupName, privacy: .public)")
         return .success
     }
 
     @discardableResult
     public func setGroupSingleSelect(_ isSingleSelect: Bool, forGroup groupID: UUID, in config: inout AppConfig) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to set single/multi select, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to set single/multi select, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         config.groups[index].isSingleSelect = isSingleSelect
         let groupName = config.groups[index].name
         let modeName = isSingleSelect ? "single" : "multi"
-        logger.info("Group \(groupName) switched to \(modeName) select")
+        logger.info("Group \(groupName, privacy: .public) switched to \(modeName, privacy: .public) select")
         return .success
     }
 
@@ -99,13 +99,13 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let index = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to add node, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to add node, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         let node = HostNode(name: name, content: content, isActive: false)
         config.groups[index].nodes.append(node)
         let groupName = config.groups[index].name
-        logger.info("Added node \(name) to group \(groupName)")
+        logger.info("Added node \(name, privacy: .public) to group \(groupName, privacy: .public)")
         return .success
     }
 
@@ -116,16 +116,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to remove node, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to remove node, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         let originalCount = config.groups[groupIndex].nodes.count
         config.groups[groupIndex].nodes.removeAll { $0.id == id }
         guard config.groups[groupIndex].nodes.count < originalCount else {
-            logger.warning("Failed to remove node, node not found: \(id.uuidString)")
+            logger.warning("Failed to remove node, node not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
-        logger.info("Removed node: \(id.uuidString)")
+        logger.info("Removed node: \(id.uuidString, privacy: .public)")
         return .success
     }
 
@@ -137,16 +137,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to rename node, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to rename node, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to rename node, node not found: \(id.uuidString)")
+            logger.warning("Failed to rename node, node not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
         let oldName = config.groups[groupIndex].nodes[nodeIndex].name
         config.groups[groupIndex].nodes[nodeIndex].name = name
-        logger.info("Node renamed: \(oldName) -> \(name)")
+        logger.info("Node renamed: \(oldName, privacy: .public) -> \(name, privacy: .public)")
         return .success
     }
 
@@ -158,11 +158,11 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to move node, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to move node, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to move node, node not found: \(id.uuidString)")
+            logger.warning("Failed to move node, node not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
 
@@ -183,7 +183,7 @@ public struct ConfigMutationService: Sendable {
         }
         config.groups[groupIndex].nodes.swapAt(nodeIndex, targetIndex)
         let movedNodeName = config.groups[groupIndex].nodes[targetIndex].name
-        logger.info("Node moved: \(movedNodeName)")
+        logger.info("Node moved: \(movedNodeName, privacy: .public)")
         return .success
     }
 
@@ -195,16 +195,16 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to update node content, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to update node content, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to update node content, node not found: \(id.uuidString)")
+            logger.warning("Failed to update node content, node not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
         config.groups[groupIndex].nodes[nodeIndex].content = content
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
-        logger.info("Updated node \(nodeName) content")
+        logger.info("Updated node \(nodeName, privacy: .public) content")
         return .success
     }
 
@@ -213,7 +213,7 @@ public struct ConfigMutationService: Sendable {
     public func renameDefaultNode(to name: String, in config: inout AppConfig) {
         let oldName = config.defaultNode.name
         config.defaultNode.name = name
-        logger.info("Default node renamed: \(oldName) -> \(name)")
+        logger.info("Default node renamed: \(oldName, privacy: .public) -> \(name, privacy: .public)")
     }
 
     public func updateDefaultNodeContent(_ content: String, in config: inout AppConfig) {
@@ -244,17 +244,17 @@ public struct ConfigMutationService: Sendable {
         in config: inout AppConfig
     ) -> MutationResult {
         guard let groupIndex = config.groups.firstIndex(where: { $0.id == groupID }) else {
-            logger.warning("Failed to activate node, group not found: \(groupID.uuidString)")
+            logger.warning("Failed to activate node, group not found: \(groupID.uuidString, privacy: .public)")
             return .notFound
         }
         guard let nodeIndex = config.groups[groupIndex].nodes.firstIndex(where: { $0.id == id }) else {
-            logger.warning("Failed to activate node, node not found: \(id.uuidString)")
+            logger.warning("Failed to activate node, node not found: \(id.uuidString, privacy: .public)")
             return .notFound
         }
 
         config.groups[groupIndex].nodes[nodeIndex].isActive = active
         let nodeName = config.groups[groupIndex].nodes[nodeIndex].name
-        logger.info("Node \(nodeName) status set to \(active)")
+        logger.info("Node \(nodeName, privacy: .public) status set to \(active, privacy: .public)")
         return .success
     }
 }

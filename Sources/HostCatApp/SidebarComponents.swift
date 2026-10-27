@@ -8,31 +8,46 @@ struct NodeRow: View {
     let isSelected: Bool
     /// Callback when the active icon is tapped; nil means not toggleable (e.g., default node).
     var onToggleActive: (() -> Void)? = nil
+    /// 点击名称区域选中节点。列表自己的选择手势在 macOS 上不可靠，必须用按钮承接。
+    var onSelect: () -> Void = {}
 
     var body: some View {
-        HStack {
-            // Active state icon; non-default nodes can tap to toggle.
+        HStack(spacing: 4) {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundStyle(isActive ? .green : .secondary)
+                .frame(width: 22, height: 22)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     onToggleActive?()
                 }
                 .allowsHitTesting(onToggleActive != nil)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel(isActive ? L.sidebarDeactivate : L.sidebarActivate)
+                .accessibilityHint(L.a11yToggleNode)
+                .accessibilityAction(.default) {
+                    onToggleActive?()
+                }
 
-            Text(name)
-
-            Spacer()
-
-            if isDefault {
-                Text(L.statusDefault)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            Button(action: onSelect) {
+                HStack {
+                    Text(name)
+                    Spacer(minLength: 0)
+                    if isDefault {
+                        Text(L.statusDefault)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.secondary.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                    }
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(name)
+            .accessibilityValue(accessibilityValueText)
+            .accessibilityHint(L.a11ySelectNode)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
@@ -42,6 +57,11 @@ struct NodeRow: View {
                     .fill(Color.accentColor.opacity(0.18))
             }
         }
+    }
+
+    private var accessibilityValueText: String {
+        if isDefault { return L.statusDefault }
+        return isActive ? L.a11yStateActive : L.a11yStateInactive
     }
 }
 
@@ -60,15 +80,15 @@ struct GroupHeader: View {
 
     var body: some View {
         HStack {
-            // Collapse arrow
-            Image(systemName: "chevron.right")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .rotationEffect(.degrees(isCollapsed ? 0 : 90))
-                .animation(.easeInOut(duration: 0.2), value: isCollapsed)
-                .onTapGesture {
-                    onToggleCollapse()
-                }
+            Button(action: onToggleCollapse) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .rotationEffect(.degrees(isCollapsed ? 0 : 90))
+                    .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isCollapsed ? L.a11yExpandGroup : L.a11yCollapseGroup)
 
             if isRenaming {
                 TextField(L.dialogNamePlaceholder, text: $renameText)
@@ -115,6 +135,7 @@ struct GroupHeader: View {
                 }
                 .buttonStyle(.plain)
                 .help(L.sidebarDeleteGroup)
+                .accessibilityLabel(L.sidebarDeleteGroup)
             }
         }
         .onHover { hovering in
@@ -152,6 +173,7 @@ struct SidebarAddGroupButton: View {
             }
         }
         .help(L.sidebarAddGroup)
+        .accessibilityLabel(L.sidebarAddGroup)
     }
 }
 
@@ -190,5 +212,6 @@ struct AddNodeButton: View {
             }
         }
         .help(L.sidebarAddNode)
+        .accessibilityLabel(L.sidebarAddNode)
     }
 }

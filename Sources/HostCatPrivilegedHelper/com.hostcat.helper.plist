@@ -4,6 +4,12 @@
 <dict>
 	<key>Label</key>
 	<string>com.hostcat.helper</string>
+	<key>BundleProgram</key>
+	<string>Contents/Library/HelperTools/HostCatPrivilegedHelper</string>
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>com.hostcat.app</string>
+	</array>
 	<key>MachServices</key>
 	<dict>
 		<key>com.hostcat.helper</key>

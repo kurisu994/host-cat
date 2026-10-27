@@ -46,10 +46,12 @@ struct BackupRestoreView: View {
                         Image(systemName: "plus")
                     }
                     .help(L.backupCreateManual)
+                    .accessibilityLabel(L.backupCreateManual)
                     Button(action: refreshBackups) {
                         Image(systemName: "arrow.clockwise")
                     }
                     .help(L.settingsRefresh)
+                    .accessibilityLabel(L.settingsRefresh)
                 }
                 .padding(12)
 

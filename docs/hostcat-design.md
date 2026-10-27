@@ -24,6 +24,10 @@ HostCat 是一个 Apple Silicon 原生的 macOS 菜单栏 hosts 管理应用。�
 - 主应用和 Helper 必须使用有效的 Developer ID 证书签名（开发调试时可用本地签名，但 Helper 注册需要真实证书才能通过系统审批）。
 - XPC 连接需双向验证 code signing requirement，防止第三方进程冒用。主应用建立连接后调用 `NSXPCConnection.setCodeSigningRequirement(_:)` 限定 Helper 签名；Helper 端在 `listener(_:shouldAcceptNewConnection:)` 回调中对入站 `NSXPCConnection` 同样设置调用方 code signing requirement。当前实现使用包含 `anchor apple generic`、固定 bundle identifier 和 Team ID 的完整 requirement；Team ID 由 Info.plist 的 `HostCatTeamIdentifier` 注入。`processIdentifier` / `SecCode` / `auditToken` 只作为补充诊断信息，不作为唯一安全边界。
 - Helper 的 launchd plist 放在 `Contents/Library/LaunchDaemons/` 目录下，Helper 可执行文件放在 `Contents/Library/HelperTools/` 目录下。`SMAppService` 模式下二者都必须在 app bundle 内，应用删除时自动清理。
+- launchd plist 必须用 `BundleProgram`（相对 app bundle 的路径 `Contents/Library/HelperTools/HostCatPrivilegedHelper`）指明可执行文件，并通过 `AssociatedBundleIdentifiers` 关联主应用；缺少 `BundleProgram` 时 launchd 不知道要启动什么。
+- Helper 是命令行工具，必须开启 `CREATE_INFOPLIST_SECTION_IN_BINARY` 把 Info.plist 嵌进二进制：不嵌入时签名标识会退化成文件名（与 requirement 里的 `com.hostcat.helper` 不符），`Bundle.main` 也读不到 `HostCatTeamIdentifier`，双向签名校验都会失败。
+- Helper 动态链接 `HostCatCore.framework`，rpath 需包含 `@executable_path/../../Frameworks`，从 `HelperTools/` 回到 `Contents/Frameworks`。
+- App 与 Helper 的 Release 配置开启 Hardened Runtime（公证硬性要求）；Debug 仍用本地 ad-hoc 签名，不开启以免触发库校验失败。
 - DNS 缓存刷新命令（`dscacheutil -flushcache` + `killall -HUP mDNSResponder`）由 Helper 在写入 hosts 后一并执行，因为这两个命令都需要 root 权限。
 
 ### XPC 接口边界
@@ -162,7 +166,7 @@ hosts 文件编码处理：首次导入和每次写入前读取 `/etc/hosts` 时
 目标：接入 `SMAppService` + Privileged Helper，完成安全写入、备份和 DNS 刷新。
 
 - [x] 支持应用配置到 `/etc/hosts`，写入后自动刷新 DNS 缓存。
-- [x] 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份事务式恢复。默认保留最近 3 份备份，超出自动删除最早的。
+- [x] 支持写入前自动备份 `/etc/hosts` 到 `~/Library/Application Support/com.hostcat.app/backups/`，支持从备份事务式恢复。默认保留最近 20 份备份，超出自动删除最早的。
 - [x] 支持写入前对比 `expectedCurrentHostsHash`，检测 `/etc/hosts` 是否在 HostCat 之外被修改；发现变化时弹窗提供「取消」或「确认覆盖」决策，不静默覆盖。
 - [x] 支持 HostCat 管理区块输出，区块使用明确的起止标记（`# --- HostCat Begin (v1) ---` / `# --- HostCat End ---`），标记中包含版本号便于未来格式升级。
 - [x] 支持 HostCat 管理区块解析，由 `HostsImporter` 负责识别、版本校验和区块外内容提取。
@@ -221,8 +225,9 @@ Apple 没有提供公开的 Swift/C API 直接刷新 DNS 缓存，调用命令�
 
 - 每次真实写入 `/etc/hosts` 前，主应用先备份当前 `/etc/hosts` 内容（644 权限，普通用户可读）。备份成功后再通过 XPC 发送写入请求给 Helper，避免错误配置覆盖后无法回滚。
 - 在设置界面或菜单中提供「备份当前 Hosts」手动操作。
-- 备份写入 `~/Library/Application Support/com.hostcat.app/backups/` 目录。文件名包含时间戳，例如 `hosts_2026-05-20_114000.bak`。
-- 默认保留最近 3 份备份，超出时自动删除最早的备份文件。
+- 备份写入 `~/Library/Application Support/com.hostcat.app/backups/` 目录。文件名为 `hosts_<本地时间>_<20 位纪元纳秒>_<随机后缀>.bak`，例如 `hosts_2026-05-20_114000_01779248400000000000_1A2B3C4D.bak`。
+- 新旧顺序和展示时间都以纪元纳秒（ordering token）为准：本地时间串在跨时区或夏令时回拨后会倒退，按它排序会让清理逻辑把刚建的备份当成最旧的删掉。
+- 默认保留最近 20 份备份，超出时自动删除最早的备份文件。
 - 提供「从备份恢复」功能，用户可选择历史备份文件。主应用读取备份内容后先通过 `HostsImporter` 生成临时恢复配置，再复用正常合并、校验和写入流程应用到 `/etc/hosts`。
 - 备份恢复采用事务式写入语义：只有 hosts 写入成功后才替换当前 `config` 并尝试持久化；如果 Helper 写入或 hash 校验失败，当前编辑草稿和已保存配置都保持原状。若写入成功但后续配置持久化失败，UI 保留已恢复状态并提示配置保存失败。
 - 备份路径使用 `FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)` 获取，避免硬编码 `~` 展开歧义。
@@ -258,6 +263,7 @@ Apple 没有提供公开的 Swift/C API 直接刷新 DNS 缓存，调用命令�
 | 场景 | 用户体验 |
 |------|--------|
 | Helper 未注册 / 未在系统设置中批准 | 弹窗引导用户打开「系统设置 > 登录项」，提供跳转按钮 |
+| Helper 有回复但拒绝写入（内容校验失败、rename 失败等） | 按写入错误展示 Helper 给出的原因；Helper 能回复说明连接正常，不走「安装/重试 Helper」引导 |
 | 权限不够无法写入 `/etc/hosts` | 弹窗提示具体错误，建议重新注册 Helper |
 | `/etc/hosts` 被其他程序锁定 | 弹窗提示「文件被占用，请稍后重试」 |
 | `/etc/hosts` 设置了 immutable flags | 弹窗提示文件被保护，提供手动解除说明，不自动清除 flags |
@@ -271,6 +277,8 @@ Apple 没有提供公开的 Swift/C API 直接刷新 DNS 缓存，调用命令�
 ## 诊断日志
 
 HostCat 使用 `OSLog` / `Logger` 记录关键路径，日志 subsystem 分为主应用 `com.hostcat.app` 和 Helper `com.hostcat.helper`。当前覆盖 XPC 连接建立/中断/失效、写入请求成功/失败、写入前备份和清理、配置加载/恢复/保存，以及 Helper 侧真实 hosts 写入结果。
+
+日志里不记录 hosts 正文，只记录错误原因、hash 前缀、计数、节点名等排障信息，这些字段统一标注 `privacy: .public`；否则 Release 包中 OSLog 会把字符串插值打码成 `<private>`，导出的诊断文件没有排障价值。
 
 设置页提供「导出诊断日志」按钮，默认导出最近一小时 `com.hostcat.*` 相关日志为纯文本 `.log` 文件。导出内容包含生成时间、查询起点、subsystem 前缀、支持的诊断级别（error / warning / info / debug）和逐条日志记录，便于用户把写入失败或 XPC 断连上下文附到 issue / 邮件中。若系统级 OSLog store 不可用，导出器回退到当前进程日志。
 
@@ -290,6 +298,8 @@ hosts 写入服务层使用 Swift `actor` 隔离，保证同一时刻只有一�
 - 每次计划写入生成一个 `writeID`，同时捕获本批次的 `configSnapshot`、`expectedCurrentHostsHash` 和合成后的 hosts 文本。
 - `HostWriteCoordinator` actor 串行处理写入。写入开始后，后续用户操作只更新新的待写入快照，不修改正在写入的批次。
 - 写入成功后，更新 `lastSuccessfulConfigSnapshot`、`lastAppliedHostsHash` 和 `lastAppliedAt`，再持久化配置。
+- `expectedCurrentHostsHash` 优先取 coordinator 本会话内最近一次成功写入的 hash，其次才是快照里的 `lastAppliedHostsHash` / `lastExternalHostsHash`。快照可能在上一批写入完成前生成，直接用它会把 HostCat 自己刚写的内容误判成外部修改。
+- 被更新批次取代的写入如果成功了，`MenuBarViewModel` 仍把它的 hash 记进配置并落盘（不回退更新的记录），避免配置里残留旧 hash 导致下次启动误报。
 - 写入失败时，保留当前配置草稿并提示 hosts 未应用。如果失败期间已经产生更新的待写入批次，不丢弃这些新操作；下一次 debounce 继续尝试写入最新快照。
 - 备份恢复是独立的事务式 apply：先构造临时恢复配置并尝试写入，成功后才替换当前配置；失败时不把备份内容写入当前草稿或配置文件。
 - 如果失败原因是 `expectedCurrentHostsHash` 不匹配，不自动重试。必须先让用户选择导入、取消或明确覆盖。
@@ -367,6 +377,10 @@ HostCat.xcodeproj
 - **hosts 编辑器语法高亮与行号组件**：采用 AppKit 的 `NSTextView` 通过 SwiftUI `NSViewRepresentable` 进行桥接，并使用 **TextKit 2**（即 `NSTextLayoutManager`）进行文本行段计算与渲染。高亮引擎 `HostsSyntaxHighlighter` 实现了对 IP（蓝色）、hostname（绿色）、注释（灰色）、管理区块起止符（橙色粗体）的多色渲染，并为所有语法错误行赋予红色半透明背景；自定义行号栏 `LineNumberRulerView`（`NSRulerView` 子类）能基于 TextKit 2 完美执行滚动与缩放计算，高亮显示当前行，并对错误行号标识为红字与红点。同时，语法高亮整个结构体添加了 `@MainActor` 修饰，完美适配 Swift 6 严格并发校验。
 - **全量多行语法错误收集**：在 `HostsParser` 中新增非抛出的 `validate(_:)` 方法，单次运行即可将整个 hosts 文本中所有不合规的行号与具体错误类型抓取至数组。编辑器 `EditorView` 结合该功能，做到了同时渲染出多行红字背景与红点 gutter 的直观报错体验，取代了单次仅暴露单行错误的中断性流程。
 - **编辑器工具栏与撤销功能**：`EditorView` 右侧编辑器顶部包含工具栏，展示当前节点名称、放弃按钮（⇧⌘Z，丢弃当前节点所有未保存修改）和应用按钮（⌘Return）。撤销按钮使用 ⇧⌘Z 而非 ⌘Z，避免与 macOS 标准的逐步撤销快捷键冲突导致用户长时间编辑后误触整体丢弃。未保存编辑时按钮可用，提供清晰的编辑状态反馈。
+- **编辑器切换节点保护**：当前节点有未应用修改时，点击其他节点（包括点它的激活开关）先弹窗询问「先应用再继续 / 放弃修改并继续 / 取消」，不再静默丢弃编辑；有修改时点列表空白处取消选中会被忽略。
+- **主机名只接受 ASCII**：hosts 不做 IDN 转换，非 ASCII 主机名（如 `中文.test`、`café.local`）系统解析器永远匹配不到，parser 直接报错，国际化域名需写成 punycode（`xn--`）。
+- **全局快捷键修饰键**：录制时必须包含 ⌘/⌥/⌃ 之一；只带 ⇧ 的组合（如 ⇧A）注册成全局热键会让全系统打不出对应大写字母，旧版本存下的这类快捷键启动时直接丢弃。
+- **配置加载失败提示**：配置文件损坏被重置为默认配置时，在菜单和编辑器状态栏提示用户（原文件另存在配置目录）；配置文件存在但读取失败时，先把它挪到 `config.json.unreadable.*` 保留再使用默认配置，避免后续保存覆盖用户原有配置。
 - **`HostWriteCoordinator` 失败语义**：写入失败时 **不返回回滚配置**，UI 也不用快照覆盖草稿。配置草稿在 apply 调用前已通过 `MenuBarViewModel.persistDraftConfig()` 持久化；失败时 hosts 保持未应用，UI 提示「hosts 未应用」并保留用户当前编辑内容。`HostWriteCoordinator.lastSuccessfulConfigSnapshot` 仅作为 actor 内部状态供服务层判定真实 hosts 内容，不通过 API 返回。
 - **`HelperService` 语言标识严格校验**：Helper 端 XPC 接口只接受已解析的具体语言标识（`en` / `zh-Hans`）；收到 `"system"` 或未知值时记录 warning 并回退到 `zh-Hans`。主应用必须先在客户端调用 `AppLanguage.effectiveLocalizationIdentifier()` 解析后再传递。语言标识仅用于格式化错误响应，不参与路径、权限或内容判定。
 
